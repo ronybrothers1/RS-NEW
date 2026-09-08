@@ -35,10 +35,10 @@ function sanitizeFilename(filename: string) {
   return `${base || "gambar"}${extension}`;
 }
 
-export default function FeaturedImageUploader() {
+export default function FeaturedImageUploader({ initialUrl = "" }: { initialUrl?: string | null }) {
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const [imageUrl, setImageUrl] = useState("");
+  const [imageUrl, setImageUrl] = useState(initialUrl ?? "");
   const [isUploading, setIsUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -157,7 +157,7 @@ export default function FeaturedImageUploader() {
               </span>
 
               <span className="mt-1 text-xs leading-5 text-slate-500">
-                JPG, PNG, atau WebP · maksimal 5 MB
+                JPG, PNG, atau WebP Â· maksimal 5 MB
               </span>
             </>
           )}

@@ -2,7 +2,7 @@ import { db } from "@/src/db";
 import { articles, users } from "@/src/db/schema";
 import { desc, eq } from "drizzle-orm";
 import Link from "next/link";
-import { FileText, Plus, ExternalLink, Image as ImageIcon } from "lucide-react";
+import { FileText, Plus, ExternalLink, Image as ImageIcon, Pencil } from "lucide-react";
 import DeleteBeritaButton from "./components/DeleteBeritaButton";
 
 export default async function BeritaPage() {
@@ -83,11 +83,26 @@ export default async function BeritaPage() {
                           ? 'bg-emerald-100 text-emerald-800' 
                           : 'bg-slate-100 text-slate-800'
                       }`}>
-                        {art.status === 'PUBLISHED' ? 'Dipublikasi' : 'Draf'}
+                        {art.status === 'PUBLISHED'
+                          ? 'Dipublikasi'
+                          : art.status === 'SCHEDULED'
+                            ? 'Terjadwal'
+                            : art.status === 'ARCHIVED'
+                              ? 'Arsip'
+                              : 'Draf'}
                       </span>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
+                        <Link
+                          href={`/admin/berita/${art.id}/edit`}
+                          className="text-slate-400 hover:text-teal-600 transition-colors"
+                          title="Edit Berita"
+                          aria-label={`Edit ${art.title}`}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Link>
+
                         {art.status === 'PUBLISHED' && (
                           <Link href={`/berita/${art.slug}`} target="_blank" className="text-slate-400 hover:text-teal-600 transition-colors" title="Lihat di Web">
                             <ExternalLink className="h-4 w-4" />
