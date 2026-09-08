@@ -5,7 +5,7 @@ function extractVideoId(url: string) {
   return match?.[1] ?? null;
 }
 
-export default function TikTokEmbed({
+export default function TikTokPreview({
   url,
 }: {
   url: string;
@@ -14,19 +14,8 @@ export default function TikTokEmbed({
 
   if (!videoId) {
     return (
-      <div className="mx-auto w-full max-w-md rounded-2xl border border-amber-200 bg-amber-50 px-5 py-8 text-center">
-        <p className="text-sm leading-6 text-amber-800">
-          Video TikTok tidak dapat ditampilkan karena tautannya tidak dikenali.
-        </p>
-
-        <a
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-3 inline-flex text-sm font-semibold text-teal-700 hover:underline"
-        >
-          Buka video di TikTok
-        </a>
+      <div className="rounded-xl border border-amber-200 bg-amber-50 px-5 py-6 text-center text-sm text-amber-800">
+        URL TikTok tidak dapat dipratinjau.
       </div>
     );
   }
@@ -39,7 +28,6 @@ export default function TikTokEmbed({
           title="Video TikTok kegiatan"
           allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
-          loading="lazy"
           className="h-full w-full border-0"
         />
       </div>

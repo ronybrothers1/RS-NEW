@@ -1,102 +1,167 @@
-// Rendered on-demand instead of prerendered at build time: this page
-// queries the database, which is not reachable from the build machine.
-export const dynamic = 'force-dynamic';
-import { db } from "@/src/db";
-import { activities } from "@/src/db/schema";
-import { desc, eq } from "drizzle-orm";
-import Link from "next/link";
-import { CalendarRange, MapPin, ArrowRight } from "lucide-react";
+﻿// Rendered on-demand because this page reads directly from the database.
+export const dynamic = "force-dynamic";
 
+import { db } from "@/src/db";
+import { activities, programs } from "@/src/db/schema";
+import { and, desc, eq, isNull } from "drizzle-orm";
+import {
+  ArrowRight,
+  CalendarDays,
+  CalendarRange,
+  MapPin,
+  Tag,
+  Video,
+} from "lucide-react";
+import type { Metadata } from "next";
+import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Kegiatan | Yayasan Ruang Sejahtera",
+  description:
+    "Dokumentasi kegiatan dan penyaluran program Yayasan Ruang Sejahtera untuk masyarakat.",
+};
 
 export default async function PublicKegiatanPage() {
   const allActivities = await db
-    .select()
+    .select({
+      activity: activities,
+      programName: programs.name,
+    })
     .from(activities)
-    .where(eq(activities.isPublished, true))
-    .orderBy(desc(activities.date), desc(activities.createdAt));
+    .leftJoin(
+      programs,
+      eq(activities.programId, programs.id),
+    )
+    .where(
+      and(
+        eq(activities.isPublished, true),
+        isNull(activities.archivedAt),
+      ),
+    )
+    .orderBy(
+      desc(activities.date),
+      desc(activities.createdAt),
+    );
 
   return (
     <div className="min-h-screen bg-slate-50">
-      
-      
-      <div className="bg-teal-700 py-16 md:py-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-3xl md:text-5xl font-bold text-white mb-6">Kegiatan Kami</h1>
-          <p className="text-teal-100 text-lg md:text-xl max-w-2xl mx-auto">
-            Jejak langkah dan aksi nyata Yayasan Ruang Sejahtera dalam menebar manfaat untuk masyarakat.
+      <section className="border-b border-slate-200 bg-white">
+        <div className="mx-auto w-full max-w-7xl px-4 py-12 text-center sm:px-6 sm:py-16 lg:px-8 lg:py-20">
+          <span className="inline-flex rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-teal-700">
+            Jejak Kegiatan
+          </span>
+
+          <h1 className="mx-auto mt-4 max-w-3xl text-3xl font-bold leading-tight text-slate-900 sm:text-4xl md:text-5xl">
+            Kegiatan Yayasan Ruang Sejahtera
+          </h1>
+
+          <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">
+            Dokumentasi kegiatan sosial, penyaluran bantuan, dan pelaksanaan program Yayasan Ruang Sejahtera di masyarakat.
           </p>
         </div>
-      </div>
+      </section>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8 lg:py-16">
         {allActivities.length === 0 ? (
-          <div className="text-center py-20 bg-white rounded-2xl border border-slate-200">
-            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CalendarRange className="h-8 w-8 text-slate-400" />
+          <div className="rounded-2xl border border-slate-200 bg-white px-6 py-16 text-center shadow-sm">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-slate-100">
+              <CalendarRange className="h-7 w-7 text-slate-400" />
             </div>
-            <h3 className="text-xl font-medium text-slate-900 mb-2">Belum ada kegiatan</h3>
-            <p className="text-slate-500">Daftar kegiatan yayasan akan segera diperbarui di halaman ini.</p>
+
+            <h2 className="text-xl font-semibold text-slate-900">
+              Belum ada kegiatan
+            </h2>
+
+            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
+              Dokumentasi kegiatan Yayasan Ruang Sejahtera akan ditampilkan di halaman ini setelah dipublikasikan.
+            </p>
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {allActivities.map((act) => (
-              <div key={act.id} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-200 hover:shadow-lg transition-all group flex flex-col">
-                <div className="aspect-[4/3] bg-slate-100 relative overflow-hidden">
-                  {act.imageUrl ? (
-                    <img 
-                      src={act.imageUrl} 
-                      alt={act.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <CalendarRange className="h-12 w-12 text-slate-300" />
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {allActivities.map(
+              ({ activity, programName }) => (
+                <article
+                  key={activity.id}
+                  className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md"
+                >
+                  <div className="flex flex-1 flex-col p-5 sm:p-6">
+                    <div className="mb-5 flex items-start justify-between gap-4">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-700">
+                        <Video className="h-5 w-5" />
+                      </div>
+
+                      {activity.tiktokUrl && (
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
+                          <Video className="h-3.5 w-3.5" />
+                          TikTok
+                        </span>
+                      )}
                     </div>
-                  )}
-                  {act.tiktokUrl && (
-                    <div className="absolute top-4 right-4 bg-black/70 backdrop-blur-sm text-white px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M19.589 6.686a4.793 4.793 0 0 1-3.77-4.245V2h-3.445v13.672a2.896 2.896 0 0 1-5.201 1.743l-.002-.001.002.001a2.895 2.895 0 0 1 3.183-4.51v-3.5a6.329 6.329 0 0 0-5.394 10.692 6.33 6.33 0 0 0 10.857-4.424V8.687a8.182 8.182 0 0 0 4.773 1.526V6.79a4.831 4.831 0 0 1-1.003-.104z"/>
-                      </svg>
-                      Video
-                    </div>
-                  )}
-                </div>
-                
-                <div className="p-6 flex flex-col flex-1">
-                  <div className="flex items-center gap-4 text-xs font-medium text-slate-500 mb-3">
-                    <span className="flex items-center gap-1">
-                      <CalendarRange className="h-3.5 w-3.5 text-teal-600" />
-                      {new Date(act.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
-                    </span>
-                    {act.location && (
-                      <span className="flex items-center gap-1">
-                        <MapPin className="h-3.5 w-3.5 text-teal-600" />
-                        <span className="line-clamp-1">{act.location}</span>
-                      </span>
+
+                    {programName && (
+                      <div className="mb-3 inline-flex w-fit items-center gap-1.5 text-xs font-semibold text-teal-700">
+                        <Tag className="h-3.5 w-3.5" />
+                        {programName}
+                      </div>
                     )}
+
+                    <h2 className="text-xl font-bold leading-7 text-slate-900 transition group-hover:text-teal-700">
+                      <Link href={`/kegiatan/${activity.slug}`}>
+                        {activity.title}
+                      </Link>
+                    </h2>
+
+                    <div className="mt-4 space-y-2 text-sm text-slate-500">
+                      <div className="flex items-start gap-2">
+                        <CalendarDays className="mt-0.5 h-4 w-4 shrink-0 text-teal-600" />
+
+                        <span>
+                          {new Date(
+                            activity.date,
+                          ).toLocaleDateString(
+                            "id-ID",
+                            {
+                              day: "numeric",
+                              month: "long",
+                              year: "numeric",
+                            },
+                          )}
+                        </span>
+                      </div>
+
+                      {activity.location && (
+                        <div className="flex items-start gap-2">
+                          <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-teal-600" />
+
+                          <span className="line-clamp-2 leading-6">
+                            {activity.location}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {activity.description && (
+                      <p className="mt-5 line-clamp-3 text-sm leading-7 text-slate-600">
+                        {activity.description}
+                      </p>
+                    )}
+
+                    <div className="mt-auto pt-6">
+                      <Link
+                        href={`/kegiatan/${activity.slug}`}
+                        className="inline-flex items-center gap-1.5 text-sm font-semibold text-teal-700 transition group-hover:gap-2.5"
+                      >
+                        Lihat Kegiatan
+                        <ArrowRight className="h-4 w-4" />
+                      </Link>
+                    </div>
                   </div>
-                  
-                  <h3 className="text-xl font-bold text-slate-900 mb-3 line-clamp-2 group-hover:text-teal-700 transition-colors">
-                    <Link href={`/kegiatan/${act.slug}`}>
-                      <span className="absolute inset-0"></span>
-                      {act.title}
-                    </Link>
-                  </h3>
-                  
-                  <p className="text-slate-600 line-clamp-3 mb-6 flex-1 text-sm leading-relaxed">
-                    {act.description}
-                  </p>
-                  
-                  <div className="text-teal-700 font-medium text-sm flex items-center gap-1 group-hover:gap-2 transition-all mt-auto pt-4 border-t border-slate-100">
-                    Baca Selengkapnya <ArrowRight className="h-4 w-4" />
-                  </div>
-                </div>
-              </div>
-            ))}
+                </article>
+              ),
+            )}
           </div>
         )}
-      </div>
+      </main>
     </div>
   );
 }

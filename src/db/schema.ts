@@ -56,10 +56,14 @@ export const activities = pgTable('activities', {
   location: text('location'),
   description: text('description'),
   imageUrl: text('image_url'),
+  imageAlt: text('image_alt'),
+  imageCaption: text('image_caption'),
   tiktokUrl: text('tiktok_url'),
   programId: uuid('program_id').references(() => programs.id),
   isPublished: boolean('is_published').default(false).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  archivedAt: timestamp('archived_at'),
 });
 
 export const articles = pgTable('articles', {

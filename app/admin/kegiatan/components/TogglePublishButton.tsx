@@ -1,30 +1,48 @@
-"use client";
+﻿"use client";
 
-import { useTransition } from "react";
-import { Eye, EyeOff } from "lucide-react";
 import { togglePublishKegiatan } from "@/app/actions/kegiatan";
+import { Globe2, Loader2 } from "lucide-react";
+import { useTransition } from "react";
 
-export default function TogglePublishButton({ id, isPublished }: { id: string, isPublished: boolean }) {
+export default function TogglePublishButton({
+  id,
+  isPublished,
+}: {
+  id: string;
+  isPublished: boolean;
+}) {
   const [isPending, startTransition] = useTransition();
 
-  const handleToggle = () => {
+  const handlePublish = () => {
     startTransition(async () => {
-      await togglePublishKegiatan(id, isPublished);
+      const result = await togglePublishKegiatan(
+        id,
+        isPublished,
+      );
+
+      if (!result.success) {
+        window.alert(
+          result.error ??
+            "Gagal mempublikasikan kegiatan.",
+        );
+      }
     });
   };
 
   return (
-    <button 
-      onClick={handleToggle}
+    <button
+      type="button"
+      onClick={handlePublish}
       disabled={isPending}
-      className={`p-1.5 rounded-md transition-colors ${
-        isPublished 
-          ? 'text-teal-600 hover:bg-teal-50' 
-          : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
-      }`}
-      title={isPublished ? "Sembunyikan" : "Publikasikan"}
+      className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition hover:bg-emerald-50 hover:text-emerald-700 disabled:opacity-50"
+      title="Publikasikan"
+      aria-label="Publikasikan kegiatan"
     >
-      {isPublished ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+      {isPending ? (
+        <Loader2 className="h-4 w-4 animate-spin" />
+      ) : (
+        <Globe2 className="h-4 w-4" />
+      )}
     </button>
   );
 }
