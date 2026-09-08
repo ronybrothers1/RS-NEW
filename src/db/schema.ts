@@ -11,7 +11,7 @@ import {
 
 export const roleEnum = pgEnum('role', ['ADMIN', 'OPERATOR']);
 export const trxTypeEnum = pgEnum('trx_type', ['IN', 'OUT']);
-export const articleStatusEnum = pgEnum('article_status', ['DRAFT', 'PUBLISHED']);
+export const articleStatusEnum = pgEnum('article_status', ['DRAFT', 'SCHEDULED', 'PUBLISHED', 'ARCHIVED']);
 export const donationStatusEnum = pgEnum('donation_status', ['PENDING', 'SUCCESS', 'FAILED']);
 export const programStatusEnum = pgEnum('program_status', ['ACTIVE', 'INACTIVE']);
 
@@ -75,6 +75,10 @@ export const articles = pgTable('articles', {
   authorId: uuid('author_id').references(() => users.id).notNull(),
   status: articleStatusEnum('status').default('DRAFT').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  publishedAt: timestamp('published_at'),
+  scheduledAt: timestamp('scheduled_at'),
+  archivedAt: timestamp('archived_at'),
 });
 
 export const donations = pgTable('donations', {
