@@ -3,13 +3,14 @@
 export const dynamic = 'force-dynamic';
 import { db } from "@/src/db";
 import { articles, users } from "@/src/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 
 import { ArrowLeft, User, Calendar } from "lucide-react";
 import Link from "next/link";
 import type { Metadata, ResolvingMetadata } from "next";
 import sanitizeHtml from 'sanitize-html';
+import { publishDueArticles } from "@/lib/article-publication";
 
 type Props = {
   params: Promise<{ slug: string }>
@@ -20,9 +21,27 @@ export async function generateMetadata(
   parent: ResolvingMetadata
 ): Promise<Metadata> {
   const params = await props.params;
-  const [article] = await db.select().from(articles).where(eq(articles.slug, params.slug));
+  await publishDueArticles();
+  const [article] = await db
+    .select()
+    .from(articles)
+    .where(
+      and(
+        eq(articles.slug, params.slug),
+        eq(articles.status, "PUBLISHED"),
+      ),
+    )
+    .limit(1);
   
-  if (!article) return { title: 'Berita Tidak Ditemukan' };
+  if (!article) {
+    return {
+      title: "Berita Tidak Ditemukan",
+      robots: {
+        index: false,
+        follow: false,
+      },
+    };
+  }
   
   return {
     title: article.metaTitle || article.title,
@@ -35,6 +54,7 @@ export async function generateMetadata(
 
 export default async function BeritaDetailPage(props: Props) {
   const params = await props.params;
+  await publishDueArticles();
   const [articleData] = await db
     .select({
       article: articles,
@@ -42,9 +62,15 @@ export default async function BeritaDetailPage(props: Props) {
     })
     .from(articles)
     .leftJoin(users, eq(articles.authorId, users.id))
-    .where(eq(articles.slug, params.slug));
+    .where(
+      and(
+        eq(articles.slug, params.slug),
+        eq(articles.status, "PUBLISHED"),
+      ),
+    )
+    .limit(1);
 
-  if (!articleData || articleData.article.status !== 'PUBLISHED') {
+  if (!articleData) {
     notFound();
   }
 
@@ -73,7 +99,7 @@ export default async function BeritaDetailPage(props: Props) {
             </div>
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-slate-400" />
-              <span>{new Date(article.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+              <span>{new Date(article.publishedAt ?? article.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
             </div>
           </div>
 

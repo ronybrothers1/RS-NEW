@@ -3,12 +3,14 @@
 export const dynamic = 'force-dynamic';
 import { db } from "@/src/db";
 import { articles, users } from "@/src/db/schema";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 import Link from "next/link";
 import { ArrowRight, Image as ImageIcon } from "lucide-react";
+import { publishDueArticles } from "@/lib/article-publication";
 
 
 export default async function PublicBeritaPage() {
+  await publishDueArticles();
   const allArticles = await db
     .select({
       id: articles.id,
@@ -18,12 +20,13 @@ export default async function PublicBeritaPage() {
       imageUrl: articles.imageUrl,
       imageAlt: articles.imageAlt,
       createdAt: articles.createdAt,
+      publishedAt: articles.publishedAt,
       authorName: users.name,
     })
     .from(articles)
     .leftJoin(users, eq(articles.authorId, users.id))
     .where(eq(articles.status, 'PUBLISHED'))
-    .orderBy(desc(articles.createdAt));
+    .orderBy(desc(sql`COALESCE(${articles.publishedAt}, ${articles.createdAt})`));
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -64,7 +67,7 @@ export default async function PublicBeritaPage() {
                 
                 <div className="p-6 flex flex-col flex-1">
                   <div className="flex items-center justify-between text-xs font-medium text-slate-500 mb-4">
-                    <span>{new Date(art.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                    <span>{new Date(art.publishedAt ?? art.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
                     <span>{art.authorName}</span>
                   </div>
                   

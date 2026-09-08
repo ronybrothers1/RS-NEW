@@ -3,24 +3,31 @@ import { db } from "@/src/db";
 import { articles, activities } from "@/src/db/schema";
 import { eq } from "drizzle-orm";
 import { getSiteUrl } from "@/lib/site-url";
+import { publishDueArticles } from "@/lib/article-publication";
 
 export const dynamic = 'force-dynamic';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = getSiteUrl();
+  await publishDueArticles();
 
   let articleUrls: MetadataRoute.Sitemap = [];
   let activityUrls: MetadataRoute.Sitemap = [];
 
   try {
     const publishedArticles = await db
-      .select({ slug: articles.slug, createdAt: articles.createdAt })
+      .select({
+        slug: articles.slug,
+        createdAt: articles.createdAt,
+        publishedAt: articles.publishedAt,
+        updatedAt: articles.updatedAt,
+      })
       .from(articles)
       .where(eq(articles.status, 'PUBLISHED'));
 
     articleUrls = publishedArticles.map((article) => ({
       url: `${baseUrl}/berita/${article.slug}`,
-      lastModified: article.createdAt || new Date(),
+      lastModified: article.updatedAt ?? article.publishedAt ?? article.createdAt,
       changeFrequency: 'weekly' as const,
       priority: 0.8,
     }));
