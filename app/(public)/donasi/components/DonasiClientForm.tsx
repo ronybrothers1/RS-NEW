@@ -13,7 +13,7 @@ export default function DonasiClientForm({ programs, bankAccounts }: { programs:
   const [state, formAction, isPending] = useActionState(submitDonation, { success: false, error: null });
   const [amount, setAmount] = useState("");
   
-  const availableBanks = ['BCA', 'MANDIRI', 'BSI'].filter(method => bankAccounts[method] && bankAccounts[method].trim() !== '');
+  const availableBanks = ['BCA', 'MANDIRI', 'BSI', 'BRI'].filter(method => bankAccounts[method] && bankAccounts[method].trim() !== '');
   const [paymentMethod, setPaymentMethod] = useState(availableBanks.length > 0 ? availableBanks[0] : "");
   
   const [copied, setCopied] = useState(false);
@@ -155,7 +155,7 @@ export default function DonasiClientForm({ programs, bankAccounts }: { programs:
         <h3 className="text-lg font-bold text-slate-900 mb-4">4. Metode Pembayaran & Bukti</h3>
         {availableBanks.length > 0 ? (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {availableBanks.map(method => (
                 <label 
                   key={method} 

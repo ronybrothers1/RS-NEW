@@ -83,6 +83,14 @@ export default function TentangKamiPage() {
             Donasi Sekarang
           </Link>
         </div>
+        <div className="mt-12 border-t border-slate-200 pt-8 text-center">
+          <p className="text-sm text-slate-500">
+            Website Yayasan Ruang Sejahtera dibuat dan dikembangkan oleh
+          </p>
+          <p className="mt-1 font-semibold text-slate-700">
+            Imam Sahroni Darmawan, S.T
+          </p>
+        </div>
       </div>
     </div>
   );

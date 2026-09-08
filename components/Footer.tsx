@@ -6,6 +6,7 @@ import {
   Instagram,
   Facebook,
   Twitter,
+  Music2,
   HeartHandshake,
 } from "lucide-react";
 import { db } from "@/src/db";
@@ -45,6 +46,11 @@ export default async function Footer() {
       label: "X / Twitter",
       href: settingsMap.social_twitter?.trim(),
       icon: Twitter,
+    },
+    {
+      label: "TikTok",
+      href: settingsMap.social_tiktok?.trim(),
+      icon: Music2,
     },
   ].filter((item) => item.href);
 

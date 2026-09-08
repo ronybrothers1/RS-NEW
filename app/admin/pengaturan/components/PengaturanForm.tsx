@@ -143,6 +143,32 @@ export default function PengaturanForm({
                 className="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-teal-500 focus:border-teal-500"
               />
             </div>
+
+            <div className="flex gap-4 items-center">
+              <div className="w-24 shrink-0 font-bold text-slate-700">
+                Bank BRI
+              </div>
+              <input
+                type="text"
+                name="bank_bri"
+                defaultValue={initialData.bank_bri || ''}
+                placeholder="Nomor rekening dan nama pemilik"
+                className="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-teal-500 focus:border-teal-500"
+              />
+            </div>
+
+            <div className="flex gap-4 items-center">
+              <div className="w-24 shrink-0 font-bold text-slate-700">
+                Bank BRI
+              </div>
+              <input
+                type="text"
+                name="bank_bri"
+                defaultValue={initialData.bank_bri || ''}
+                placeholder="Nomor rekening dan nama pemilik"
+                className="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-teal-500 focus:border-teal-500"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -190,6 +216,19 @@ export default function PengaturanForm({
               name="social_twitter"
               defaultValue={initialData.social_twitter || ''}
               placeholder="https://x.com/..."
+              className="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-teal-500 focus:border-teal-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              TikTok
+            </label>
+            <input
+              type="url"
+              name="social_tiktok"
+              defaultValue={initialData.social_tiktok || ''}
+              placeholder="https://www.tiktok.com/@..."
               className="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-teal-500 focus:border-teal-500"
             />
           </div>

@@ -22,9 +22,11 @@ export async function saveSettings(prevState: any, formData: FormData) {
     'bank_bca',
     'bank_mandiri',
     'bank_bsi',
+    'bank_bri',
     'social_instagram',
     'social_facebook',
     'social_twitter',
+    'social_tiktok',
   ];
 
   try {
