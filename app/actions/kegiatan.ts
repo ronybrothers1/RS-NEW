@@ -1,4 +1,4 @@
-﻿"use server";
+"use server";
 
 import { auth } from "@/auth";
 import { db } from "@/src/db";
@@ -43,6 +43,7 @@ function makeSlug(title: string) {
 
 function revalidateKegiatan(slug?: string | null) {
   revalidatePath("/admin/kegiatan");
+  revalidatePath("/admin/dashboard");
   revalidatePath("/kegiatan");
 
   if (slug) {

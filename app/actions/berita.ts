@@ -298,6 +298,7 @@ export async function createBerita(
     });
 
     revalidatePath("/admin/berita");
+    revalidatePath("/admin/dashboard");
     revalidatePath("/berita");
 
     return {
@@ -441,6 +442,7 @@ export async function updateBerita(
     });
 
     revalidatePath("/admin/berita");
+    revalidatePath("/admin/dashboard");
     revalidatePath(`/admin/berita/${id}/edit`);
     revalidatePath("/berita");
     revalidatePath(`/berita/${oldArticle.slug}`);
@@ -575,6 +577,7 @@ export async function deleteBerita(
     });
 
     revalidatePath("/admin/berita");
+    revalidatePath("/admin/dashboard");
     revalidatePath("/berita");
     revalidatePath(`/berita/${oldArticle.slug}`);
 

@@ -80,6 +80,7 @@ export async function rejectDonation(donationId: string) {
     });
 
     revalidatePath('/admin/donasi');
+    revalidatePath('/admin/dashboard');
     return { success: true, error: null };
   } catch (err: any) {
     return { success: false, error: "Gagal menolak donasi." };

@@ -5,6 +5,7 @@ import { donations } from "@/src/db/schema";
 import { redirect } from "next/navigation";
 import { rateLimit } from "@/lib/rate-limit";
 import { headers } from "next/headers";
+import { revalidatePath } from "next/cache";
 
 export async function submitDonation(prevState: any, formData: FormData) {
   // Use IP for rate limiting (5 submissions per minute)

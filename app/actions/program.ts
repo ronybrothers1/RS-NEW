@@ -33,6 +33,7 @@ function isUuid(value: string) {
 
 function revalidateProgramPages() {
   revalidatePath("/admin/program");
+  revalidatePath("/admin/dashboard");
   revalidatePath("/program");
   revalidatePath("/");
   revalidatePath("/donasi");

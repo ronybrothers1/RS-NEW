@@ -46,6 +46,7 @@ export async function createTransaksiMasuk(prevState: any, formData: FormData) {
     });
 
     revalidatePath('/admin/keuangan');
+    revalidatePath('/admin/dashboard');
     return { success: true, error: null };
   } catch (err: any) {
     return { success: false, error: "Gagal menyimpan transaksi." };
@@ -101,6 +102,7 @@ export async function createTransaksiKeluar(prevState: any, formData: FormData) 
     });
 
     revalidatePath('/admin/keuangan');
+    revalidatePath('/admin/dashboard');
     return { success: true, error: null };
   } catch (err: any) {
     return { success: false, error: "Gagal menyimpan transaksi." };
@@ -132,6 +134,7 @@ export async function deleteTransaksi(id: string) {
     });
 
     revalidatePath('/admin/keuangan');
+    revalidatePath('/admin/dashboard');
     return { success: true, error: null };
   } catch (err: any) {
     return { success: false, error: "Gagal menghapus transaksi." };
