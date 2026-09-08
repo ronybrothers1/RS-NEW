@@ -304,7 +304,7 @@ export default async function DashboardPage() {
                         month: "short",
                         year: "numeric",
                       })}
-                      {item.location ? ` Â· ${item.location}` : ""}
+                      {item.location ? ` Ã‚· ${item.location}` : ""}
                     </p>
                   </div>
                   <span

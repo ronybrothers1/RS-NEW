@@ -16,10 +16,12 @@ import {
   Menu,
   X,
   CircleDollarSign,
+  LogOut,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import clsx from "clsx";
+import { signOut } from "next-auth/react";
 
 interface AdminSidebarProps {
   role: string;
@@ -65,6 +67,26 @@ export default function AdminSidebar({ role }: AdminSidebarProps) {
         prev.program,
     }));
   }, [pathname]);
+
+  useEffect(() => {
+    if (!isMobileOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsMobileOpen(false);
+      }
+    };
+
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isMobileOpen]);
 
   const toggleMenu = (key: string) => {
     setOpenMenus((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -295,6 +317,15 @@ export default function AdminSidebar({ role }: AdminSidebarProps) {
         </nav>
 
         <div className="shrink-0 border-t border-slate-200 px-4 py-3">
+          <button
+            type="button"
+            onClick={() => signOut({ callbackUrl: "/login" })}
+            className="mb-3 flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 px-3 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 md:hidden"
+          >
+            <LogOut className="h-4 w-4" />
+            Keluar
+          </button>
+
           <p className="text-xs leading-5 text-slate-400">
             Yayasan Ruang Sejahtera<br />
             Sistem manajemen internal
