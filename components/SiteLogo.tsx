@@ -1,28 +1,27 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
-import { HeartHandshake } from "lucide-react";
 
 interface SiteLogoProps {
   name: string;
 }
 
 export default function SiteLogo({ name }: SiteLogoProps) {
-  const displayName =
-    name.replace(/^Yayasan\s+/i, "").trim() || "Ruang Sejahtera";
-
   return (
     <Link
       href="/"
-      className="flex items-center gap-3"
+      className="flex shrink-0 items-center"
       aria-label={`${name} - Beranda`}
     >
-      <div className="w-11 h-11 rounded-xl bg-teal-700 text-white flex items-center justify-center shadow-sm">
-        <HeartHandshake className="h-6 w-6" aria-hidden="true" />
-      </div>
-      <span className="font-bold text-lg sm:text-xl text-white whitespace-nowrap">
-        {displayName}
-      </span>
+      <Image
+        src="/brand/ruang-sejahtera-logo.png"
+        alt="Ruang Sejahtera"
+        width={1100}
+        height={500}
+        priority
+        className="h-11 w-auto max-w-[165px] object-contain sm:h-12 sm:max-w-[210px]"
+      />
     </Link>
   );
 }
