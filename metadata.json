@@ -1,0 +1,8 @@
+{
+  "name": "Yayasan Ruang Sejahtera",
+  "description": "Membangun Harapan, Mewujudkan Kesejahteraan melalui program sosial, pendidikan, dan kemanusiaan.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
