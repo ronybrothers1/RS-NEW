@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useActionState, useState } from "react";
 import { createBerita } from "@/app/actions/berita";
@@ -6,6 +6,7 @@ import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import "react-quill-new/dist/quill.snow.css";
+import FeaturedImageUploader from "../components/FeaturedImageUploader";
 
 // Dynamic import for react-quill to avoid SSR issues
 const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
@@ -18,7 +19,7 @@ export default function TulisBeritaPage() {
     return (
       <div className="max-w-2xl mx-auto mt-8">
         <div className="bg-emerald-50 text-emerald-700 p-8 rounded-xl border border-emerald-100 flex flex-col items-center text-center">
-          <CheckCircle2 className="h-16 w-16 text-emerald-50 mb-4" />
+          <CheckCircle2 className="h-16 w-16 text-emerald-600 mb-4" />
           <h2 className="text-2xl font-bold mb-2">Berita Berhasil Disimpan</h2>
           <p className="text-emerald-600 mb-8">Artikel baru telah ditambahkan ke sistem.</p>
           <div className="flex gap-4">
@@ -111,13 +112,15 @@ export default function TulisBeritaPage() {
               </div>
               
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-slate-700 mb-1">URL Featured Image (Cover)</label>
-                <input
-                  type="url"
-                  name="imageUrl"
-                  placeholder="https://..."
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-teal-500 focus:border-teal-500 text-slate-900"
-                />
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  Gambar Unggulan
+                </label>
+
+                <FeaturedImageUploader />
+
+                <p className="mt-2 text-xs leading-5 text-slate-500">
+                  Gambar akan disimpan di penyimpanan media Ruang Sejahtera dan digunakan sebagai cover berita.
+                </p>
               </div>
 
               <div className="md:col-span-2">
