@@ -20,7 +20,7 @@ export default function SiteLogo({ name }: SiteLogoProps) {
         width={1100}
         height={500}
         priority
-        className="h-11 w-auto max-w-[165px] object-contain sm:h-12 sm:max-w-[210px]"
+        className="h-14 w-auto object-contain sm:h-16"
       />
     </Link>
   );
