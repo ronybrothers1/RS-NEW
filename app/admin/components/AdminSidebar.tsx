@@ -2,181 +2,301 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { 
-  LayoutDashboard, 
-  Wallet, 
-  CalendarRange, 
-  Newspaper, 
-  HeartHandshake, 
-  Image as ImageIcon, 
-  Users, 
+import {
+  LayoutDashboard,
+  Wallet,
+  CalendarRange,
+  Newspaper,
+  HeartHandshake,
+  Image as ImageIcon,
+  Users,
   Settings,
   ClipboardList,
   ChevronDown,
   Menu,
-  X
+  X,
+  CircleDollarSign,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import type { LucideIcon } from "lucide-react";
+import { useEffect, useState } from "react";
 import clsx from "clsx";
 
 interface AdminSidebarProps {
   role: string;
 }
 
+type MenuChild = {
+  name: string;
+  href: string;
+};
+
+type MenuItem = {
+  name: string;
+  icon: LucideIcon;
+  href?: string;
+  exact?: boolean;
+  id?: string;
+  children?: MenuChild[];
+};
+
 export default function AdminSidebar({ role }: AdminSidebarProps) {
   const pathname = usePathname();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({
-    keuangan: pathname?.includes('/admin/keuangan') || false,
-    kegiatan: pathname?.includes('/admin/kegiatan') || false,
-    berita: pathname?.includes('/admin/berita') || false,
-    donasi: pathname?.includes('/admin/donasi') || false
+    keuangan: pathname?.startsWith("/admin/keuangan") || false,
+    kegiatan: pathname?.startsWith("/admin/kegiatan") || false,
+    berita: pathname?.startsWith("/admin/berita") || false,
+    program:
+      pathname?.startsWith("/admin/donasi") ||
+      pathname?.startsWith("/admin/program") ||
+      false,
   });
 
-  // Close mobile sidebar when route changes
   useEffect(() => {
     setIsMobileOpen(false);
+    setOpenMenus((prev) => ({
+      ...prev,
+      keuangan: pathname?.startsWith("/admin/keuangan") || prev.keuangan,
+      kegiatan: pathname?.startsWith("/admin/kegiatan") || prev.kegiatan,
+      berita: pathname?.startsWith("/admin/berita") || prev.berita,
+      program:
+        pathname?.startsWith("/admin/donasi") ||
+        pathname?.startsWith("/admin/program") ||
+        prev.program,
+    }));
   }, [pathname]);
 
   const toggleMenu = (key: string) => {
-    setOpenMenus(prev => ({ ...prev, [key]: !prev[key] }));
+    setOpenMenus((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const menuItems = [
-    { name: "Dashboard", icon: LayoutDashboard, href: "/admin/dashboard", exact: true },
-    { 
-      name: "Keuangan", icon: Wallet, id: "keuangan",
+  const menuItems: MenuItem[] = [
+    {
+      name: "Dashboard",
+      icon: LayoutDashboard,
+      href: "/admin/dashboard",
+      exact: true,
+    },
+    {
+      name: "Keuangan",
+      icon: Wallet,
+      id: "keuangan",
       children: [
         { name: "Uang Masuk", href: "/admin/keuangan/masuk" },
         { name: "Uang Keluar", href: "/admin/keuangan/keluar" },
         { name: "Riwayat Transaksi", href: "/admin/keuangan/riwayat" },
-      ]
+      ],
     },
-    { 
-      name: "Kegiatan", icon: CalendarRange, id: "kegiatan",
+    {
+      name: "Kegiatan",
+      icon: CalendarRange,
+      id: "kegiatan",
       children: [
         { name: "Semua Kegiatan", href: "/admin/kegiatan" },
         { name: "Tambah Kegiatan", href: "/admin/kegiatan/tambah" },
-      ]
+      ],
     },
-    { 
-      name: "Berita", icon: Newspaper, id: "berita",
+    {
+      name: "Berita",
+      icon: Newspaper,
+      id: "berita",
       children: [
         { name: "Semua Berita", href: "/admin/berita" },
         { name: "Tulis Berita", href: "/admin/berita/tulis" },
-      ]
+      ],
     },
-    { 
-      name: "Program Sosial", icon: HeartHandshake, id: "donasi",
+    {
+      name: "Program & Donasi",
+      icon: HeartHandshake,
+      id: "program",
       children: [
         { name: "Verifikasi Donasi", href: "/admin/donasi" },
         { name: "Manajemen Program", href: "/admin/program" },
-      ]
+      ],
     },
     { name: "Galeri", icon: ImageIcon, href: "/admin/galeri" },
   ];
 
-  if (role === 'ADMIN') {
+  if (role === "ADMIN") {
     menuItems.push(
       { name: "Pengguna", icon: Users, href: "/admin/pengguna" },
       { name: "Pengaturan", icon: Settings, href: "/admin/pengaturan" },
-      { name: "Audit Logs", icon: ClipboardList, href: "/admin/audit-logs" }
+      { name: "Audit Log", icon: ClipboardList, href: "/admin/audit-logs" },
     );
   }
 
-  const renderLink = (item: any, isChild = false) => {
-    const isActive = item.exact ? pathname === item.href : pathname?.startsWith(item.href);
-    
+  const isLinkActive = (item: { href?: string; exact?: boolean }) => {
+    if (!item.href) return false;
+    if (item.exact) return pathname === item.href;
+    return pathname === item.href || pathname?.startsWith(`${item.href}/`);
+  };
+
+  const isParentActive = (item: MenuItem) =>
+    item.children?.some((child) => isLinkActive(child)) ?? false;
+
+  const renderLink = (item: MenuChild | MenuItem, isChild = false) => {
+    if (!item.href) return null;
+    const isActive = isLinkActive(item);
+    const Icon = "icon" in item ? item.icon : undefined;
+
     return (
-      <Link 
-        key={item.name} 
+      <Link
+        key={item.name}
         href={item.href}
+        aria-current={isActive ? "page" : undefined}
         className={clsx(
-          "flex items-center w-full px-3 py-2 text-sm font-medium rounded-lg transition-colors",
-          isActive 
-            ? "bg-teal-50 text-teal-700" 
-            : "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
-          isChild ? "pl-10" : ""
+          "group flex min-h-10 w-full items-center rounded-lg px-3 text-sm font-medium transition-colors",
+          isActive
+            ? "bg-teal-50 text-teal-800 ring-1 ring-inset ring-teal-100"
+            : "text-slate-600 hover:bg-slate-100 hover:text-slate-950",
+          isChild ? "pl-11" : "",
         )}
       >
-        {item.icon && <item.icon className={clsx("mr-3 h-5 w-5", isActive ? "text-teal-700" : "text-slate-400")} />}
-        {item.name}
+        {Icon && (
+          <Icon
+            className={clsx(
+              "mr-3 h-5 w-5 shrink-0",
+              isActive ? "text-teal-700" : "text-slate-400 group-hover:text-slate-600",
+            )}
+          />
+        )}
+        <span className="truncate">{item.name}</span>
       </Link>
     );
   };
 
   return (
     <>
-      {/* Mobile Menu Button */}
-      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-slate-200 z-20 flex items-center px-4">
-        <button onClick={() => setIsMobileOpen(!isMobileOpen)} className="text-slate-500 hover:text-slate-700">
+      <div className="fixed inset-x-0 top-0 z-30 flex h-16 items-center justify-between border-b border-slate-200 bg-white px-4 md:hidden">
+        <button
+          type="button"
+          onClick={() => setIsMobileOpen(true)}
+          className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
+          aria-label="Buka navigasi admin"
+          aria-expanded={isMobileOpen}
+        >
           <Menu className="h-6 w-6" />
         </button>
-        <span className="ml-4 font-bold text-slate-800">Ruang Sejahtera</span>
+        <div className="flex items-center gap-2">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-teal-700 text-white">
+            <HeartHandshake className="h-5 w-5" />
+          </div>
+          <div className="leading-tight">
+            <div className="text-sm font-bold text-slate-900">Ruang Sejahtera</div>
+            <div className="text-[11px] text-slate-500">Panel Admin</div>
+          </div>
+        </div>
+        <div className="h-10 w-10" aria-hidden="true" />
       </div>
 
-      {/* Overlay */}
       {isMobileOpen && (
-        <div 
-          className="md:hidden fixed inset-0 bg-slate-900/50 z-30"
+        <button
+          type="button"
+          aria-label="Tutup navigasi admin"
+          className="fixed inset-0 z-40 bg-slate-950/45 backdrop-blur-[1px] md:hidden"
           onClick={() => setIsMobileOpen(false)}
         />
       )}
 
-      {/* Sidebar */}
-      <div className={clsx(
-        "fixed md:static inset-y-0 left-0 w-64 bg-white border-r border-slate-200 z-40 transform transition-transform duration-200 ease-in-out md:transform-none flex flex-col",
-        isMobileOpen ? "translate-x-0" : "-translate-x-full"
-      )}>
-        <div className="h-16 flex items-center px-6 border-b border-slate-800 bg-slate-950 justify-between">
-          <Link href="/admin/dashboard" className="flex items-center space-x-2">
-            <img 
-              src="/logo.jpeg" 
-              alt="Logo Ruang Sejahtera" 
-              className="h-10 w-auto object-contain mix-blend-screen"
-              title="Ruang Sejahtera"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.style.display = 'none';
-                if (target.parentElement) {
-                  target.parentElement.innerHTML = '<div class="w-8 h-8 bg-teal-700 text-white rounded flex items-center justify-center font-bold text-sm">YRS</div><span class="font-bold text-white ml-2">Admin Panel</span>';
-                }
-              }}
-            />
+      <aside
+        className={clsx(
+          "fixed inset-y-0 left-0 z-50 flex w-72 shrink-0 flex-col border-r border-slate-200 bg-white shadow-xl transition-transform duration-200 ease-out md:static md:z-auto md:w-64 md:translate-x-0 md:shadow-none",
+          isMobileOpen ? "translate-x-0" : "-translate-x-full",
+        )}
+      >
+        <div className="flex h-16 shrink-0 items-center justify-between border-b border-slate-800 bg-slate-950 px-5">
+          <Link href="/admin/dashboard" className="flex min-w-0 items-center gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-teal-700 text-white shadow-sm">
+              <HeartHandshake className="h-5 w-5" aria-hidden="true" />
+            </div>
+            <div className="min-w-0 leading-tight">
+              <div className="truncate text-sm font-bold text-white">Ruang Sejahtera</div>
+              <div className="text-[11px] font-medium tracking-wide text-slate-400">PANEL ADMIN</div>
+            </div>
           </Link>
-          <button className="md:hidden text-slate-400 hover:text-white" onClick={() => setIsMobileOpen(false)}>
+          <button
+            type="button"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white md:hidden"
+            onClick={() => setIsMobileOpen(false)}
+            aria-label="Tutup navigasi admin"
+          >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
-          {menuItems.map((item) => (
-            <div key={item.name}>
-              {item.children ? (
-                <div>
-                  <button 
-                    onClick={() => toggleMenu(item.id!)}
-                    className="flex items-center justify-between w-full px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+        <div className="border-b border-slate-100 px-4 py-4">
+          <div className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-teal-700 shadow-sm ring-1 ring-slate-200">
+              <CircleDollarSign className="h-5 w-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Mode kerja</p>
+              <p className="truncate text-sm font-semibold text-slate-800">
+                {role === "ADMIN" ? "Administrator" : "Operator"}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label="Navigasi admin">
+          <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+            Operasional
+          </p>
+          <div className="space-y-1">
+            {menuItems.map((item) => {
+              if (!item.children) return renderLink(item);
+
+              const active = isParentActive(item);
+              const open = Boolean(item.id && openMenus[item.id]);
+              const Icon = item.icon;
+
+              return (
+                <div key={item.name}>
+                  <button
+                    type="button"
+                    onClick={() => item.id && toggleMenu(item.id)}
+                    className={clsx(
+                      "flex min-h-10 w-full items-center justify-between rounded-lg px-3 text-sm font-medium transition-colors",
+                      active
+                        ? "bg-teal-50 text-teal-800"
+                        : "text-slate-600 hover:bg-slate-100 hover:text-slate-950",
+                    )}
+                    aria-expanded={open}
                   >
-                    <div className="flex items-center">
-                      <item.icon className="mr-3 h-5 w-5 text-slate-400" />
-                      {item.name}
-                    </div>
-                    <ChevronDown className={clsx("h-4 w-4 transition-transform", openMenus[item.id!] ? "rotate-180" : "")} />
+                    <span className="flex min-w-0 items-center">
+                      <Icon
+                        className={clsx(
+                          "mr-3 h-5 w-5 shrink-0",
+                          active ? "text-teal-700" : "text-slate-400",
+                        )}
+                      />
+                      <span className="truncate">{item.name}</span>
+                    </span>
+                    <ChevronDown
+                      className={clsx(
+                        "h-4 w-4 shrink-0 transition-transform",
+                        open && "rotate-180",
+                      )}
+                    />
                   </button>
-                  {openMenus[item.id!] && (
+                  {open && (
                     <div className="mt-1 space-y-1">
-                      {item.children.map(child => renderLink(child, true))}
+                      {item.children.map((child) => renderLink(child, true))}
                     </div>
                   )}
                 </div>
-              ) : (
-                renderLink(item)
-              )}
-            </div>
-          ))}
+              );
+            })}
+          </div>
+        </nav>
+
+        <div className="shrink-0 border-t border-slate-200 px-4 py-3">
+          <p className="text-xs leading-5 text-slate-400">
+            Yayasan Ruang Sejahtera<br />
+            Sistem manajemen internal
+          </p>
         </div>
-      </div>
+      </aside>
     </>
   );
 }
