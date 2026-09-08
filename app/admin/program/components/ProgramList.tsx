@@ -1,92 +1,257 @@
-"use client";
+﻿"use client";
 
-import { useState } from "react";
-import { deleteProgram } from "@/app/actions/program";
-import { BookOpen, Stethoscope, Leaf, Users, HeartHandshake, Activity, FileText, Trash2, Edit } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import {
+  Activity,
+  BookOpen,
+  FileText,
+  HeartHandshake,
+  Leaf,
+  Pencil,
+  PlayCircle,
+  PowerOff,
+  Stethoscope,
+  Users,
+} from "lucide-react";
+import Link from "next/link";
+import {
+  useRouter,
+} from "next/navigation";
+import {
+  useState,
+} from "react";
 
-const iconMap: Record<string, React.ElementType> = {
-  'BookOpen': BookOpen,
-  'Stethoscope': Stethoscope,
-  'Leaf': Leaf,
-  'Users': Users,
-  'HeartHandshake': HeartHandshake,
-  'Activity': Activity,
-  'FileText': FileText,
+import {
+  setProgramStatus,
+} from "@/app/actions/program";
+import {
+  formatCurrency,
+} from "@/lib/utils";
+
+const iconMap: Record<
+  string,
+  React.ElementType
+> = {
+  BookOpen,
+  Stethoscope,
+  Leaf,
+  Users,
+  HeartHandshake,
+  Activity,
+  FileText,
 };
 
-export default function ProgramList({ programs }: { programs: any[] }) {
-  const [isDeleting, setIsDeleting] = useState<string | null>(null);
+export default function ProgramList({
+  programs,
+}: {
+  programs: any[];
+}) {
+  const router = useRouter();
 
-  const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Apakah Anda yakin ingin membatalkan program "${name}"? Program tidak akan ditampilkan lagi kepada publik.`)) {
+  const [processingId, setProcessingId] =
+    useState<string | null>(null);
+
+  async function changeStatus(
+    id: string,
+    name: string,
+    currentStatus:
+      | "ACTIVE"
+      | "INACTIVE",
+  ) {
+    const nextStatus =
+      currentStatus === "ACTIVE"
+        ? "INACTIVE"
+        : "ACTIVE";
+
+    const actionText =
+      nextStatus === "ACTIVE"
+        ? "mengaktifkan kembali"
+        : "menonaktifkan";
+
+    const confirmed = window.confirm(
+      `Apakah Anda yakin ingin ${actionText} program "${name}"?`,
+    );
+
+    if (!confirmed) {
       return;
     }
 
-    setIsDeleting(id);
-    const result = await deleteProgram(id);
+    setProcessingId(id);
+
+    const result =
+      await setProgramStatus(
+        id,
+        nextStatus,
+      );
+
     if (!result.success) {
-      alert(result.error);
+      window.alert(
+        result.error ||
+          "Gagal mengubah status program.",
+      );
+
+      setProcessingId(null);
+      return;
     }
-    setIsDeleting(null);
-  };
+
+    router.refresh();
+    setProcessingId(null);
+  }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
       <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-slate-50 text-slate-600 font-medium border-b border-slate-200">
+        <table className="w-full min-w-[760px] text-left text-sm">
+          <thead className="border-b border-slate-200 bg-slate-50 font-medium text-slate-600">
             <tr>
-              <th className="px-6 py-4 w-12">Ikon</th>
-              <th className="px-6 py-4">Nama Program</th>
-              <th className="px-6 py-4">Target Dana</th>
-              <th className="px-6 py-4">Status</th>
-              <th className="px-6 py-4 text-right">Aksi</th>
+              <th className="w-16 px-6 py-4">
+                Ikon
+              </th>
+
+              <th className="px-6 py-4">
+                Nama Program
+              </th>
+
+              <th className="px-6 py-4">
+                Target Dana
+              </th>
+
+              <th className="px-6 py-4">
+                Status
+              </th>
+
+              <th className="px-6 py-4 text-right">
+                Aksi
+              </th>
             </tr>
           </thead>
+
           <tbody className="divide-y divide-slate-100">
             {programs.length > 0 ? (
               programs.map((program) => {
-                const IconComponent = iconMap[program.icon] || HeartHandshake;
-                const isCancelled = program.status === 'INACTIVE';
-                
+                const IconComponent =
+                  iconMap[program.icon] ||
+                  HeartHandshake;
+
+                const isInactive =
+                  program.status ===
+                  "INACTIVE";
+
+                const isProcessing =
+                  processingId ===
+                  program.id;
+
                 return (
-                  <tr key={program.id} className={`hover:bg-slate-50 ${isCancelled ? 'opacity-60 bg-slate-50/50' : ''}`}>
+                  <tr
+                    key={program.id}
+                    className={`transition hover:bg-slate-50 ${
+                      isInactive
+                        ? "bg-slate-50/60"
+                        : ""
+                    }`}
+                  >
                     <td className="px-6 py-4">
-                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${isCancelled ? 'bg-slate-200 text-slate-500' : 'bg-teal-50 text-teal-600'}`}>
+                      <div
+                        className={`flex h-10 w-10 items-center justify-center rounded-lg ${
+                          isInactive
+                            ? "bg-slate-200 text-slate-500"
+                            : "bg-teal-50 text-teal-600"
+                        }`}
+                      >
                         <IconComponent className="h-5 w-5" />
                       </div>
                     </td>
+
                     <td className="px-6 py-4">
-                      <div className="font-medium text-slate-900">{program.name}</div>
-                      <div className="text-slate-500 text-xs mt-1 max-w-xs truncate">{program.description}</div>
+                      <div
+                        className={`font-semibold ${
+                          isInactive
+                            ? "text-slate-500"
+                            : "text-slate-900"
+                        }`}
+                      >
+                        {program.name}
+                      </div>
+
+                      {program.description && (
+                        <div className="mt-1 max-w-md truncate text-xs text-slate-500">
+                          {
+                            program.description
+                          }
+                        </div>
+                      )}
                     </td>
+
                     <td className="px-6 py-4 font-medium text-slate-700">
-                      {program.targetAmount ? formatCurrency(Number(program.targetAmount)) : <span className="text-slate-400 italic font-normal">Tidak Terbatas</span>}
+                      {program.targetAmount ? (
+                        formatCurrency(
+                          Number(
+                            program.targetAmount,
+                          ),
+                        )
+                      ) : (
+                        <span className="font-normal italic text-slate-400">
+                          Tidak Terbatas
+                        </span>
+                      )}
                     </td>
+
                     <td className="px-6 py-4">
-                      {isCancelled ? (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">
-                          Dibatalkan
+                      {isInactive ? (
+                        <span className="inline-flex rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
+                          Nonaktif
                         </span>
                       ) : (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 border border-emerald-200">
+                        <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
                           Aktif
                         </span>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        {!isCancelled && (
-                          <button 
-                            disabled={isDeleting === program.id}
-                            onClick={() => handleDelete(program.id, program.name)}
-                            className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors disabled:opacity-50"
-                            title="Hapus / Batalkan Program"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        )}
+
+                    <td className="px-6 py-4">
+                      <div className="flex items-center justify-end gap-1">
+                        <Link
+                          href={`/admin/program/${program.id}/edit`}
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-sky-50 hover:text-sky-700"
+                          title="Edit Program"
+                          aria-label={`Edit ${program.name}`}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Link>
+
+                        <button
+                          type="button"
+                          disabled={
+                            isProcessing
+                          }
+                          onClick={() =>
+                            changeStatus(
+                              program.id,
+                              program.name,
+                              program.status,
+                            )
+                          }
+                          className={`inline-flex h-9 w-9 items-center justify-center rounded-lg transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                            isInactive
+                              ? "text-slate-400 hover:bg-emerald-50 hover:text-emerald-700"
+                              : "text-slate-400 hover:bg-amber-50 hover:text-amber-700"
+                          }`}
+                          title={
+                            isInactive
+                              ? "Aktifkan Program"
+                              : "Nonaktifkan Program"
+                          }
+                          aria-label={
+                            isInactive
+                              ? `Aktifkan ${program.name}`
+                              : `Nonaktifkan ${program.name}`
+                          }
+                        >
+                          {isInactive ? (
+                            <PlayCircle className="h-4 w-4" />
+                          ) : (
+                            <PowerOff className="h-4 w-4" />
+                          )}
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -94,10 +259,20 @@ export default function ProgramList({ programs }: { programs: any[] }) {
               })
             ) : (
               <tr>
-                <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
-                  <Activity className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-                  <p className="font-medium text-slate-900">Belum ada program</p>
-                  <p className="text-sm mt-1">Tambahkan program pertama Anda untuk mulai menerima donasi spesifik.</p>
+                <td
+                  colSpan={5}
+                  className="px-6 py-14 text-center"
+                >
+                  <Activity className="mx-auto mb-3 h-12 w-12 text-slate-300" />
+
+                  <p className="font-medium text-slate-900">
+                    Belum ada program
+                  </p>
+
+                  <p className="mt-1 text-sm text-slate-500">
+                    Tambahkan program pertama
+                    Yayasan Ruang Sejahtera.
+                  </p>
                 </td>
               </tr>
             )}
