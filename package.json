@@ -13,7 +13,7 @@
     "db:migrate": "drizzle-kit migrate --config=src/db/drizzle.config.ts",
     "db:push": "drizzle-kit push --config=src/db/drizzle.config.ts",
     "db:studio": "drizzle-kit studio --config=src/db/drizzle.config.ts",
-    "db:seed": "bun seed.ts"
+    "db:seed": "tsx seed.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
@@ -53,6 +53,7 @@
     "eslint-config-next": "16.0.8",
     "firebase-tools": "^15.0.0",
     "tailwindcss": "4.1.11",
+    "tsx": "^4.23.13",
     "typescript": "5.9.3"
   }
 }
