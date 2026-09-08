@@ -1,4 +1,4 @@
-﻿import ArticleForm from "../../components/ArticleForm";
+import ArticleForm from "../../components/ArticleForm";
 import { db } from "@/src/db";
 import { articles } from "@/src/db/schema";
 import { eq } from "drizzle-orm";
@@ -31,6 +31,7 @@ export default async function EditBeritaPage({
         excerpt: article.excerpt,
         imageUrl: article.imageUrl,
         imageAlt: article.imageAlt,
+        imageCaption: article.imageCaption,
         metaTitle: article.metaTitle,
         metaDescription: article.metaDescription,
         status: article.status,

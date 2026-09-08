@@ -70,6 +70,7 @@ export const articles = pgTable('articles', {
   excerpt: text('excerpt'),
   imageUrl: text('image_url'),
   imageAlt: text('image_alt'),
+  imageCaption: text('image_caption'),
   metaTitle: text('meta_title'),
   metaDescription: text('meta_description'),
   authorId: uuid('author_id').references(() => users.id).notNull(),

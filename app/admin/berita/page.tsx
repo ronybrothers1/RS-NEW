@@ -4,6 +4,7 @@ import { desc, eq } from "drizzle-orm";
 import Link from "next/link";
 import { FileText, Plus, ExternalLink, Image as ImageIcon, Pencil } from "lucide-react";
 import DeleteBeritaButton from "./components/DeleteBeritaButton";
+import ArchiveBeritaButton from "./components/ArchiveBeritaButton";
 import { publishDueArticles } from "@/lib/article-publication";
 
 export default async function BeritaPage() {
@@ -110,7 +111,18 @@ export default async function BeritaPage() {
                             <ExternalLink className="h-4 w-4" />
                           </Link>
                         )}
-                        <DeleteBeritaButton id={art.id} />
+                                                {(art.status === "PUBLISHED" ||
+                          art.status === "SCHEDULED") ? (
+                          <ArchiveBeritaButton
+                            id={art.id}
+                            title={art.title}
+                          />
+                        ) : (
+                          <DeleteBeritaButton
+                            id={art.id}
+                            title={art.title}
+                          />
+                        )}
                       </div>
                     </td>
                   </tr>

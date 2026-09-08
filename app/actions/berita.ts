@@ -1,10 +1,11 @@
-﻿"use server";
+"use server";
 
 import { auth } from "@/auth";
 import { db } from "@/src/db";
 import { articles, auditLogs } from "@/src/db/schema";
 import { and, eq, ne } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { hasMeaningfulArticleContent } from "@/lib/article-content";
 
 type ArticleStatus = "DRAFT" | "SCHEDULED" | "PUBLISHED" | "ARCHIVED";
 
@@ -205,12 +206,31 @@ export async function createBerita(
   }
 
   const title = cleanOptional(formData.get("title"));
-  const content = cleanOptional(formData.get("content"));
+  const rawContent = cleanOptional(formData.get("content"));
 
-  if (!title || !content) {
+  if (!title || !rawContent) {
     return {
       success: false,
       error: "Judul dan konten wajib diisi.",
+    };
+  }
+
+  const checkedContent = hasMeaningfulArticleContent(rawContent);
+
+  if (!checkedContent.meaningful) {
+    return {
+      success: false,
+      error: "Isi berita masih kosong. Tambahkan teks atau media.",
+    };
+  }
+
+  const content = checkedContent.sanitized;
+  const imageCaption = cleanOptional(formData.get("imageCaption"));
+
+  if (imageCaption && imageCaption.length > 300) {
+    return {
+      success: false,
+      error: "Caption gambar maksimal 300 karakter.",
     };
   }
 
@@ -259,6 +279,7 @@ export async function createBerita(
         excerpt: cleanOptional(formData.get("excerpt")),
         imageUrl: cleanOptional(formData.get("imageUrl")),
         imageAlt: cleanOptional(formData.get("imageAlt")),
+        imageCaption,
         metaTitle: cleanOptional(formData.get("metaTitle")),
         metaDescription: cleanOptional(formData.get("metaDescription")),
         status,
@@ -321,12 +342,31 @@ export async function updateBerita(
   }
 
   const title = cleanOptional(formData.get("title"));
-  const content = cleanOptional(formData.get("content"));
+  const rawContent = cleanOptional(formData.get("content"));
 
-  if (!title || !content) {
+  if (!title || !rawContent) {
     return {
       success: false,
       error: "Judul dan konten wajib diisi.",
+    };
+  }
+
+  const checkedContent = hasMeaningfulArticleContent(rawContent);
+
+  if (!checkedContent.meaningful) {
+    return {
+      success: false,
+      error: "Isi berita masih kosong. Tambahkan teks atau media.",
+    };
+  }
+
+  const content = checkedContent.sanitized;
+  const imageCaption = cleanOptional(formData.get("imageCaption"));
+
+  if (imageCaption && imageCaption.length > 300) {
+    return {
+      success: false,
+      error: "Caption gambar maksimal 300 karakter.",
     };
   }
 
@@ -381,6 +421,7 @@ export async function updateBerita(
         excerpt: cleanOptional(formData.get("excerpt")),
         imageUrl: cleanOptional(formData.get("imageUrl")),
         imageAlt: cleanOptional(formData.get("imageAlt")),
+        imageCaption,
         metaTitle: cleanOptional(formData.get("metaTitle")),
         metaDescription: cleanOptional(formData.get("metaDescription")),
         status,
@@ -508,6 +549,16 @@ export async function deleteBerita(
       return {
         success: false,
         error: "Artikel tidak ditemukan.",
+      };
+    }
+
+    if (
+      oldArticle.status === "PUBLISHED" ||
+      oldArticle.status === "SCHEDULED"
+    ) {
+      return {
+        success: false,
+        error: "Artikel aktif harus diarsipkan terlebih dahulu sebelum dihapus permanen.",
       };
     }
 

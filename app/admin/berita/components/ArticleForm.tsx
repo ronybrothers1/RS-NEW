@@ -1,7 +1,7 @@
-﻿"use client";
+"use client";
 
 import { createBerita, updateBerita } from "@/app/actions/berita";
-import { ArrowLeft, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Eye } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useActionState, useEffect, useState } from "react";
@@ -26,6 +26,7 @@ type InitialArticle = {
   excerpt: string | null;
   imageUrl: string | null;
   imageAlt: string | null;
+  imageCaption: string | null;
   metaTitle: string | null;
   metaDescription: string | null;
   status: ArticleStatus;
@@ -232,6 +233,29 @@ export default function ArticleForm({ article }: Props) {
                   placeholder="Deskripsi gambar untuk aksesibilitas dan SEO"
                   className="w-full rounded-lg border border-slate-300 px-4 py-2 text-slate-900 focus:border-teal-500 focus:ring-teal-500"
                 />
+
+                <p className="mt-1 text-xs text-slate-500">
+                  Jelaskan isi gambar secara singkat untuk pembaca layar. Alt text tidak ditampilkan sebagai caption.
+                </p>
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="mb-1 block text-sm font-medium text-slate-700">
+                  Caption Gambar
+                </label>
+
+                <textarea
+                  name="imageCaption"
+                  rows={2}
+                  maxLength={300}
+                  defaultValue={article?.imageCaption ?? ""}
+                  placeholder="Contoh: Kondisi rumah sebelum direnovasi di Desa Karanggayam, Sampang."
+                  className="w-full rounded-lg border border-slate-300 px-4 py-2 text-slate-900 focus:border-teal-500 focus:ring-teal-500"
+                />
+
+                <p className="mt-1 text-xs text-slate-500">
+                  Caption tampil di bawah gambar unggulan. Maksimal 300 karakter.
+                </p>
               </div>
             </div>
 
@@ -385,7 +409,17 @@ export default function ArticleForm({ article }: Props) {
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 border-t border-slate-100 pt-6">
+          <div className="flex flex-wrap justify-end gap-3 border-t border-slate-100 pt-6">
+            {article && (
+              <Link
+                href={`/admin/berita/${article.id}/preview`}
+                target="_blank"
+                className="inline-flex items-center gap-2 rounded-lg border border-teal-200 bg-teal-50 px-5 py-2.5 text-sm font-medium text-teal-700 hover:bg-teal-100"
+              >
+                <Eye className="h-4 w-4" />
+                Pratinjau
+              </Link>
+            )}
             <Link
               href="/admin/berita"
               className="rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
