@@ -167,25 +167,27 @@ export default function AdminSidebar({ role }: AdminSidebarProps) {
 
   return (
     <>
-      <div className="fixed inset-x-0 top-0 z-30 flex h-16 items-center justify-between border-b border-slate-200 bg-white px-4 md:hidden">
+      <div className="fixed inset-x-0 top-0 z-30 flex h-16 items-center justify-between border-b border-slate-800 bg-black px-4 md:hidden">
         <button
           type="button"
           onClick={() => setIsMobileOpen(true)}
-          className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-red-500"
           aria-label="Buka navigasi admin"
           aria-expanded={isMobileOpen}
         >
           <Menu className="h-6 w-6" />
         </button>
-        <div className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-teal-700 text-white">
-            <HeartHandshake className="h-5 w-5" />
-          </div>
-          <div className="leading-tight">
-            <div className="text-sm font-bold text-slate-900">Ruang Sejahtera</div>
-            <div className="text-[11px] text-slate-500">Panel Admin</div>
-          </div>
-        </div>
+        <Link
+          href="/admin/dashboard"
+          className="flex items-center"
+          aria-label="Dashboard Ruang Sejahtera"
+        >
+          <img
+            src="/brand/ruang-sejahtera-logo.png"
+            alt="Ruang Sejahtera"
+            className="h-11 w-auto max-w-[180px] object-contain"
+          />
+        </Link>
         <div className="h-10 w-10" aria-hidden="true" />
       </div>
 
@@ -200,19 +202,21 @@ export default function AdminSidebar({ role }: AdminSidebarProps) {
 
       <aside
         className={clsx(
-          "fixed inset-y-0 left-0 z-50 flex w-72 shrink-0 flex-col border-r border-slate-200 bg-white shadow-xl transition-transform duration-200 ease-out md:static md:z-auto md:w-64 md:translate-x-0 md:shadow-none",
+          "fixed inset-y-0 left-0 z-50 flex w-72 shrink-0 flex-col border-r border-slate-200 bg-white shadow-xl transition-transform duration-200 ease-out md:static md:z-auto md:h-screen md:w-64 md:translate-x-0 md:shadow-none",
           isMobileOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
-        <div className="flex h-16 shrink-0 items-center justify-between border-b border-slate-800 bg-slate-950 px-5">
-          <Link href="/admin/dashboard" className="flex min-w-0 items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-teal-700 text-white shadow-sm">
-              <HeartHandshake className="h-5 w-5" aria-hidden="true" />
-            </div>
-            <div className="min-w-0 leading-tight">
-              <div className="truncate text-sm font-bold text-white">Ruang Sejahtera</div>
-              <div className="text-[11px] font-medium tracking-wide text-slate-400">PANEL ADMIN</div>
-            </div>
+        <div className="flex h-16 shrink-0 items-center justify-between border-b border-slate-800 bg-black px-5">
+          <Link
+            href="/admin/dashboard"
+            className="flex min-w-0 items-center"
+            aria-label="Dashboard Ruang Sejahtera"
+          >
+            <img
+              src="/brand/ruang-sejahtera-logo.png"
+              alt="Ruang Sejahtera"
+              className="h-12 w-auto max-w-[205px] object-contain"
+            />
           </Link>
           <button
             type="button"
