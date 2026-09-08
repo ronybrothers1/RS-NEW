@@ -1,4 +1,6 @@
-export const revalidate = 60;
+// Rendered on-demand instead of prerendered at build time: this page
+// queries the database, which is not reachable from the build machine.
+export const dynamic = 'force-dynamic';
 
 import Link from "next/link";
 import { HeartHandshake, ArrowRight, Activity, Users, FileText, CheckCircle2, BookOpen, Stethoscope, Leaf } from "lucide-react";

@@ -5,11 +5,16 @@ import { settings } from "@/src/db/schema";
 import SiteLogo from "@/components/SiteLogo";
 
 export default async function Footer() {
-  const settingsData = await db.select().from(settings);
-  const settingsMap = settingsData.reduce((acc, curr) => {
-    acc[curr.key] = curr.value;
-    return acc;
-  }, {} as Record<string, string>);
+  let settingsMap: Record<string, string> = {};
+  try {
+    const settingsData = await db.select().from(settings);
+    settingsMap = settingsData.reduce((acc, curr) => {
+      acc[curr.key] = curr.value;
+      return acc;
+    }, {} as Record<string, string>);
+  } catch (error) {
+    console.error('Footer: failed to fetch settings', error);
+  }
 
   const address = settingsMap.yayasan_address || "Alamat belum diatur";
   const phone = settingsMap.yayasan_phone || "-";

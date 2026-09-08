@@ -1,4 +1,6 @@
-export const revalidate = 60;
+// Rendered on-demand instead of prerendered at build time: this page
+// queries the database, which is not reachable from the build machine.
+export const dynamic = 'force-dynamic';
 import { db } from "@/src/db";
 import { articles, users } from "@/src/db/schema";
 import { eq } from "drizzle-orm";

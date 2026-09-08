@@ -3,7 +3,9 @@ import { Mail, MapPin, Phone } from "lucide-react";
 import { db } from "@/src/db";
 import { settings } from "@/src/db/schema";
 
-export const revalidate = 60; // Cache for 60 seconds
+// Rendered on-demand instead of prerendered at build time: this page
+// queries the database, which is not reachable from the build machine.
+export const dynamic = 'force-dynamic';
 
 export default async function KontakPage() {
   const settingsData = await db.select().from(settings);

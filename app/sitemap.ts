@@ -3,26 +3,52 @@ import { db } from "@/src/db";
 import { articles, activities } from "@/src/db/schema";
 import { eq } from "drizzle-orm";
 
+// Force this route to be rendered on-demand (at request time) instead of
+// being statically generated during `next build`. The build environment
+// (e.g. Vercel's build machine) cannot reach the production database, so
+// prerendering this page at build time causes ECONNREFUSED errors and
+// fails the whole deployment.
+export const dynamic = 'force-dynamic';
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://yayasanruangsejahtera.org';
 
-  // Fetch dynamic routes
-  const publishedArticles = await db.select({ slug: articles.slug, createdAt: articles.createdAt }).from(articles).where(eq(articles.status, 'PUBLISHED'));
-  const publishedActivities = await db.select({ slug: activities.slug, createdAt: activities.createdAt }).from(activities).where(eq(activities.isPublished, true));
+  // Fetch dynamic routes. Wrapped in try/catch so a transient DB issue
+  // never takes down the sitemap (or, previously, the entire build).
+  let articleUrls: MetadataRoute.Sitemap = [];
+  let activityUrls: MetadataRoute.Sitemap = [];
 
-  const articleUrls = publishedArticles.map((article) => ({
-    url: `${baseUrl}/berita/${article.slug}`,
-    lastModified: article.createdAt || new Date(),
-    changeFrequency: 'weekly' as const,
-    priority: 0.8,
-  }));
+  try {
+    const publishedArticles = await db
+      .select({ slug: articles.slug, createdAt: articles.createdAt })
+      .from(articles)
+      .where(eq(articles.status, 'PUBLISHED'));
 
-  const activityUrls = publishedActivities.map((activity) => ({
-    url: `${baseUrl}/kegiatan/${activity.slug}`,
-    lastModified: activity.createdAt || new Date(),
-    changeFrequency: 'weekly' as const,
-    priority: 0.8,
-  }));
+    articleUrls = publishedArticles.map((article) => ({
+      url: `${baseUrl}/berita/${article.slug}`,
+      lastModified: article.createdAt || new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.8,
+    }));
+  } catch (error) {
+    console.error('sitemap: failed to fetch published articles', error);
+  }
+
+  try {
+    const publishedActivities = await db
+      .select({ slug: activities.slug, createdAt: activities.createdAt })
+      .from(activities)
+      .where(eq(activities.isPublished, true));
+
+    activityUrls = publishedActivities.map((activity) => ({
+      url: `${baseUrl}/kegiatan/${activity.slug}`,
+      lastModified: activity.createdAt || new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.8,
+    }));
+  } catch (error) {
+    console.error('sitemap: failed to fetch published activities', error);
+  }
 
   return [
     {
