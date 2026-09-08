@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { HeartHandshake, Menu, X, User } from "lucide-react";
 import { useState } from "react";
+import SiteLogo from "@/components/SiteLogo";
 
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -22,73 +23,70 @@ export default function Navbar() {
     <header className="sticky top-0 z-50 bg-slate-950/95 backdrop-blur-md border-b border-slate-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
-          <div className="flex items-center gap-3">
-            <Link href="/" className="flex items-center gap-3">
-              <img 
-                src="/logo.jpeg" 
-                alt="Logo Ruang Sejahtera" 
-                className="h-12 w-auto object-contain mix-blend-screen"
-                title="Ruang Sejahtera"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.style.display = 'none';
-                  target.parentElement?.classList.add('fallback-logo');
-                  if (target.parentElement) {
-                    target.parentElement.innerHTML = '<div class="w-10 h-10 bg-teal-700 text-white rounded-lg flex items-center justify-center font-bold text-lg">YRS</div><span class="font-bold text-xl text-white hidden sm:block ml-3">Ruang Sejahtera</span>';
-                  }
-                }}
-              />
-            </Link>
-          </div>
-          
-          {/* Desktop Nav */}
-          <nav className="hidden xl:flex space-x-6">
+          <SiteLogo name="Yayasan Ruang Sejahtera" />
+
+          <nav className="hidden xl:flex space-x-6" aria-label="Navigasi utama">
             {navLinks.map((link) => (
-              <Link key={link.path} href={link.path} className="text-slate-300 hover:text-white font-medium text-sm">
+              <Link
+                key={link.path}
+                href={link.path}
+                className="text-slate-300 hover:text-white font-medium text-sm"
+              >
                 {link.name}
               </Link>
             ))}
           </nav>
-          
+
           <div className="flex items-center gap-3 sm:gap-4">
-            <Link href="/login" className="hidden xl:flex items-center gap-2 text-slate-400 hover:text-white font-medium text-sm transition-colors">
+            <Link
+              href="/login"
+              className="hidden xl:flex items-center gap-2 text-slate-400 hover:text-white font-medium text-sm transition-colors"
+            >
               <User className="w-4 h-4" />
               <span>Akun</span>
             </Link>
-            <Link href="/donasi" className="bg-amber-600 hover:bg-amber-500 text-white px-4 sm:px-5 py-2.5 rounded-full font-medium transition-colors shadow-sm flex items-center gap-2 text-sm sm:text-base">
+            <Link
+              href="/donasi"
+              className="bg-amber-600 hover:bg-amber-500 text-white px-4 sm:px-5 py-2.5 rounded-full font-medium transition-colors shadow-sm flex items-center gap-2 text-sm sm:text-base"
+            >
               <HeartHandshake className="h-4 w-4" />
               <span className="hidden sm:inline">Donasi Sekarang</span>
               <span className="sm:hidden">Donasi</span>
             </Link>
 
-            {/* Mobile Menu Toggle */}
-            <button 
+            <button
               className="xl:hidden text-slate-300 hover:text-white p-2"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              aria-label="Toggle mobile menu"
+              aria-label={
+                isMobileMenuOpen ? "Tutup menu navigasi" : "Buka menu navigasi"
+              }
+              aria-expanded={isMobileMenuOpen}
             >
-              {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              {isMobileMenuOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Mobile Menu Dropdown */}
       {isMobileMenuOpen && (
         <div className="xl:hidden bg-slate-900 border-b border-slate-800 animate-in slide-in-from-top-2">
           <div className="px-4 pt-2 pb-6 space-y-1">
             {navLinks.map((link) => (
-              <Link 
-                key={link.path} 
-                href={link.path} 
+              <Link
+                key={link.path}
+                href={link.path}
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="block px-3 py-3 text-base font-medium text-slate-300 hover:text-white hover:bg-slate-800 rounded-md"
               >
                 {link.name}
               </Link>
             ))}
-            <Link 
-              href="/login" 
+            <Link
+              href="/login"
               onClick={() => setIsMobileMenuOpen(false)}
               className="flex items-center gap-2 px-3 py-3 mt-4 text-base font-medium text-teal-400 hover:text-teal-300 hover:bg-slate-800 rounded-md border-t border-slate-800"
             >

@@ -8,28 +8,43 @@ import { revalidatePath } from "next/cache";
 export async function saveSettings(prevState: any, formData: FormData) {
   const session = await auth();
   if (!session?.user?.id || (session.user as any).role !== 'ADMIN') {
-    return { success: false, error: "Unauthorized. Hanya ADMIN yang berhak mengubah pengaturan." };
+    return {
+      success: false,
+      error: "Unauthorized. Hanya ADMIN yang berhak mengubah pengaturan.",
+    };
   }
 
   const keys = [
-    'yayasan_name', 
-    'yayasan_phone', 
-    'yayasan_email', 
-    'yayasan_address', 
-    'bank_bca', 
-    'bank_mandiri', 
-    'bank_bsi'
+    'yayasan_name',
+    'yayasan_phone',
+    'yayasan_email',
+    'yayasan_address',
+    'bank_bca',
+    'bank_mandiri',
+    'bank_bsi',
+    'social_instagram',
+    'social_facebook',
+    'social_twitter',
   ];
-  
+
   try {
     for (const key of keys) {
       const value = formData.get(key) as string;
+
       if (value !== null) {
-        await db.insert(settings)
-          .values({ key, value, description: `Pengaturan ${key}` })
+        await db
+          .insert(settings)
+          .values({
+            key,
+            value: value.trim(),
+            description: `Pengaturan ${key}`,
+          })
           .onConflictDoUpdate({
             target: settings.key,
-            set: { value, updatedAt: new Date() }
+            set: {
+              value: value.trim(),
+              updatedAt: new Date(),
+            },
           });
       }
     }
@@ -42,12 +57,19 @@ export async function saveSettings(prevState: any, formData: FormData) {
       newData: { updatedKeys: keys },
     });
 
-    // Revalidate paths that use settings
     revalidatePath('/', 'layout');
-    
-    return { success: true, message: "Pengaturan berhasil disimpan." };
+
+    return {
+      success: true,
+      error: null,
+      message: "Pengaturan berhasil disimpan.",
+    };
   } catch (error: any) {
     console.error("Save settings error:", error);
-    return { success: false, error: "Terjadi kesalahan saat menyimpan pengaturan." };
+    return {
+      success: false,
+      error: "Terjadi kesalahan saat menyimpan pengaturan.",
+      message: null,
+    };
   }
 }

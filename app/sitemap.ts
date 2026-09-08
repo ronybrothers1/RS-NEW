@@ -2,19 +2,13 @@ import { MetadataRoute } from 'next';
 import { db } from "@/src/db";
 import { articles, activities } from "@/src/db/schema";
 import { eq } from "drizzle-orm";
+import { getSiteUrl } from "@/lib/site-url";
 
-// Force this route to be rendered on-demand (at request time) instead of
-// being statically generated during `next build`. The build environment
-// (e.g. Vercel's build machine) cannot reach the production database, so
-// prerendering this page at build time causes ECONNREFUSED errors and
-// fails the whole deployment.
 export const dynamic = 'force-dynamic';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = 'https://yayasanruangsejahtera.org';
+  const baseUrl = getSiteUrl();
 
-  // Fetch dynamic routes. Wrapped in try/catch so a transient DB issue
-  // never takes down the sitemap (or, previously, the entire build).
   let articleUrls: MetadataRoute.Sitemap = [];
   let activityUrls: MetadataRoute.Sitemap = [];
 
@@ -104,6 +98,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date(),
       changeFrequency: 'yearly',
       priority: 0.6,
+    },
+    {
+      url: `${baseUrl}/kebijakan-privasi`,
+      lastModified: new Date(),
+      changeFrequency: 'yearly',
+      priority: 0.3,
+    },
+    {
+      url: `${baseUrl}/ketentuan-donasi`,
+      lastModified: new Date(),
+      changeFrequency: 'yearly',
+      priority: 0.3,
     },
     ...articleUrls,
     ...activityUrls,

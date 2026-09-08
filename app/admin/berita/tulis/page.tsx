@@ -1,14 +1,14 @@
-"use client";
+﻿"use client";
 
 import { useActionState, useState } from "react";
 import { createBerita } from "@/app/actions/berita";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import "react-quill/dist/quill.snow.css";
+import "react-quill-new/dist/quill.snow.css";
 
 // Dynamic import for react-quill to avoid SSR issues
-const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
+const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
 
 export default function TulisBeritaPage() {
   const [state, formAction, isPending] = useActionState(createBerita, { success: false, error: null });
@@ -202,3 +202,4 @@ export default function TulisBeritaPage() {
     </div>
   );
 }
+
