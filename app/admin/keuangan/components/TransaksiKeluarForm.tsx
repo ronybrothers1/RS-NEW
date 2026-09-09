@@ -211,7 +211,7 @@ export default function TransaksiKeluarForm({
           ))}
 
           <option value="other">
-            Lainnya / Operasional Umum
+            Umum
           </option>
         </select>
 

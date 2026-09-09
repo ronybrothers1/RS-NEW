@@ -183,7 +183,8 @@ export default function RiwayatTransaksiClient({
           const haystack = [
             transaction.description,
             transaction.donorName,
-            transaction.programName,
+            transaction.programName ??
+              (transaction.programId ? "" : "Umum"),
             transaction.userName,
           ]
             .filter(Boolean)
@@ -377,7 +378,7 @@ export default function RiwayatTransaksiClient({
               ))}
 
               <option value="NONE">
-                Tanpa Program
+                Umum
               </option>
             </select>
           </div>
@@ -503,8 +504,8 @@ export default function RiwayatTransaksiClient({
                                 )}
                               </div>
                             ) : (
-                              <span className="text-slate-400">
-                                —
+                              <span className="text-slate-700">
+                                Umum
                               </span>
                             )}
                           </td>
@@ -697,7 +698,7 @@ export default function RiwayatTransaksiClient({
                 </dt>
                 <dd className="mt-1 text-slate-800">
                   {detailItem.programName ||
-                    "Tanpa program"}
+                    "Umum"}
                 </dd>
               </div>
 
@@ -940,8 +941,7 @@ export default function RiwayatTransaksiClient({
                   className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5"
                 >
                   <option value="other">
-                    Tanpa Program /
-                    Operasional Umum
+                    Umum
                   </option>
 
                   {programs.map(

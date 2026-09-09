@@ -1,64 +1,209 @@
 "use server";
 
-import { headers } from "next/headers";
-import { revalidatePath } from "next/cache";
 import {
   and,
   eq,
 } from "drizzle-orm";
+import { headers } from "next/headers";
+import { revalidatePath } from "next/cache";
 
+import { rateLimit } from "@/lib/rate-limit";
 import { db } from "@/src/db";
 import {
   donations,
   programs,
   settings,
 } from "@/src/db/schema";
-import { rateLimit } from "@/lib/rate-limit";
 
-const ALLOWED_PROOF_TYPES = new Set([
-  "image/jpeg",
-  "image/png",
-]);
+const MAX_PROOF_SIZE =
+  5 * 1024 * 1024;
 
-const SUPPORTED_BANKS = new Set([
-  "BCA",
-  "MANDIRI",
-  "BSI",
-  "BRI",
-]);
+const ALLOWED_PROOF_TYPES =
+  new Set([
+    "image/jpeg",
+    "image/png",
+  ]);
+
+const SUPPORTED_BANKS =
+  new Set([
+    "BCA",
+    "MANDIRI",
+    "BSI",
+    "BRI",
+  ]);
+
+type ProofValidationResult =
+  | {
+      success: true;
+    }
+  | {
+      success: false;
+      error: string;
+    };
 
 function cleanText(
-  value: FormDataEntryValue | null,
+  value:
+    | FormDataEntryValue
+    | null,
 ) {
-  return typeof value === "string"
+  return typeof value ===
+    "string"
     ? value.trim()
     : "";
 }
 
-function isUuid(value: string) {
+function isUuid(
+  value: string,
+) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
     value,
   );
+}
+
+function isAllowedProofUrl(
+  value: string,
+) {
+  try {
+    const url =
+      new URL(value);
+
+    return (
+      url.protocol ===
+        "https:" &&
+      url.hostname.endsWith(
+        ".blob.vercel-storage.com",
+      ) &&
+      url.pathname.startsWith(
+        "/media/donasi/",
+      )
+    );
+  } catch {
+    return false;
+  }
+}
+
+async function validateProofUpload(
+  proofImageUrl: string,
+): Promise<ProofValidationResult> {
+  if (
+    !isAllowedProofUrl(
+      proofImageUrl,
+    )
+  ) {
+    return {
+      success: false,
+      error:
+        "Bukti transfer tidak valid. Silakan unggah ulang.",
+    };
+  }
+
+  try {
+    const response =
+      await fetch(
+        proofImageUrl,
+        {
+          method: "HEAD",
+          cache: "no-store",
+        },
+      );
+
+    if (!response.ok) {
+      return {
+        success: false,
+        error:
+          "Bukti transfer tidak dapat ditemukan. Silakan unggah ulang.",
+      };
+    }
+
+    const contentType =
+      (
+        response.headers.get(
+          "content-type",
+        ) || ""
+      )
+        .split(";")[0]
+        .trim()
+        .toLowerCase();
+
+    if (
+      !ALLOWED_PROOF_TYPES.has(
+        contentType,
+      )
+    ) {
+      return {
+        success: false,
+        error:
+          "Format bukti transfer tidak valid.",
+      };
+    }
+
+    const contentLengthRaw =
+      response.headers.get(
+        "content-length",
+      );
+
+    if (contentLengthRaw) {
+      const contentLength =
+        Number(
+          contentLengthRaw,
+        );
+
+      if (
+        Number.isFinite(
+          contentLength,
+        ) &&
+        contentLength >
+          MAX_PROOF_SIZE
+      ) {
+        return {
+          success: false,
+          error:
+            "Ukuran bukti transfer melebihi 5 MB.",
+        };
+      }
+    }
+
+    return {
+      success: true,
+    };
+  } catch (error) {
+    console.error(
+      "Proof validation error:",
+      error,
+    );
+
+    return {
+      success: false,
+      error:
+        "Bukti transfer tidak dapat diverifikasi. Silakan unggah ulang.",
+    };
+  }
 }
 
 export async function submitDonation(
   _prevState: unknown,
   formData: FormData,
 ) {
-  const headersList = await headers();
+  const headersList =
+    await headers();
 
   const forwardedFor =
-    headersList.get("x-forwarded-for");
+    headersList.get(
+      "x-forwarded-for",
+    );
 
   const ip =
     forwardedFor
       ?.split(",")[0]
       ?.trim() ||
-    headersList.get("x-real-ip") ||
+    headersList.get(
+      "x-real-ip",
+    ) ||
     "unknown-ip";
 
   const {
-    success: rateLimitSuccess,
+    success:
+      rateLimitSuccess,
   } = rateLimit(
     `donation-submit-${ip}`,
     5,
@@ -73,33 +218,52 @@ export async function submitDonation(
     };
   }
 
-  const donorName = cleanText(
-    formData.get("donorName"),
-  );
+  const donorName =
+    cleanText(
+      formData.get(
+        "donorName",
+      ),
+    );
 
-  const amountRaw = cleanText(
-    formData.get("amount"),
-  );
+  const amountRaw =
+    cleanText(
+      formData.get(
+        "amount",
+      ),
+    );
 
-  const programId = cleanText(
-    formData.get("programId"),
-  );
+  const programId =
+    cleanText(
+      formData.get(
+        "programId",
+      ),
+    );
 
-  const paymentMethod = cleanText(
-    formData.get("paymentMethod"),
-  ).toUpperCase();
+  const paymentMethod =
+    cleanText(
+      formData.get(
+        "paymentMethod",
+      ),
+    ).toUpperCase();
+
+  const proofImageUrl =
+    cleanText(
+      formData.get(
+        "proofImageUrl",
+      ),
+    );
 
   const isAnonymous =
-    formData.get("isAnonymous") === "on";
-
-  const proofEntry =
-    formData.get("proofImage");
+    formData.get(
+      "isAnonymous",
+    ) === "on";
 
   if (
     !donorName ||
     !amountRaw ||
     !programId ||
-    !paymentMethod
+    !paymentMethod ||
+    !proofImageUrl
   ) {
     return {
       success: false,
@@ -108,7 +272,10 @@ export async function submitDonation(
     };
   }
 
-  if (donorName.length > 180) {
+  if (
+    donorName.length >
+    180
+  ) {
     return {
       success: false,
       error:
@@ -116,7 +283,9 @@ export async function submitDonation(
     };
   }
 
-  if (!isUuid(programId)) {
+  if (
+    !isUuid(programId)
+  ) {
     return {
       success: false,
       error:
@@ -124,52 +293,24 @@ export async function submitDonation(
     };
   }
 
-  const amount = Number(
-    amountRaw.replace(/\D/g, ""),
-  );
+  const amount =
+    Number(
+      amountRaw.replace(
+        /\D/g,
+        "",
+      ),
+    );
 
   if (
-    !Number.isSafeInteger(amount) ||
+    !Number.isSafeInteger(
+      amount,
+    ) ||
     amount < 10000
   ) {
     return {
       success: false,
       error:
         "Minimal donasi adalah Rp10.000.",
-    };
-  }
-
-  if (
-    !(proofEntry instanceof File) ||
-    proofEntry.size === 0
-  ) {
-    return {
-      success: false,
-      error:
-        "Bukti transfer wajib diunggah.",
-    };
-  }
-
-  if (
-    proofEntry.size >
-    5 * 1024 * 1024
-  ) {
-    return {
-      success: false,
-      error:
-        "Ukuran gambar maksimal 5 MB.",
-    };
-  }
-
-  if (
-    !ALLOWED_PROOF_TYPES.has(
-      proofEntry.type,
-    )
-  ) {
-    return {
-      success: false,
-      error:
-        "Bukti transfer harus berformat JPG atau PNG.",
     };
   }
 
@@ -185,6 +326,21 @@ export async function submitDonation(
     };
   }
 
+  const proofValidation =
+    await validateProofUpload(
+      proofImageUrl,
+    );
+
+  if (
+    !proofValidation.success
+  ) {
+    return {
+      success: false,
+      error:
+        proofValidation.error,
+    };
+  }
+
   try {
     const settingKey =
       `bank_${paymentMethod.toLowerCase()}`;
@@ -192,6 +348,7 @@ export async function submitDonation(
     const [
       selectedPrograms,
       bankSettings,
+      existingProof,
     ] = await Promise.all([
       db
         .select({
@@ -214,7 +371,8 @@ export async function submitDonation(
 
       db
         .select({
-          value: settings.value,
+          value:
+            settings.value,
         })
         .from(settings)
         .where(
@@ -224,9 +382,24 @@ export async function submitDonation(
           ),
         )
         .limit(1),
+
+      db
+        .select({
+          id: donations.id,
+        })
+        .from(donations)
+        .where(
+          eq(
+            donations.proofImage,
+            proofImageUrl,
+          ),
+        )
+        .limit(1),
     ]);
 
-    if (!selectedPrograms[0]) {
+    if (
+      !selectedPrograms[0]
+    ) {
       return {
         success: false,
         error:
@@ -235,7 +408,9 @@ export async function submitDonation(
     }
 
     if (
-      !bankSettings[0]?.value?.trim()
+      !bankSettings[0]
+        ?.value
+        ?.trim()
     ) {
       return {
         success: false,
@@ -244,32 +419,32 @@ export async function submitDonation(
       };
     }
 
-    const buffer =
-      await proofEntry.arrayBuffer();
-
-    const base64 =
-      Buffer.from(buffer).toString(
-        "base64",
-      );
-
-    const proofImage =
-      `data:${proofEntry.type};base64,${base64}`;
+    if (existingProof[0]) {
+      return {
+        success: false,
+        error:
+          "Bukti transfer ini sudah pernah dikirim.",
+      };
+    }
 
     await db
       .insert(donations)
       .values({
         donorName,
-        amount: amount.toString(),
+        amount:
+          amount.toString(),
         programId,
         paymentMethod,
         isAnonymous,
-        proofImage,
+        proofImage:
+          proofImageUrl,
         status: "PENDING",
       });
 
     revalidatePath(
       "/admin/donasi",
     );
+
     revalidatePath(
       "/admin/dashboard",
     );

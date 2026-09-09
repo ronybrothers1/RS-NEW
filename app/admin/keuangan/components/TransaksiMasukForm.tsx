@@ -209,7 +209,7 @@ export default function TransaksiMasukForm({
           className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-slate-900 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
         >
           <option value="">
-            Dana umum / tanpa program khusus
+            Umum
           </option>
 
           {programs.map((program) => (

@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import {
   Activity,
   ArrowDownRight,
@@ -29,6 +29,7 @@ import {
   programs,
 } from "@/src/db/schema";
 import { formatCurrency } from "@/lib/utils";
+import { getFinanceOpeningBalance } from "@/lib/finance-opening-balance";
 
 export const dynamic = "force-dynamic";
 
@@ -105,6 +106,9 @@ function articleStatus(status: string) {
 }
 
 export default async function DashboardPage() {
+  const openingBalance =
+    await getFinanceOpeningBalance();
+
   const [
     financialStats,
     activityStats,
@@ -448,7 +452,7 @@ export default async function DashboardPage() {
     finance.totalOut || 0,
   );
 
-  const saldo = totalIn - totalOut;
+  const saldo = openingBalance.amount + totalIn - totalOut;
 
   const transactionCount = Number(
     finance.count || 0,

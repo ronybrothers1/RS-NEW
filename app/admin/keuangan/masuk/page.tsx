@@ -39,7 +39,7 @@ export default async function UangMasukPage() {
 
             <p className="mt-1 text-sm text-slate-500">
               Catat donasi manual atau
-              penerimaan dana lainnya.
+              penerimaan dana umum.
             </p>
           </div>
         </div>

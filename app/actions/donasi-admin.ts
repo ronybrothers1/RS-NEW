@@ -150,6 +150,34 @@ export async function verifyDonation(
             };
           }
 
+          if (
+            !oldDonation.proofImage
+              ?.trim()
+          ) {
+            return {
+              success: false as const,
+              error:
+                "Donasi tidak memiliki bukti transfer dan tidak dapat diverifikasi.",
+            };
+          }
+
+          const donationAmount =
+            Number(
+              oldDonation.amount,
+            );
+
+          if (
+            !Number.isFinite(
+              donationAmount,
+            ) ||
+            donationAmount <= 0
+          ) {
+            return {
+              success: false as const,
+              error:
+                "Nominal donasi tidak valid dan tidak dapat dicatat ke keuangan.",
+            };
+          }
           const [updatedDonation] =
             await tx
               .update(donations)

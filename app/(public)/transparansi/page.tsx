@@ -1,4 +1,5 @@
 import { db } from "@/src/db";
+import { getFinanceOpeningBalance } from "@/lib/finance-opening-balance";
 import { financialTransactions, programs } from "@/src/db/schema";
 import { desc, eq, sql } from "drizzle-orm";
 
@@ -8,6 +9,9 @@ import Link from "next/link";
 export const dynamic = 'force-dynamic';
 
 export default async function TransparansiPage() {
+  const openingBalance =
+    await getFinanceOpeningBalance();
+
   // Get totals using raw SQL aggregation for simplicity
   const result = await db.execute(sql`
     SELECT 
@@ -20,7 +24,7 @@ export default async function TransparansiPage() {
   const data = (result as any).rows || (result as any);
   const totalIn = Number(data[0]?.total_in || 0);
   const totalOut = Number(data[0]?.total_out || 0);
-  const currentBalance = totalIn - totalOut;
+  const currentBalance = openingBalance.amount + totalIn - totalOut;
 
   // Get recent 10 transactions
   const recentTransactions = await db
@@ -138,7 +142,7 @@ export default async function TransparansiPage() {
                           <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-slate-100 text-slate-700">
                             {trx.programName}
                           </span>
-                        ) : '-'}
+                        ) : 'Umum'}
                       </td>
                       <td className="px-6 py-4 text-right font-medium">
                         {trx.type === 'IN' ? (
