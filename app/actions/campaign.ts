@@ -126,6 +126,9 @@ function refreshCampaignPaths(
   revalidatePath(
     `/bantuan/${slug}`,
   );
+  revalidatePath(
+    "/admin/keuangan/kampanye",
+  );
 }
 
 export async function saveCampaign(

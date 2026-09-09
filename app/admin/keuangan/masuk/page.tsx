@@ -7,22 +7,70 @@ import {
 } from "drizzle-orm";
 
 import { db } from "@/src/db";
-import { programs } from "@/src/db/schema";
+import {
+  campaigns,
+  programs,
+} from "@/src/db/schema";
 import TransaksiMasukForm from "../components/TransaksiMasukForm";
 
 export const dynamic = "force-dynamic";
 
-export default async function UangMasukPage() {
-  const activePrograms = await db
-    .select({
-      id: programs.id,
-      name: programs.name,
-    })
-    .from(programs)
-    .where(
-      eq(programs.status, "ACTIVE"),
+export default async function UangMasukPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    campaign?: string;
+  }>;
+}) {
+  const {
+    campaign:
+      requestedCampaignId = "",
+  } = await searchParams;
+
+  const [
+    activePrograms,
+    activeCampaigns,
+  ] = await Promise.all([
+    db
+      .select({
+        id: programs.id,
+        name: programs.name,
+      })
+      .from(programs)
+      .where(
+        eq(
+          programs.status,
+          "ACTIVE",
+        ),
+      )
+      .orderBy(asc(programs.name)),
+
+    db
+      .select({
+        id: campaigns.id,
+        title: campaigns.title,
+        programId:
+          campaigns.programId,
+        status: campaigns.status,
+      })
+      .from(campaigns)
+      .where(
+        eq(
+          campaigns.status,
+          "ACTIVE",
+        ),
+      )
+      .orderBy(asc(campaigns.title)),
+  ]);
+
+  const defaultCampaignId =
+    activeCampaigns.some(
+      (item) =>
+        item.id ===
+        requestedCampaignId,
     )
-    .orderBy(asc(programs.name));
+      ? requestedCampaignId
+      : "";
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -38,8 +86,9 @@ export default async function UangMasukPage() {
             </h1>
 
             <p className="mt-1 text-sm text-slate-500">
-              Catat donasi manual atau
-              penerimaan dana umum.
+              Catat penerimaan umum,
+              program, atau dana khusus
+              kampanye.
             </p>
           </div>
         </div>
@@ -48,6 +97,18 @@ export default async function UangMasukPage() {
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
         <TransaksiMasukForm
           programs={activePrograms}
+          campaigns={
+            activeCampaigns.map(
+              (item) => ({
+                ...item,
+                status:
+                  "ACTIVE" as const,
+              }),
+            )
+          }
+          defaultCampaignId={
+            defaultCampaignId
+          }
         />
       </div>
     </div>

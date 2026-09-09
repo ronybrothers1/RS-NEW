@@ -107,6 +107,7 @@ export default function AdminSidebar({ role }: AdminSidebarProps) {
         { name: "Uang Masuk", href: "/admin/keuangan/masuk" },
         { name: "Uang Keluar", href: "/admin/keuangan/keluar" },
         { name: "Riwayat Transaksi", href: "/admin/keuangan/riwayat" },
+        { name: "Keuangan Kampanye", href: "/admin/keuangan/kampanye" },
       ],
     },
     {

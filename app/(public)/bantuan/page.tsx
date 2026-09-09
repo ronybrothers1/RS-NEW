@@ -7,6 +7,7 @@ import {
   desc,
   eq,
   inArray,
+  isNull,
 } from "drizzle-orm";
 import Link from "next/link";
 
@@ -18,7 +19,7 @@ import {
 } from "@/src/db";
 import {
   campaigns,
-  donations,
+  financialTransactions,
   programs,
 } from "@/src/db/schema";
 
@@ -35,7 +36,7 @@ export const metadata = {
 export default async function AssistanceCampaignsPage() {
   const [
     rows,
-    successfulDonations,
+    ledgerRows,
   ] =
     await Promise.all([
       db
@@ -94,15 +95,18 @@ export default async function AssistanceCampaignsPage() {
       db
         .select({
           campaignId:
-            donations.campaignId,
+            financialTransactions.campaignId,
+          type:
+            financialTransactions.type,
           amount:
-            donations.amount,
+            financialTransactions.amount,
         })
-        .from(donations)
+        .from(
+          financialTransactions,
+        )
         .where(
-          eq(
-            donations.status,
-            "SUCCESS",
+          isNull(
+            financialTransactions.deletedAt,
           ),
         ),
     ]);
@@ -110,29 +114,46 @@ export default async function AssistanceCampaignsPage() {
   const totals =
     new Map<
       string,
-      number
+      {
+        collected: number;
+        spent: number;
+      }
     >();
 
   for (
-    const donation of
-      successfulDonations
+    const row of
+      ledgerRows
   ) {
-    if (
-      !donation.campaignId
-    ) {
+    if (!row.campaignId) {
       continue;
     }
 
+    const current =
+      totals.get(
+        row.campaignId,
+      ) || {
+        collected: 0,
+        spent: 0,
+      };
+
+    const amount =
+      Number(row.amount);
+
+    if (
+      Number.isFinite(amount)
+    ) {
+      if (row.type === "IN") {
+        current.collected +=
+          amount;
+      } else {
+        current.spent +=
+          amount;
+      }
+    }
+
     totals.set(
-      donation.campaignId,
-      (
-        totals.get(
-          donation.campaignId,
-        ) || 0
-      ) +
-        Number(
-          donation.amount,
-        ),
+      row.campaignId,
+      current,
     );
   }
 
@@ -148,7 +169,7 @@ export default async function AssistanceCampaignsPage() {
             Bantuan yang sudah melewati verifikasi.
           </h1>
           <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300 md:text-lg">
-            Setiap kampanye berasal dari pengajuan yang telah diperiksa pengurus. Donasi yang tampil pada progres hanya donasi yang telah diverifikasi.
+            Setiap kampanye berasal dari pengajuan yang telah diperiksa pengurus. Progres dihitung dari dana masuk yang sudah tercatat pada keuangan kampanye.
           </p>
         </div>
       </section>
@@ -168,10 +189,20 @@ export default async function AssistanceCampaignsPage() {
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {rows.map(
               (campaign) => {
-                const collected =
+                const total =
                   totals.get(
                     campaign.id,
-                  ) || 0;
+                  ) || {
+                    collected: 0,
+                    spent: 0,
+                  };
+
+                const collected =
+                  total.collected;
+
+                const available =
+                  total.collected -
+                  total.spent;
 
                 const target =
                   Number(
@@ -260,6 +291,7 @@ export default async function AssistanceCampaignsPage() {
                             {progress}%
                           </span>
                         </div>
+
                         <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
                           <div
                             className="h-full rounded-full bg-teal-600"
@@ -268,12 +300,22 @@ export default async function AssistanceCampaignsPage() {
                             }}
                           />
                         </div>
-                        <div className="mt-2 flex items-center gap-2 text-xs text-slate-500">
-                          <Target className="h-4 w-4" />
-                          Target{" "}
-                          {formatRupiah(
-                            target,
-                          )}
+
+                        <div className="mt-2 flex items-center justify-between gap-3 text-xs text-slate-500">
+                          <span className="inline-flex items-center gap-2">
+                            <Target className="h-4 w-4" />
+                            Target{" "}
+                            {formatRupiah(
+                              target,
+                            )}
+                          </span>
+
+                          <span>
+                            Tersedia{" "}
+                            {formatRupiah(
+                              available,
+                            )}
+                          </span>
                         </div>
                       </div>
 

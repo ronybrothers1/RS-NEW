@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { db } from "@/src/db";
 import {
   auditLogs,
+  campaigns,
   financialTransactions,
   programs,
 } from "@/src/db/schema";
@@ -19,6 +20,13 @@ export type KeuanganActionResult = {
   error: string | null;
   id?: string;
 };
+
+type CampaignStatus =
+  | "DRAFT"
+  | "ACTIVE"
+  | "PAUSED"
+  | "COMPLETED"
+  | "CANCELLED";
 
 function cleanText(
   value: FormDataEntryValue | null,
@@ -98,6 +106,7 @@ function isWebsiteDonationTransaction(
     )
   );
 }
+
 async function getFinanceSession() {
   const session = await auth();
 
@@ -124,7 +133,9 @@ async function getFinanceSession() {
   };
 }
 
-function revalidateFinancePages() {
+function revalidateFinancePages(
+  campaignId?: string | null,
+) {
   revalidatePath("/admin/dashboard");
   revalidatePath(
     "/admin/keuangan/masuk",
@@ -135,7 +146,17 @@ function revalidateFinancePages() {
   revalidatePath(
     "/admin/keuangan/riwayat",
   );
+  revalidatePath(
+    "/admin/keuangan/kampanye",
+  );
   revalidatePath("/transparansi");
+  revalidatePath("/bantuan");
+
+  if (campaignId) {
+    revalidatePath(
+      `/admin/keuangan/kampanye/${campaignId}`,
+    );
+  }
 }
 
 async function resolveProgram(
@@ -164,11 +185,6 @@ async function resolveProgram(
       .where(eq(programs.id, rawValue))
       .limit(1);
   } else {
-    /*
-     * Compatibility sementara untuk form
-     * lama yang masih mengirim nama.
-     * Phase 2 akan menggantinya dengan UUID.
-     */
     [program] = await db
       .select({
         id: programs.id,
@@ -201,6 +217,122 @@ async function resolveProgram(
   return {
     success: true as const,
     id: program.id,
+  };
+}
+
+async function resolveCampaign(
+  rawCampaignId: string | null,
+  rawProgramId: string | null,
+  allowedStatuses: CampaignStatus[],
+) {
+  if (!rawCampaignId) {
+    const program =
+      await resolveProgram(rawProgramId);
+
+    if (!program.success) {
+      return program;
+    }
+
+    return {
+      success: true as const,
+      campaignId: null,
+      programId: program.id,
+      campaignTitle: null,
+    };
+  }
+
+  if (!isUuid(rawCampaignId)) {
+    return {
+      success: false as const,
+      error:
+        "Kampanye yang dipilih tidak valid.",
+    };
+  }
+
+  const [campaign] = await db
+    .select({
+      id: campaigns.id,
+      title: campaigns.title,
+      programId: campaigns.programId,
+      status: campaigns.status,
+    })
+    .from(campaigns)
+    .where(
+      eq(
+        campaigns.id,
+        rawCampaignId,
+      ),
+    )
+    .limit(1);
+
+  if (!campaign) {
+    return {
+      success: false as const,
+      error:
+        "Kampanye tidak ditemukan.",
+    };
+  }
+
+  if (
+    !allowedStatuses.includes(
+      campaign.status,
+    )
+  ) {
+    return {
+      success: false as const,
+      error:
+        "Kampanye pada status ini tidak dapat menerima transaksi tersebut.",
+    };
+  }
+
+  if (
+    rawProgramId &&
+    rawProgramId !== "other" &&
+    rawProgramId !== campaign.programId
+  ) {
+    return {
+      success: false as const,
+      error:
+        "Kampanye tidak sesuai dengan program yang dipilih.",
+    };
+  }
+
+  return {
+    success: true as const,
+    campaignId: campaign.id,
+    programId: campaign.programId,
+    campaignTitle: campaign.title,
+  };
+}
+
+function calculateAvailable(
+  rows: Array<{
+    type: "IN" | "OUT";
+    amount: string;
+  }>,
+) {
+  let collected = 0;
+  let spent = 0;
+
+  for (const row of rows) {
+    const amount = Number(row.amount);
+
+    if (!Number.isFinite(amount)) {
+      continue;
+    }
+
+    if (row.type === "IN") {
+      collected += amount;
+    } else {
+      spent += amount;
+    }
+  }
+
+  return {
+    collected,
+    spent,
+    available:
+      collected - spent,
   };
 }
 
@@ -238,6 +370,10 @@ export async function createTransaksiMasuk(
 
   const rawProgramId = cleanOptional(
     formData.get("programId"),
+  );
+
+  const rawCampaignId = cleanOptional(
+    formData.get("campaignId"),
   );
 
   if (!date) {
@@ -279,13 +415,17 @@ export async function createTransaksiMasuk(
     };
   }
 
-  const resolvedProgram =
-    await resolveProgram(rawProgramId);
+  const target =
+    await resolveCampaign(
+      rawCampaignId,
+      rawProgramId,
+      ["ACTIVE"],
+    );
 
-  if (!resolvedProgram.success) {
+  if (!target.success) {
     return {
       success: false,
-      error: resolvedProgram.error,
+      error: target.error,
     };
   }
 
@@ -304,7 +444,9 @@ export async function createTransaksiMasuk(
                 date,
                 description,
                 programId:
-                  resolvedProgram.id,
+                  target.programId,
+                campaignId:
+                  target.campaignId,
                 userId:
                   financeUser.userId,
                 donorName,
@@ -331,7 +473,9 @@ export async function createTransaksiMasuk(
         },
       );
 
-    revalidateFinancePages();
+    revalidateFinancePages(
+      target.campaignId,
+    );
 
     return {
       success: true,
@@ -383,6 +527,10 @@ export async function createTransaksiKeluar(
     formData.get("programId"),
   );
 
+  const rawCampaignId = cleanOptional(
+    formData.get("campaignId"),
+  );
+
   if (!date) {
     return {
       success: false,
@@ -398,11 +546,14 @@ export async function createTransaksiKeluar(
     };
   }
 
-  if (!rawProgramId) {
+  if (
+    !rawProgramId &&
+    !rawCampaignId
+  ) {
     return {
       success: false,
       error:
-        "Pilih program atau kategori Lainnya.",
+        "Pilih program, kampanye, atau kategori Umum.",
     };
   }
 
@@ -422,20 +573,70 @@ export async function createTransaksiKeluar(
     };
   }
 
-  const resolvedProgram =
-    await resolveProgram(rawProgramId);
+  const target =
+    await resolveCampaign(
+      rawCampaignId,
+      rawProgramId || null,
+      [
+        "ACTIVE",
+        "PAUSED",
+        "COMPLETED",
+      ],
+    );
 
-  if (!resolvedProgram.success) {
+  if (!target.success) {
     return {
       success: false,
-      error: resolvedProgram.error,
+      error: target.error,
     };
   }
 
   try {
-    const created =
+    const result =
       await db.transaction(
         async (tx) => {
+          if (target.campaignId) {
+            const ledgerRows =
+              await tx
+                .select({
+                  type:
+                    financialTransactions.type,
+                  amount:
+                    financialTransactions.amount,
+                })
+                .from(
+                  financialTransactions,
+                )
+                .where(
+                  and(
+                    eq(
+                      financialTransactions.campaignId,
+                      target.campaignId,
+                    ),
+                    isNull(
+                      financialTransactions.deletedAt,
+                    ),
+                  ),
+                );
+
+            const totals =
+              calculateAvailable(
+                ledgerRows,
+              );
+
+            if (
+              Number(amount) >
+              totals.available
+            ) {
+              return {
+                success:
+                  false as const,
+                error:
+                  `Saldo kampanye tidak mencukupi. Saldo tersedia Rp${totals.available.toLocaleString("id-ID")}.`,
+              };
+            }
+          }
+
           const [newTransaction] =
             await tx
               .insert(
@@ -447,7 +648,9 @@ export async function createTransaksiKeluar(
                 date,
                 description,
                 programId:
-                  resolvedProgram.id,
+                  target.programId,
+                campaignId:
+                  target.campaignId,
                 userId:
                   financeUser.userId,
                 donorName: null,
@@ -470,16 +673,28 @@ export async function createTransaksiKeluar(
                 newTransaction,
             });
 
-          return newTransaction;
+          return {
+            success:
+              true as const,
+            error: null,
+            transaction:
+              newTransaction,
+          };
         },
       );
 
-    revalidateFinancePages();
+    if (!result.success) {
+      return result;
+    }
+
+    revalidateFinancePages(
+      target.campaignId,
+    );
 
     return {
       success: true,
       error: null,
-      id: created.id,
+      id: result.transaction.id,
     };
   } catch (error) {
     console.error(
@@ -542,7 +757,11 @@ export async function updateTransaksi(
     };
   }
 
-  if (isWebsiteDonationTransaction(oldTransaction)) {
+  if (
+    isWebsiteDonationTransaction(
+      oldTransaction,
+    )
+  ) {
     return {
       success: false,
       error:
@@ -642,23 +861,133 @@ export async function updateTransaksi(
     };
   }
 
-  const resolvedProgram =
-    await resolveProgram(
-      rawProgramId,
-      oldTransaction.programId,
-    );
+  let targetProgramId:
+    string | null =
+    oldTransaction.programId;
 
-  if (!resolvedProgram.success) {
-    return {
-      success: false,
-      error: resolvedProgram.error,
-    };
+  if (oldTransaction.campaignId) {
+    const [campaign] = await db
+      .select({
+        id: campaigns.id,
+        programId:
+          campaigns.programId,
+      })
+      .from(campaigns)
+      .where(
+        eq(
+          campaigns.id,
+          oldTransaction.campaignId,
+        ),
+      )
+      .limit(1);
+
+    if (!campaign) {
+      return {
+        success: false,
+        error:
+          "Kampanye transaksi ini tidak ditemukan.",
+      };
+    }
+
+    if (
+      rawProgramId &&
+      rawProgramId !==
+        campaign.programId
+    ) {
+      return {
+        success: false,
+        error:
+          "Program transaksi kampanye tidak dapat diubah ke program lain.",
+      };
+    }
+
+    targetProgramId =
+      campaign.programId;
+  } else {
+    const resolvedProgram =
+      await resolveProgram(
+        rawProgramId,
+        oldTransaction.programId,
+      );
+
+    if (!resolvedProgram.success) {
+      return {
+        success: false,
+        error:
+          resolvedProgram.error,
+      };
+    }
+
+    targetProgramId =
+      resolvedProgram.id;
   }
 
   try {
-    const updated =
+    const result =
       await db.transaction(
         async (tx) => {
+          if (
+            oldTransaction.campaignId
+          ) {
+            const ledgerRows =
+              await tx
+                .select({
+                  id:
+                    financialTransactions.id,
+                  type:
+                    financialTransactions.type,
+                  amount:
+                    financialTransactions.amount,
+                })
+                .from(
+                  financialTransactions,
+                )
+                .where(
+                  and(
+                    eq(
+                      financialTransactions.campaignId,
+                      oldTransaction.campaignId,
+                    ),
+                    isNull(
+                      financialTransactions.deletedAt,
+                    ),
+                  ),
+                );
+
+            const rowsWithoutCurrent =
+              ledgerRows
+                .filter(
+                  (row) =>
+                    row.id !== id,
+                )
+                .map((row) => ({
+                  type: row.type,
+                  amount: row.amount,
+                }));
+
+            const totals =
+              calculateAvailable(
+                rowsWithoutCurrent,
+              );
+
+            const nextAvailable =
+              totals.available +
+              (
+                type === "IN"
+                  ? Number(amount)
+                  : -Number(amount)
+              );
+
+            if (nextAvailable < 0) {
+              return {
+                success:
+                  false as const,
+                error:
+                  `Perubahan membuat saldo kampanye menjadi minus Rp${Math.abs(nextAvailable).toLocaleString("id-ID")}.`,
+              };
+            }
+          }
+
           const [newTransaction] =
             await tx
               .update(
@@ -670,7 +999,9 @@ export async function updateTransaksi(
                 date,
                 description,
                 programId:
-                  resolvedProgram.id,
+                  targetProgramId,
+                campaignId:
+                  oldTransaction.campaignId,
                 donorName:
                   type === "IN"
                     ? donorName
@@ -701,16 +1032,28 @@ export async function updateTransaksi(
                 newTransaction,
             });
 
-          return newTransaction;
+          return {
+            success:
+              true as const,
+            error: null,
+            transaction:
+              newTransaction,
+          };
         },
       );
 
-    revalidateFinancePages();
+    if (!result.success) {
+      return result;
+    }
+
+    revalidateFinancePages(
+      oldTransaction.campaignId,
+    );
 
     return {
       success: true,
       error: null,
-      id: updated.id,
+      id: result.transaction.id,
     };
   } catch (error) {
     console.error(
@@ -776,42 +1119,104 @@ export async function deleteTransaksi(
 
           if (!oldTransaction) {
             return {
-              success: false as const,
+              success:
+                false as const,
               error:
                 "Transaksi tidak ditemukan.",
             };
           }
 
-          if (isWebsiteDonationTransaction(oldTransaction)) {
+          if (
+            isWebsiteDonationTransaction(
+              oldTransaction,
+            )
+          ) {
             return {
-              success: false as const,
+              success:
+                false as const,
               error:
                 "Transaksi dari donasi website tidak dapat dihapus dari menu Keuangan.",
             };
           }
 
-          const [updated] = await tx
-            .update(
-              financialTransactions,
-            )
-            .set({
-              deletedAt: new Date(),
-              updatedAt: new Date(),
-            })
-            .where(
-              eq(
-                financialTransactions.id,
-                id,
-              ),
-            )
-            .returning();
+          if (
+            oldTransaction.campaignId &&
+            oldTransaction.type === "IN"
+          ) {
+            const ledgerRows =
+              await tx
+                .select({
+                  id:
+                    financialTransactions.id,
+                  type:
+                    financialTransactions.type,
+                  amount:
+                    financialTransactions.amount,
+                })
+                .from(
+                  financialTransactions,
+                )
+                .where(
+                  and(
+                    eq(
+                      financialTransactions.campaignId,
+                      oldTransaction.campaignId,
+                    ),
+                    isNull(
+                      financialTransactions.deletedAt,
+                    ),
+                  ),
+                );
+
+            const totals =
+              calculateAvailable(
+                ledgerRows
+                  .filter(
+                    (row) =>
+                      row.id !== id,
+                  )
+                  .map((row) => ({
+                    type: row.type,
+                    amount: row.amount,
+                  })),
+              );
+
+            if (totals.available < 0) {
+              return {
+                success:
+                  false as const,
+                error:
+                  "Penerimaan ini tidak dapat dihapus karena dana kampanye sudah digunakan. Sesuaikan pengeluaran terlebih dahulu.",
+              };
+            }
+          }
+
+          const [updated] =
+            await tx
+              .update(
+                financialTransactions,
+              )
+              .set({
+                deletedAt:
+                  new Date(),
+                updatedAt:
+                  new Date(),
+              })
+              .where(
+                eq(
+                  financialTransactions.id,
+                  id,
+                ),
+              )
+              .returning();
 
           await tx
             .insert(auditLogs)
             .values({
               userId:
                 financeUser.userId,
-              action: "SOFT_DELETE",
+              action:
+                "SOFT_DELETE",
               tableName:
                 "financial_transactions",
               recordId: id,
@@ -821,8 +1226,11 @@ export async function deleteTransaksi(
             });
 
           return {
-            success: true as const,
+            success:
+              true as const,
             error: null,
+            campaignId:
+              oldTransaction.campaignId,
           };
         },
       );
@@ -831,7 +1239,9 @@ export async function deleteTransaksi(
       return result;
     }
 
-    revalidateFinancePages();
+    revalidateFinancePages(
+      result.campaignId,
+    );
 
     return {
       success: true,

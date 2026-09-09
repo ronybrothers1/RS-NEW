@@ -9,6 +9,7 @@ import {
   and,
   eq,
   inArray,
+  isNull,
 } from "drizzle-orm";
 import Link from "next/link";
 import {
@@ -23,7 +24,7 @@ import {
 } from "@/src/db";
 import {
   campaigns,
-  donations,
+  financialTransactions,
   programs,
 } from "@/src/db/schema";
 
@@ -101,38 +102,51 @@ export default async function CampaignDetailPage({
     notFound();
   }
 
-  const donationRows =
+  const ledgerRows =
     await db
       .select({
+        type:
+          financialTransactions.type,
         amount:
-          donations.amount,
+          financialTransactions.amount,
       })
-      .from(donations)
+      .from(
+        financialTransactions,
+      )
       .where(
         and(
           eq(
-            donations.campaignId,
+            financialTransactions.campaignId,
             campaign.id,
           ),
-          eq(
-            donations.status,
-            "SUCCESS",
+          isNull(
+            financialTransactions.deletedAt,
           ),
         ),
       );
 
-  const collected =
-    donationRows.reduce(
-      (
-        total,
-        donation,
-      ) =>
-        total +
-        Number(
-          donation.amount,
-        ),
-      0,
-    );
+  let collected = 0;
+  let spent = 0;
+
+  for (const row of ledgerRows) {
+    const amount =
+      Number(row.amount);
+
+    if (
+      !Number.isFinite(amount)
+    ) {
+      continue;
+    }
+
+    if (row.type === "IN") {
+      collected += amount;
+    } else {
+      spent += amount;
+    }
+  }
+
+  const available =
+    collected - spent;
 
   const target =
     Number(
@@ -246,7 +260,7 @@ export default async function CampaignDetailPage({
 
           <aside className="h-fit rounded-3xl border border-slate-200 bg-white p-6 shadow-sm lg:sticky lg:top-28">
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-              Dana Terverifikasi
+              Dana Terkumpul
             </p>
             <p className="mt-2 text-2xl font-bold text-slate-950">
               {formatRupiah(
@@ -279,6 +293,30 @@ export default async function CampaignDetailPage({
               </span>
             </div>
 
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              <div className="rounded-xl bg-slate-50 p-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                  Terpakai
+                </p>
+                <p className="mt-1 text-sm font-bold text-slate-900">
+                  {formatRupiah(
+                    spent,
+                  )}
+                </p>
+              </div>
+
+              <div className="rounded-xl bg-slate-50 p-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                  Tersedia
+                </p>
+                <p className="mt-1 text-sm font-bold text-slate-900">
+                  {formatRupiah(
+                    available,
+                  )}
+                </p>
+              </div>
+            </div>
+
             {campaign.status ===
             "ACTIVE" ? (
               <Link
@@ -294,7 +332,7 @@ export default async function CampaignDetailPage({
             )}
 
             <p className="mt-4 text-xs leading-5 text-slate-500">
-              Progres hanya menghitung donasi yang telah diverifikasi oleh pengurus.
+              Progres dihitung dari dana masuk kampanye dan tidak berkurang ketika dana digunakan. Saldo tersedia adalah dana masuk dikurangi pengeluaran tercatat.
             </p>
           </aside>
         </div>

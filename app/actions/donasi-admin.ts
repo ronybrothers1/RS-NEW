@@ -57,6 +57,9 @@ function revalidateVerifiedDonationPages() {
   revalidatePath(
     "/admin/keuangan/riwayat",
   );
+  revalidatePath(
+    "/admin/keuangan/kampanye",
+  );
   revalidatePath("/transparansi");
   revalidatePath(
     "/bantuan",

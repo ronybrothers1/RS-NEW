@@ -1,6 +1,7 @@
 import {
   ArrowLeft,
   Megaphone,
+  WalletCards,
 } from "lucide-react";
 import {
   asc,
@@ -51,6 +52,8 @@ export default async function AdminCampaignPage({
   ] =
     await db
       .select({
+        id:
+          campaigns.id,
         applicationId:
           campaigns.applicationId,
         slug:
@@ -150,21 +153,31 @@ export default async function AdminCampaignPage({
           Detail Pengajuan
         </Link>
 
-        <div className="mt-5 flex items-start gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-teal-50 text-teal-700">
-            <Megaphone className="h-6 w-6" />
+        <div className="mt-5 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="flex items-start gap-4">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-teal-50 text-teal-700">
+              <Megaphone className="h-6 w-6" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-teal-700">
+                Kampanye Publik · {campaign.programName}
+              </p>
+              <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
+                Kelola “Bantu Mereka”
+              </h1>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">
+                Pengajuan sudah disetujui. Tinjau dan pisahkan informasi yang aman untuk publik sebelum kampanye diaktifkan.
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="text-sm font-semibold text-teal-700">
-              Kampanye Publik · {campaign.programName}
-            </p>
-            <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
-              Kelola “Bantu Mereka”
-            </h1>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">
-              Pengajuan sudah disetujui. Tinjau dan pisahkan informasi yang aman untuk publik sebelum kampanye diaktifkan.
-            </p>
-          </div>
+
+          <Link
+            href={`/admin/keuangan/kampanye/${campaign.id}`}
+            className="inline-flex shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+          >
+            <WalletCards className="mr-2 h-4 w-4 text-teal-700" />
+            Lihat Keuangan
+          </Link>
         </div>
       </div>
 

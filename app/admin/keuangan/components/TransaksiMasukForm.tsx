@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import {
   useActionState,
+  useMemo,
   useState,
 } from "react";
 
@@ -21,6 +22,13 @@ type ProgramOption = {
   name: string;
 };
 
+type CampaignOption = {
+  id: string;
+  title: string;
+  programId: string;
+  status: "ACTIVE";
+};
+
 function getJakartaDateValue() {
   return new Intl.DateTimeFormat(
     "en-CA",
@@ -32,6 +40,7 @@ function getJakartaDateValue() {
     },
   ).format(new Date());
 }
+
 function formatAmount(value: string) {
   const digits = value.replace(/\D/g, "");
 
@@ -44,9 +53,19 @@ function formatAmount(value: string) {
 
 export default function TransaksiMasukForm({
   programs,
+  campaigns,
+  defaultCampaignId = "",
 }: {
   programs: ProgramOption[];
+  campaigns: CampaignOption[];
+  defaultCampaignId?: string;
 }) {
+  const initialCampaign =
+    campaigns.find(
+      (campaign) =>
+        campaign.id === defaultCampaignId,
+    ) || null;
+
   const initialState: KeuanganActionResult = {
     success: false,
     error: null,
@@ -61,6 +80,72 @@ export default function TransaksiMasukForm({
   const [amount, setAmount] =
     useState("");
 
+  const [
+    selectedProgram,
+    setSelectedProgram,
+  ] = useState(
+    initialCampaign?.programId || "",
+  );
+
+  const [
+    selectedCampaign,
+    setSelectedCampaign,
+  ] = useState(
+    initialCampaign?.id || "",
+  );
+
+  const availableCampaigns =
+    useMemo(
+      () =>
+        campaigns.filter(
+          (campaign) =>
+            !selectedProgram ||
+            campaign.programId ===
+              selectedProgram,
+        ),
+      [
+        campaigns,
+        selectedProgram,
+      ],
+    );
+
+  function changeProgram(
+    programId: string,
+  ) {
+    setSelectedProgram(programId);
+
+    if (
+      selectedCampaign &&
+      !campaigns.some(
+        (campaign) =>
+          campaign.id ===
+            selectedCampaign &&
+          campaign.programId ===
+            programId,
+      )
+    ) {
+      setSelectedCampaign("");
+    }
+  }
+
+  function changeCampaign(
+    campaignId: string,
+  ) {
+    setSelectedCampaign(campaignId);
+
+    const campaign =
+      campaigns.find(
+        (item) =>
+          item.id === campaignId,
+      );
+
+    if (campaign) {
+      setSelectedProgram(
+        campaign.programId,
+      );
+    }
+  }
+
   if (state.success) {
     return (
       <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-6 text-center">
@@ -71,9 +156,9 @@ export default function TransaksiMasukForm({
         </h2>
 
         <p className="mt-2 text-sm leading-6 text-emerald-700">
-          Saldo, dashboard, riwayat
-          transaksi, dan transparansi telah
-          diperbarui.
+          Saldo, dashboard, riwayat,
+          transparansi, dan sub-ledger
+          kampanye telah diperbarui.
         </p>
 
         <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
@@ -191,37 +276,88 @@ export default function TransaksiMasukForm({
         />
       </div>
 
-      <div>
-        <label
-          htmlFor="income-program"
-          className="mb-2 block text-sm font-medium text-slate-700"
-        >
-          Program Tujuan
-          <span className="ml-1 font-normal text-slate-400">
-            (Opsional)
-          </span>
-        </label>
+      <div className="grid gap-5 sm:grid-cols-2">
+        <div>
+          <label
+            htmlFor="income-program"
+            className="mb-2 block text-sm font-medium text-slate-700"
+          >
+            Program Tujuan
+          </label>
 
-        <select
-          id="income-program"
-          name="programId"
-          defaultValue=""
-          className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-slate-900 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
-        >
-          <option value="">
-            Umum
-          </option>
-
-          {programs.map((program) => (
-            <option
-              key={program.id}
-              value={program.id}
-            >
-              {program.name}
+          <select
+            id="income-program"
+            name="programId"
+            value={selectedProgram}
+            onChange={(event) =>
+              changeProgram(
+                event.target.value,
+              )
+            }
+            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-slate-900 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
+          >
+            <option value="">
+              Umum
             </option>
-          ))}
-        </select>
+
+            {programs.map((program) => (
+              <option
+                key={program.id}
+                value={program.id}
+              >
+                {program.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label
+            htmlFor="income-campaign"
+            className="mb-2 block text-sm font-medium text-slate-700"
+          >
+            Kampanye
+            <span className="ml-1 font-normal text-slate-400">
+              (Opsional)
+            </span>
+          </label>
+
+          <select
+            id="income-campaign"
+            name="campaignId"
+            value={selectedCampaign}
+            onChange={(event) =>
+              changeCampaign(
+                event.target.value,
+              )
+            }
+            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-slate-900 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
+          >
+            <option value="">
+              Tidak terkait kampanye
+            </option>
+
+            {availableCampaigns.map(
+              (campaign) => (
+                <option
+                  key={campaign.id}
+                  value={campaign.id}
+                >
+                  {campaign.title}
+                </option>
+              ),
+            )}
+          </select>
+        </div>
       </div>
+
+      {selectedCampaign && (
+        <div className="rounded-xl border border-teal-200 bg-teal-50 px-4 py-3 text-sm leading-6 text-teal-800">
+          Penerimaan ini akan tercatat
+          langsung pada sub-ledger kampanye
+          dan ikut menambah progres target.
+        </div>
+      )}
 
       <div>
         <label
