@@ -156,19 +156,6 @@ export default function PengaturanForm({
                 className="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-teal-500 focus:border-teal-500"
               />
             </div>
-
-            <div className="flex gap-4 items-center">
-              <div className="w-24 shrink-0 font-bold text-slate-700">
-                Bank BRI
-              </div>
-              <input
-                type="text"
-                name="bank_bri"
-                defaultValue={initialData.bank_bri || ''}
-                placeholder="Nomor rekening dan nama pemilik"
-                className="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-teal-500 focus:border-teal-500"
-              />
-            </div>
           </div>
         </div>
       </div>
