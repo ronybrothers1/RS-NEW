@@ -1,6 +1,14 @@
-import { auth } from "@/auth";
-import { redirect } from "next/navigation";
+import {
+  auth,
+} from "@/auth";
+import {
+  getCurrentDbUser,
+} from "@/lib/current-authz";
+import {
+  redirect,
+} from "next/navigation";
 
+import AccessRevoked from "./components/AccessRevoked";
 import AdminHeader from "./components/AdminHeader";
 import AdminSidebar from "./components/AdminSidebar";
 
@@ -9,29 +17,31 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth();
+  const session =
+    await auth();
 
   if (!session?.user) {
     redirect("/login");
   }
 
-  const role = (
-    session.user as {
-      role?: string;
-    }
-  ).role;
+  const currentUser =
+    await getCurrentDbUser();
 
-  const isStaff =
-    role === "ADMIN" ||
-    role === "OPERATOR";
-
-  if (!isStaff) {
-    redirect("/akun");
+  if (
+    !currentUser ||
+    (
+      currentUser.role !== "ADMIN" &&
+      currentUser.role !== "OPERATOR"
+    )
+  ) {
+    return <AccessRevoked />;
   }
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50">
-      <AdminSidebar role={role} />
+      <AdminSidebar
+        role={currentUser.role}
+      />
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <AdminHeader

@@ -262,6 +262,7 @@ async function getVerifiedUser() {
     await db
       .select({
         id: users.id,
+        role: users.role,
         emailVerifiedAt:
           users.emailVerifiedAt,
       })
@@ -276,6 +277,7 @@ async function getVerifiedUser() {
 
   if (
     !user ||
+    user.role !== "USER" ||
     !user.emailVerifiedAt
   ) {
     return null;

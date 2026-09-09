@@ -1,6 +1,8 @@
 "use server";
 
-import { auth } from "@/auth";
+import {
+  getCurrentStaffUser,
+} from "@/lib/current-authz";
 import { db } from "@/src/db";
 import {
   auditLogs,
@@ -12,6 +14,7 @@ import {
   and,
   eq,
   isNull,
+  sql,
 } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
@@ -108,28 +111,16 @@ function isWebsiteDonationTransaction(
 }
 
 async function getFinanceSession() {
-  const session = await auth();
+  const staff =
+    await getCurrentStaffUser();
 
-  if (!session?.user?.id) {
-    return null;
-  }
-
-  const role = (
-    session.user as {
-      role?: string;
-    }
-  ).role;
-
-  if (
-    role !== "ADMIN" &&
-    role !== "OPERATOR"
-  ) {
+  if (!staff) {
     return null;
   }
 
   return {
-    userId: session.user.id,
-    role,
+    userId: staff.id,
+    role: staff.role,
   };
 }
 
@@ -596,6 +587,10 @@ export async function createTransaksiKeluar(
       await db.transaction(
         async (tx) => {
           if (target.campaignId) {
+            await tx.execute(
+              sql`SELECT id FROM campaigns WHERE id = ${target.campaignId} FOR UPDATE`,
+            );
+
             const ledgerRows =
               await tx
                 .select({
@@ -929,6 +924,10 @@ export async function updateTransaksi(
           if (
             oldTransaction.campaignId
           ) {
+            await tx.execute(
+              sql`SELECT id FROM campaigns WHERE id = ${oldTransaction.campaignId} FOR UPDATE`,
+            );
+
             const ledgerRows =
               await tx
                 .select({
@@ -1143,6 +1142,10 @@ export async function deleteTransaksi(
             oldTransaction.campaignId &&
             oldTransaction.type === "IN"
           ) {
+            await tx.execute(
+              sql`SELECT id FROM campaigns WHERE id = ${oldTransaction.campaignId} FOR UPDATE`,
+            );
+
             const ledgerRows =
               await tx
                 .select({

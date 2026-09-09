@@ -1,9 +1,12 @@
 "use server";
 
-import { auth } from "@/auth";
+import {
+  getCurrentStaffUser,
+} from "@/lib/current-authz";
 import { db } from "@/src/db";
 import {
   auditLogs,
+  campaigns,
   donations,
   financialTransactions,
 } from "@/src/db/schema";
@@ -20,27 +23,15 @@ function isUuid(value: string) {
 }
 
 async function getAdminSession() {
-  const session = await auth();
+  const staff =
+    await getCurrentStaffUser();
 
-  if (!session?.user?.id) {
-    return null;
-  }
-
-  const role = (
-    session.user as {
-      role?: string;
-    }
-  ).role;
-
-  if (
-    role !== "ADMIN" &&
-    role !== "OPERATOR"
-  ) {
+  if (!staff) {
     return null;
   }
 
   return {
-    userId: session.user.id,
+    userId: staff.id,
   };
 }
 
@@ -165,6 +156,38 @@ export async function verifyDonation(
               error:
                 "Donasi tidak memiliki bukti transfer dan tidak dapat diverifikasi.",
             };
+          }
+
+          if (
+            oldDonation.campaignId
+          ) {
+            const [campaign] =
+              await tx
+                .select({
+                  status:
+                    campaigns.status,
+                })
+                .from(campaigns)
+                .where(
+                  eq(
+                    campaigns.id,
+                    oldDonation.campaignId,
+                  ),
+                )
+                .limit(1);
+
+            if (
+              !campaign ||
+              campaign.status ===
+                "CANCELLED"
+            ) {
+              return {
+                success:
+                  false as const,
+                error:
+                  "Donasi kampanye tidak dapat diverifikasi karena kampanye telah dibatalkan atau tidak tersedia.",
+              };
+            }
           }
 
           const donationAmount =

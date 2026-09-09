@@ -3,38 +3,62 @@
 import {
   compare,
 } from "bcryptjs";
-
 import {
   ilike,
 } from "drizzle-orm";
-
 import {
   AuthError,
 } from "next-auth";
+import {
+  headers,
+} from "next/headers";
 
 import {
   signIn,
 } from "@/auth";
-
-import { db } from "@/src/db";
-
-import {
-  users,
-} from "@/src/db/schema";
-
-import {
-  ensureEmailVerificationCode,
-} from "@/lib/issue-email-verification";
-
 import {
   setPendingEmailVerificationCookie,
 } from "@/lib/email-verification-session";
+import {
+  ensureEmailVerificationCode,
+} from "@/lib/issue-email-verification";
+import {
+  rateLimit,
+} from "@/lib/rate-limit";
+import {
+  db,
+} from "@/src/db";
+import {
+  users,
+} from "@/src/db/schema";
 
 export type LoginState = {
   success: boolean;
   error: string | null;
   requiresVerification: boolean;
 };
+
+function getIp(
+  headersList:
+    Awaited<
+      ReturnType<
+        typeof headers
+      >
+    >,
+) {
+  return (
+    headersList
+      .get(
+        "x-forwarded-for",
+      )
+      ?.split(",")[0]
+      ?.trim() ||
+    headersList.get(
+      "x-real-ip",
+    ) ||
+    "unknown-ip"
+  );
+}
 
 export async function loginAction(
   _prevState: LoginState,
@@ -57,6 +81,38 @@ export async function loginAction(
       success: false,
       error:
         "Email dan password wajib diisi.",
+      requiresVerification:
+        false,
+    };
+  }
+
+  const headersList =
+    await headers();
+
+  const ip =
+    getIp(headersList);
+
+  const {
+    success:
+      loginAllowed,
+    retryAfterMs,
+  } = rateLimit(
+    `login:${ip}:${email}`,
+    10,
+    15 * 60 * 1000,
+  );
+
+  if (!loginAllowed) {
+    return {
+      success: false,
+      error:
+        `Terlalu banyak percobaan masuk. Coba lagi sekitar ${Math.max(
+          1,
+          Math.ceil(
+            retryAfterMs /
+              60000,
+          ),
+        )} menit lagi.`,
       requiresVerification:
         false,
     };

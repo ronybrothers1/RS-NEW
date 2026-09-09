@@ -3,6 +3,7 @@
 import {
   and,
   eq,
+  sql,
 } from "drizzle-orm";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
@@ -491,22 +492,60 @@ export async function submitDonation(
         selectedCampaign.slug;
     }
 
-    await db
-      .insert(donations)
-      .values({
-        donorName,
-        amount:
-          amount.toString(),
-        programId,
-        campaignId:
-          campaignId ||
-          null,
-        paymentMethod,
-        isAnonymous,
-        proofImage:
-          proofImageUrl,
-        status: "PENDING",
-      });
+    const inserted =
+      await db.transaction(
+        async (tx) => {
+          await tx.execute(
+            sql`SELECT pg_advisory_xact_lock(hashtext(${proofImageUrl}))`,
+          );
+
+          const [duplicate] =
+            await tx
+              .select({
+                id: donations.id,
+              })
+              .from(donations)
+              .where(
+                eq(
+                  donations.proofImage,
+                  proofImageUrl,
+                ),
+              )
+              .limit(1);
+
+          if (duplicate) {
+            return false;
+          }
+
+          await tx
+            .insert(donations)
+            .values({
+              donorName,
+              amount:
+                amount.toString(),
+              programId,
+              campaignId:
+                campaignId ||
+                null,
+              paymentMethod,
+              isAnonymous,
+              proofImage:
+                proofImageUrl,
+              status:
+                "PENDING",
+            });
+
+          return true;
+        },
+      );
+
+    if (!inserted) {
+      return {
+        success: false,
+        error:
+          "Bukti transfer ini sudah pernah dikirim.",
+      };
+    }
 
     revalidatePath(
       "/admin/donasi",

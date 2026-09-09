@@ -6,8 +6,8 @@ import {
 } from "drizzle-orm";
 
 import {
-  auth,
-} from "@/auth";
+  getCurrentDbUser,
+} from "@/lib/current-authz";
 import {
   getAssistanceBlobToken,
 } from "@/lib/assistance-media";
@@ -31,25 +31,18 @@ export async function GET(
       }>;
   },
 ) {
-  const session =
-    await auth();
+  const currentUser =
+    await getCurrentDbUser();
 
-  const userId =
-    session?.user?.id;
-
-  const role = (
-    session?.user as
-      | {
-          role?: string;
-        }
-      | undefined
-  )?.role;
-
-  if (!userId) {
+  if (!currentUser) {
     return new Response(
       "Unauthorized",
       {
         status: 401,
+        headers: {
+          "Cache-Control":
+            "no-store",
+        },
       },
     );
   }
@@ -89,18 +82,25 @@ export async function GET(
       "Not Found",
       {
         status: 404,
+        headers: {
+          "Cache-Control":
+            "no-store",
+        },
       },
     );
   }
 
   const isStaff =
-    role === "ADMIN" ||
-    role === "OPERATOR";
+    currentUser.role ===
+      "ADMIN" ||
+    currentUser.role ===
+      "OPERATOR";
 
   const isOwner =
-    role === "USER" &&
+    currentUser.role ===
+      "USER" &&
     photo.applicantId ===
-      userId;
+      currentUser.id;
 
   if (
     !isStaff &&
@@ -110,6 +110,10 @@ export async function GET(
       "Forbidden",
       {
         status: 403,
+        headers: {
+          "Cache-Control":
+            "no-store",
+        },
       },
     );
   }
@@ -122,6 +126,10 @@ export async function GET(
       "Media storage unavailable",
       {
         status: 503,
+        headers: {
+          "Cache-Control":
+            "no-store",
+        },
       },
     );
   }
@@ -142,6 +150,10 @@ export async function GET(
         "Not Found",
         {
           status: 404,
+          headers: {
+            "Cache-Control":
+              "no-store",
+          },
         },
       );
     }
@@ -171,6 +183,10 @@ export async function GET(
       "Media unavailable",
       {
         status: 404,
+        headers: {
+          "Cache-Control":
+            "no-store",
+        },
       },
     );
   }

@@ -1,20 +1,17 @@
 import {
-  handleUpload,
-  type HandleUploadBody,
-} from "@vercel/blob/client";
-import {
   del,
 } from "@vercel/blob";
 import {
-  eq,
-} from "drizzle-orm";
+  handleUpload,
+  type HandleUploadBody,
+} from "@vercel/blob/client";
 import {
   NextResponse,
 } from "next/server";
 
 import {
-  auth,
-} from "@/auth";
+  getCurrentVerifiedPublicUser,
+} from "@/lib/current-authz";
 import {
   rateLimit,
 } from "@/lib/rate-limit";
@@ -24,66 +21,12 @@ import {
   getAssistanceBlobToken,
   isAllowedAssistanceUserPath,
 } from "@/lib/assistance-media";
-import {
-  db,
-} from "@/src/db";
-import {
-  users,
-} from "@/src/db/schema";
-
-async function getVerifiedPublicUser() {
-  const session =
-    await auth();
-
-  const userId =
-    session?.user?.id;
-
-  const role = (
-    session?.user as
-      | {
-          role?: string;
-        }
-      | undefined
-  )?.role;
-
-  if (
-    !userId ||
-    role !== "USER"
-  ) {
-    return null;
-  }
-
-  const [user] =
-    await db
-      .select({
-        id: users.id,
-        emailVerifiedAt:
-          users.emailVerifiedAt,
-      })
-      .from(users)
-      .where(
-        eq(
-          users.id,
-          userId,
-        ),
-      )
-      .limit(1);
-
-  if (
-    !user ||
-    !user.emailVerifiedAt
-  ) {
-    return null;
-  }
-
-  return user;
-}
 
 export async function POST(
   request: Request,
 ): Promise<NextResponse> {
   const user =
-    await getVerifiedPublicUser();
+    await getCurrentVerifiedPublicUser();
 
   if (!user) {
     return NextResponse.json(
@@ -155,7 +98,9 @@ export async function POST(
         token,
 
         onBeforeGenerateToken:
-          async (pathname) => {
+          async (
+            pathname,
+          ) => {
             if (
               !isAllowedAssistanceUserPath(
                 pathname,
@@ -174,7 +119,8 @@ export async function POST(
                 ],
               maximumSizeInBytes:
                 ASSISTANCE_MEDIA_MAX_SIZE,
-              addRandomSuffix: true,
+              addRandomSuffix:
+                true,
             };
           },
 
@@ -202,7 +148,8 @@ export async function POST(
     return NextResponse.json(
       {
         error:
-          error instanceof Error
+          error instanceof
+          Error
             ? error.message
             : "Gagal mengunggah foto pengajuan.",
       },
@@ -221,7 +168,7 @@ export async function DELETE(
   request: Request,
 ): Promise<NextResponse> {
   const user =
-    await getVerifiedPublicUser();
+    await getCurrentVerifiedPublicUser();
 
   if (!user) {
     return NextResponse.json(
@@ -231,6 +178,10 @@ export async function DELETE(
       },
       {
         status: 401,
+        headers: {
+          "Cache-Control":
+            "no-store",
+        },
       },
     );
   }
@@ -246,6 +197,10 @@ export async function DELETE(
       },
       {
         status: 503,
+        headers: {
+          "Cache-Control":
+            "no-store",
+        },
       },
     );
   }
@@ -273,6 +228,10 @@ export async function DELETE(
         },
         {
           status: 400,
+          headers: {
+            "Cache-Control":
+              "no-store",
+          },
         },
       );
     }
@@ -284,9 +243,17 @@ export async function DELETE(
       },
     );
 
-    return NextResponse.json({
-      success: true,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+      },
+      {
+        headers: {
+          "Cache-Control":
+            "no-store",
+        },
+      },
+    );
   } catch (error) {
     console.error(
       "Assistance temporary photo delete error:",
@@ -300,6 +267,10 @@ export async function DELETE(
       },
       {
         status: 400,
+        headers: {
+          "Cache-Control":
+            "no-store",
+        },
       },
     );
   }
