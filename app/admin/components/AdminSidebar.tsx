@@ -8,7 +8,7 @@ import {
   CalendarRange,
   Newspaper,
   HeartHandshake,
-  Image as ImageIcon,
+  ClipboardCheck,
   Users,
   Settings,
   ClipboardList,
@@ -136,7 +136,7 @@ export default function AdminSidebar({ role }: AdminSidebarProps) {
         { name: "Manajemen Program", href: "/admin/program" },
       ],
     },
-    { name: "Galeri", icon: ImageIcon, href: "/admin/galeri" },
+    { name: "Pengajuan Bantuan", icon: ClipboardCheck, href: "/admin/pengajuan" },
   ];
 
   if (role === "ADMIN") {
