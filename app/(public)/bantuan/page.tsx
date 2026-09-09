@@ -28,7 +28,7 @@ export const dynamic =
 
 export const metadata = {
   title:
-    "Bantu Mereka | Ruang Sejahtera",
+    "Bantu Mereka",
   description:
     "Kampanye bantuan yang telah melalui proses verifikasi Yayasan Ruang Sejahtera.",
 };

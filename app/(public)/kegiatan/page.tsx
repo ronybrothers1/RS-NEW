@@ -16,7 +16,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Kegiatan | Yayasan Ruang Sejahtera",
+  title: "Kegiatan",
   description:
     "Dokumentasi kegiatan dan penyaluran program Yayasan Ruang Sejahtera untuk masyarakat.",
 };

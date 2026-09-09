@@ -1,5 +1,6 @@
 import { defineConfig } from "drizzle-kit";
 import * as dotenv from "dotenv";
+import { normalizePostgresSslMode } from "../../lib/postgres-url";
 
 dotenv.config();
 
@@ -10,7 +11,12 @@ const databaseUrl =
 let dbCredentials: any;
 
 if (databaseUrl) {
-  dbCredentials = { url: databaseUrl };
+  dbCredentials = {
+    url:
+      normalizePostgresSslMode(
+        databaseUrl,
+      ),
+  };
 } else {
   const sqlHost = process.env.SQL_HOST;
   const sqlDbName = process.env.SQL_DB_NAME;

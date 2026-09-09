@@ -8,6 +8,7 @@ import { db } from "@/src/db";
 import { financialTransactions, programs, activities } from "@/src/db/schema";
 import { sql, eq } from "drizzle-orm";
 import { formatCurrency } from "@/lib/utils";
+import { getFinanceOpeningBalance } from "@/lib/finance-opening-balance";
 
 const iconMap: Record<string, React.ElementType> = {
   'BookOpen': BookOpen,
@@ -20,12 +21,18 @@ const iconMap: Record<string, React.ElementType> = {
 };
 
 export default async function HomePage() {
+  const openingBalance =
+    await getFinanceOpeningBalance();
+
   const [financialStats] = await db.select({
     totalIn: sql<number>`COALESCE(SUM(CASE WHEN ${financialTransactions.type} = 'IN' THEN ${financialTransactions.amount} ELSE 0 END), 0)`,
     totalOut: sql<number>`COALESCE(SUM(CASE WHEN ${financialTransactions.type} = 'OUT' THEN ${financialTransactions.amount} ELSE 0 END), 0)`,
   }).from(financialTransactions).where(sql`${financialTransactions.deletedAt} IS NULL`);
 
-  const saldo = Number(financialStats?.totalIn || 0) - Number(financialStats?.totalOut || 0);
+  const saldo =
+    openingBalance.amount +
+    Number(financialStats?.totalIn || 0) -
+    Number(financialStats?.totalOut || 0);
 
   const activePrograms = await db
     .select()
@@ -75,16 +82,16 @@ export default async function HomePage() {
               <div className="text-teal-200 text-sm">Program Sosial</div>
             </div>
             <div>
-              <div className="text-3xl font-bold mb-1">Rp {((Number(financialStats?.totalOut || 0)) / 1000000).toFixed(1)}Jt+</div>
-              <div className="text-teal-200 text-sm">Tersalurkan</div>
+              <div className="text-3xl font-bold mb-1">Rp {((Number(financialStats?.totalOut || 0)) / 1000000).toFixed(1)} Jt</div>
+              <div className="text-teal-200 text-sm">Total Pengeluaran</div>
             </div>
             <div>
-              <div className="text-3xl font-bold mb-1">Rp {((Number(financialStats?.totalIn || 0)) / 1000000).toFixed(1)}Jt+</div>
-              <div className="text-teal-200 text-sm">Total Donasi</div>
+              <div className="text-3xl font-bold mb-1">Rp {((Number(financialStats?.totalIn || 0)) / 1000000).toFixed(1)} Jt</div>
+              <div className="text-teal-200 text-sm">Total Penerimaan</div>
             </div>
             <div>
-              <div className="text-3xl font-bold mb-1">100%</div>
-              <div className="text-teal-200 text-sm">Transparan</div>
+              <div className="text-3xl font-bold mb-1">Terbuka</div>
+              <div className="text-teal-200 text-sm">Laporan Keuangan</div>
             </div>
           </div>
         ) : (
@@ -185,17 +192,17 @@ export default async function HomePage() {
             <div>
               <h2 className="text-3xl md:text-4xl font-bold mb-6">Transparansi Adalah Janji Kami</h2>
               <p className="text-slate-300 text-lg mb-8 leading-relaxed">
-                Kami percaya bahwa setiap rupiah yang didonasikan adalah amanah. Laporan keuangan dan penyaluran dana kami publikasikan secara real-time dan dapat diakses oleh siapa saja.
+                Kami percaya bahwa setiap rupiah yang dipercayakan kepada yayasan adalah amanah. Laporan penerimaan, pengeluaran, dan saldo kas disajikan dari transaksi yang tercatat di sistem dan dapat diakses oleh masyarakat.
               </p>
               <ul className="space-y-4 mb-8">
                 <li className="flex items-center gap-3 text-slate-200">
-                  <CheckCircle2 className="h-6 w-6 text-teal-400" /> Pencatatan dana masuk & keluar real-time
+                  <CheckCircle2 className="h-6 w-6 text-teal-400" /> Penerimaan dan pengeluaran tercatat pada ledger keuangan
                 </li>
                 <li className="flex items-center gap-3 text-slate-200">
-                  <CheckCircle2 className="h-6 w-6 text-teal-400" /> Transaksi terkait langsung dengan program
+                  <CheckCircle2 className="h-6 w-6 text-teal-400" /> Transaksi terhubung ke program atau kampanye bila relevan
                 </li>
                 <li className="flex items-center gap-3 text-slate-200">
-                  <CheckCircle2 className="h-6 w-6 text-teal-400" /> Publikasi terbuka untuk masyarakat umum
+                  <CheckCircle2 className="h-6 w-6 text-teal-400" /> Riwayat transaksi terbaru dapat dilihat oleh masyarakat
                 </li>
               </ul>
               <Link href="/transparansi" className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-full font-medium transition-colors border border-white/10">
@@ -206,17 +213,17 @@ export default async function HomePage() {
             <div className="bg-slate-800 rounded-3xl p-8 border border-slate-700 shadow-2xl">
               <div className="space-y-6">
                 <div>
-                  <div className="text-slate-400 text-sm font-medium mb-1">Total Penerimaan Dana</div>
+                  <div className="text-slate-400 text-sm font-medium mb-1">Total Penerimaan</div>
                   <div className="text-3xl font-bold text-emerald-400">{formatCurrency(Number(financialStats?.totalIn || 0))}</div>
                 </div>
                 <div className="h-px bg-slate-700"></div>
                 <div>
-                  <div className="text-slate-400 text-sm font-medium mb-1">Total Penyaluran Program</div>
+                  <div className="text-slate-400 text-sm font-medium mb-1">Total Pengeluaran</div>
                   <div className="text-3xl font-bold text-amber-400">{formatCurrency(Number(financialStats?.totalOut || 0))}</div>
                 </div>
                 <div className="h-px bg-slate-700"></div>
                 <div>
-                  <div className="text-slate-400 text-sm font-medium mb-1">Saldo Tersedia</div>
+                  <div className="text-slate-400 text-sm font-medium mb-1">Saldo Kas Saat Ini</div>
                   <div className="text-3xl font-bold text-white">{formatCurrency(saldo)}</div>
                 </div>
               </div>

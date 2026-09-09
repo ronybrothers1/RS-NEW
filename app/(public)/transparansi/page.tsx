@@ -164,7 +164,7 @@ export default async function TransparansiPage() {
           
           <div className="p-6 bg-slate-50 text-center border-t border-slate-100">
              <p className="text-sm text-slate-500">
-               Catatan: Data diperbarui secara *real-time* setiap kali admin memasukkan data transaksi.
+               Catatan: Data diperbarui setiap kali pengurus mencatat atau memverifikasi transaksi di sistem.
              </p>
           </div>
         </div>

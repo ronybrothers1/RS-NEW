@@ -99,7 +99,7 @@ export default async function Footer() {
               </li>
               <li>
                 <Link href="/kegiatan" className="hover:text-teal-400 transition-colors">
-                  Galeri Kegiatan
+                  Kegiatan
                 </Link>
               </li>
               <li>

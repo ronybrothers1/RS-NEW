@@ -1,6 +1,7 @@
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool, type PoolConfig } from 'pg';
 import * as schema from './schema';
+import { normalizePostgresSslMode } from '../../lib/postgres-url';
 
 declare global {
   var _postgresPool: Pool | undefined;
@@ -18,7 +19,10 @@ function getPoolConfig(): PoolConfig {
   if (databaseUrl) {
     return {
       ...common,
-      connectionString: databaseUrl,
+      connectionString:
+        normalizePostgresSslMode(
+          databaseUrl,
+        ),
     };
   }
 
