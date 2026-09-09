@@ -5,11 +5,19 @@ import {
   Phone,
 } from "lucide-react";
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { eq } from "drizzle-orm";
+import {
+  redirect,
+} from "next/navigation";
+import {
+  eq,
+} from "drizzle-orm";
 
-import { auth } from "@/auth";
-import { db } from "@/src/db";
+import {
+  auth,
+} from "@/auth";
+import {
+  db,
+} from "@/src/db";
 import {
   users,
 } from "@/src/db/schema";
@@ -20,10 +28,15 @@ export const dynamic =
   "force-dynamic";
 
 export default async function AccountPage() {
-  const session = await auth();
+  const session =
+    await auth();
 
-  if (!session?.user?.id) {
-    redirect("/login");
+  if (
+    !session?.user?.id
+  ) {
+    redirect(
+      "/login",
+    );
   }
 
   const role = (
@@ -32,32 +45,51 @@ export default async function AccountPage() {
     }
   ).role;
 
-  if (role !== "USER") {
+  if (
+    role !== "USER"
+  ) {
     redirect(
       "/admin/dashboard",
     );
   }
 
-  const [user] = await db
-    .select({
-      id: users.id,
-      name: users.name,
-      email: users.email,
-      phone: users.phone,
-      createdAt:
-        users.createdAt,
-    })
-    .from(users)
-    .where(
-      eq(
-        users.id,
-        session.user.id,
-      ),
-    )
-    .limit(1);
+  const [user] =
+    await db
+      .select({
+        id:
+          users.id,
+        name:
+          users.name,
+        email:
+          users.email,
+        phone:
+          users.phone,
+        emailVerifiedAt:
+          users.emailVerifiedAt,
+        createdAt:
+          users.createdAt,
+      })
+      .from(users)
+      .where(
+        eq(
+          users.id,
+          session.user.id,
+        ),
+      )
+      .limit(1);
 
   if (!user) {
-    redirect("/login");
+    redirect(
+      "/login",
+    );
+  }
+
+  if (
+    !user.emailVerifiedAt
+  ) {
+    redirect(
+      "/verifikasi-email",
+    );
   }
 
   return (
@@ -75,7 +107,9 @@ export default async function AccountPage() {
               </p>
 
               <h1 className="text-2xl font-bold tracking-tight text-slate-950">
-                {user.name}
+                {
+                  user.name
+                }
               </h1>
             </div>
           </div>
@@ -100,7 +134,9 @@ export default async function AccountPage() {
                 </p>
 
                 <p className="mt-1 break-all text-sm font-medium text-slate-700">
-                  {user.email}
+                  {
+                    user.email
+                  }
                 </p>
               </div>
             </div>
@@ -132,28 +168,30 @@ export default async function AccountPage() {
           </h2>
 
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            Dari akun ini Anda akan
-            dapat mengajukan calon
-            penerima bantuan, melihat
-            proses verifikasi, dan
-            melengkapi data apabila
-            pengurus meminta revisi.
+            Ajukan calon penerima untuk salah satu program aktif, simpan draf, kirim untuk verifikasi, dan pantau statusnya dari akun ini.
           </p>
 
           <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
             <p className="text-sm font-medium text-slate-700">
-              Modul Pengajuan Bantuan
-              sedang disiapkan pada tahap
-              berikutnya.
+              Data alamat lengkap dan foto pengajuan digunakan untuk proses internal. Foto pengajuan tidak dibuka sebagai media publik.
             </p>
           </div>
 
-          <Link
-            href="/"
-            className="mt-5 inline-flex text-sm font-semibold text-teal-700 hover:text-teal-800"
-          >
-            Kembali ke beranda
-          </Link>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <Link
+              href="/akun/pengajuan"
+              className="inline-flex min-h-11 items-center justify-center rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800"
+            >
+              Kelola Pengajuan
+            </Link>
+
+            <Link
+              href="/"
+              className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            >
+              Kembali ke Beranda
+            </Link>
+          </div>
         </section>
       </div>
     </div>

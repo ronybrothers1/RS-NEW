@@ -16,6 +16,17 @@ export const articleStatusEnum = pgEnum('article_status', ['DRAFT', 'SCHEDULED',
 export const donationStatusEnum = pgEnum('donation_status', ['PENDING', 'SUCCESS', 'FAILED']);
 export const programStatusEnum = pgEnum('program_status', ['ACTIVE', 'INACTIVE']);
 
+export const assistanceApplicationStatusEnum = pgEnum(
+  'assistance_application_status',
+  [
+    'DRAFT',
+    'SUBMITTED',
+    'NEEDS_REVISION',
+    'APPROVED',
+    'REJECTED',
+  ]
+);
+
 export const users = pgTable('users', {
   id: uuid('id').defaultRandom().primaryKey(),
   name: text('name').notNull(),
@@ -49,6 +60,75 @@ export const programs = pgTable('programs', {
   targetAmount: numeric('target_amount'),
   status: programStatusEnum('status').default('ACTIVE').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const assistanceApplications = pgTable('assistance_applications', {
+  id: uuid('id').defaultRandom().primaryKey(),
+
+  applicantId: uuid('applicant_id')
+    .references(() => users.id, { onDelete: 'restrict' })
+    .notNull(),
+
+  programId: uuid('program_id')
+    .references(() => programs.id, { onDelete: 'restrict' })
+    .notNull(),
+
+  title: text('title').notNull(),
+  beneficiaryName: text('beneficiary_name').notNull(),
+  applicantRelationship: text('applicant_relationship').notNull(),
+  contactWhatsapp: text('contact_whatsapp').notNull(),
+  village: text('village').notNull(),
+  subdistrict: text('subdistrict').notNull(),
+  regency: text('regency').notNull(),
+  detailedAddress: text('detailed_address').notNull(),
+  conditionDescription: text('condition_description').notNull(),
+  targetAmount: numeric('target_amount').notNull(),
+  programData: json('program_data'),
+
+  truthConsent: boolean('truth_consent')
+    .default(false)
+    .notNull(),
+
+  truthConsentAt: timestamp('truth_consent_at'),
+
+  status: assistanceApplicationStatusEnum('status')
+    .default('DRAFT')
+    .notNull(),
+
+  reviewNote: text('review_note'),
+
+  reviewedBy: uuid('reviewed_by')
+    .references(() => users.id, { onDelete: 'set null' }),
+
+  submittedAt: timestamp('submitted_at'),
+  reviewedAt: timestamp('reviewed_at'),
+
+  createdAt: timestamp('created_at')
+    .defaultNow()
+    .notNull(),
+
+  updatedAt: timestamp('updated_at')
+    .defaultNow()
+    .notNull(),
+});
+
+export const assistanceApplicationPhotos = pgTable('assistance_application_photos', {
+  id: uuid('id').defaultRandom().primaryKey(),
+
+  applicationId: uuid('application_id')
+    .references(() => assistanceApplications.id, { onDelete: 'cascade' })
+    .notNull(),
+
+  imageUrl: text('image_url').notNull(),
+  storagePath: text('storage_path'),
+
+  sortOrder: integer('sort_order')
+    .default(0)
+    .notNull(),
+
+  createdAt: timestamp('created_at')
+    .defaultNow()
+    .notNull(),
 });
 
 export const financialTransactions = pgTable('financial_transactions', {
