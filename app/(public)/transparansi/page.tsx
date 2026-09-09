@@ -130,7 +130,9 @@ export default async function TransparansiPage() {
           <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h2 className="text-lg font-bold text-slate-900">Riwayat Transaksi Bulan Ini</h2>
-              <p className="text-sm text-slate-500">Seluruh transaksi ${periodStartLabel} - ${periodEndLabel} yang tercatat di sistem.</p>
+              <p className="text-sm text-slate-500">
+                Seluruh transaksi {periodStartLabel} - {periodEndLabel} yang tercatat di sistem.
+              </p>
             </div>
           </div>
           
