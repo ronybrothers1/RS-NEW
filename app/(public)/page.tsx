@@ -47,7 +47,7 @@ export default async function HomePage() {
     <div className="min-h-screen bg-white">
       
       {/* Hero Section */}
-      <section className="relative pt-28 pb-32 md:pt-40 md:pb-48 overflow-hidden bg-slate-950">
+      <section className="relative pt-14 pb-24 md:pt-20 md:pb-32 overflow-hidden bg-slate-950">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-teal-900/40 via-slate-950 to-slate-950 -z-10"></div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 flex flex-col md:flex-row items-center md:items-start gap-12">
           
@@ -102,9 +102,9 @@ export default async function HomePage() {
       </section>
 
       {/* Program Section (Lighter Design) */}
-      <section className="py-24 bg-white">
+      <section className="py-16 md:py-[72px] bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-16">
+          <div className="text-center max-w-2xl mx-auto mb-10 md:mb-12">
             <h2 className="text-3xl font-bold text-slate-900">Program Utama Kami</h2>
             <p className="mt-4 text-slate-600">Salurkan donasi Anda melalui program-program yang tepat sasaran dan terverifikasi.</p>
           </div>
@@ -138,9 +138,9 @@ export default async function HomePage() {
       </section>
 
       {/* Workflow Section */}
-      <section className="py-24 bg-slate-50">
+      <section className="py-16 md:py-[72px] bg-slate-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-16">
+          <div className="text-center max-w-2xl mx-auto mb-10 md:mb-12">
             <h2 className="text-3xl font-bold text-slate-900">Cara Bantuan Bekerja</h2>
             <p className="mt-4 text-slate-600">Dari niat baik hingga menjadi manfaat nyata yang terukur.</p>
           </div>
@@ -184,7 +184,7 @@ export default async function HomePage() {
       </section>
 
       {/* Transparency Section */}
-      <section className="py-24 bg-slate-900 text-white relative overflow-hidden">
+      <section className="py-16 md:py-[72px] bg-slate-900 text-white relative overflow-hidden">
         <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-teal-400 via-transparent to-transparent"></div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="grid lg:grid-cols-2 gap-12 items-center">

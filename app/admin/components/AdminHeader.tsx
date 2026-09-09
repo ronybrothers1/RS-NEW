@@ -23,6 +23,8 @@ const labels:
     keluar: "Uang Keluar",
     riwayat:
       "Riwayat Transaksi",
+    laporan:
+      "Laporan Keuangan",
     kampanye: "Kampanye",
     kegiatan: "Kegiatan",
     tambah: "Tambah",

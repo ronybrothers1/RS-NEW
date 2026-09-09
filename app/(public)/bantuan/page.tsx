@@ -1,7 +1,12 @@
 import {
+  BadgeCheck,
+  FilePlus2,
   HeartHandshake,
+  LogIn,
+  MailCheck,
   MapPin,
   Target,
+  UserPlus,
 } from "lucide-react";
 import {
   desc,
@@ -11,6 +16,7 @@ import {
 } from "drizzle-orm";
 import Link from "next/link";
 
+import { auth } from "@/auth";
 import {
   formatRupiah,
 } from "@/lib/assistance";
@@ -34,6 +40,10 @@ export const metadata = {
 };
 
 export default async function AssistanceCampaignsPage() {
+  const session = await auth();
+  const sessionRole = (session?.user as { role?: string } | undefined)?.role;
+  const canSubmitApplication = sessionRole === "USER";
+
   const [
     rows,
     ledgerRows,
@@ -171,6 +181,71 @@ export default async function AssistanceCampaignsPage() {
           <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300 md:text-lg">
             Setiap kampanye berasal dari pengajuan yang telah diperiksa pengurus. Progres dihitung dari dana masuk yang sudah tercatat pada keuangan kampanye.
           </p>
+        </div>
+      </section>
+
+      <section className="border-b border-slate-200 bg-white">
+        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 md:py-12 lg:px-8">
+          <div className="max-w-3xl">
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-700">
+              Pengajuan Bantuan
+            </p>
+            <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950 md:text-3xl">
+              Cara Mengajukan Bantuan
+            </h2>
+            <p className="mt-3 text-sm leading-7 text-slate-600 md:text-base">
+              Masyarakat dapat mengajukan calon penerima bantuan melalui akun pribadi.
+              Prosesnya dibuat singkat, tetapi setiap pengajuan tetap diperiksa sebelum
+              dapat menjadi kampanye publik.
+            </p>
+          </div>
+
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+            {[
+              { icon: UserPlus, title: "1. Daftar", text: "Buat akun dengan nama, email, WhatsApp, dan kata sandi Anda." },
+              { icon: MailCheck, title: "2. Verifikasi email", text: "Masukkan kode OTP yang dikirim ke email agar akun aktif." },
+              { icon: LogIn, title: "3. Masuk ke akun", text: "Login lalu buka menu Akun dan Pengajuan Bantuan." },
+              { icon: FilePlus2, title: "4. Lengkapi pengajuan", text: "Pilih program, isi kondisi calon penerima, dan unggah foto pendukung." },
+              { icon: BadgeCheck, title: "5. Kirim & tunggu verifikasi", text: "Tim Ruang Sejahtera memeriksa pengajuan sebelum disetujui atau diminta perbaikan." },
+            ].map((step) => {
+              const Icon = step.icon;
+              return (
+                <div key={step.title} className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-100 text-teal-700">
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <h3 className="mt-4 text-sm font-bold text-slate-950">{step.title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">{step.text}</p>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            {canSubmitApplication ? (
+              <Link
+                href="/akun/pengajuan/baru"
+                className="inline-flex min-h-11 items-center justify-center rounded-xl bg-teal-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-teal-800"
+              >
+                Ajukan Bantuan Sekarang
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/register"
+                  className="inline-flex min-h-11 items-center justify-center rounded-xl bg-teal-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-teal-800"
+                >
+                  Daftar untuk Mengajukan
+                </Link>
+                <Link
+                  href="/login"
+                  className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                >
+                  Sudah punya akun? Masuk
+                </Link>
+              </>
+            )}
+          </div>
         </div>
       </section>
 

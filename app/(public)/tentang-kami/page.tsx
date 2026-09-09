@@ -49,7 +49,7 @@ export default function TentangKamiPage() {
 
         <div className="text-center mb-16">
           <h2 className="text-3xl font-bold text-slate-900 mb-4">Nilai Inti Kami</h2>
-          <p className="text-slate-600 max-w-2xl mx-auto">Kami berpegang teguh pada prinsip-prinsiring untuk menjaga amanah donatur dan memastikan setiap bantuan tepat sasaran.</p>
+          <p className="text-slate-600 max-w-2xl mx-auto">Kami berpegang teguh pada prinsip-prinsip untuk menjaga amanah donatur dan memastikan setiap bantuan tepat sasaran.</p>
         </div>
 
         <div className="grid sm:grid-cols-3 gap-8 mb-24">

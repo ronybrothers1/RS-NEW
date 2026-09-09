@@ -1,16 +1,42 @@
 import { db } from "@/src/db";
 import { getFinanceOpeningBalance } from "@/lib/finance-opening-balance";
 import { financialTransactions, programs } from "@/src/db/schema";
-import { desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, gte, isNull, lt, sql } from "drizzle-orm";
 
 import { ArrowDownRight, ArrowUpRight, CheckCircle2, TrendingUp, Wallet, ArrowRight, BookOpen } from "lucide-react";
 import Link from "next/link";
 
 export const dynamic = 'force-dynamic';
 
+function getJakartaToday() {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Jakarta",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return {
+    year: Number(values.year),
+    month: Number(values.month),
+    day: Number(values.day),
+  };
+}
+
 export default async function TransparansiPage() {
   const openingBalance =
     await getFinanceOpeningBalance();
+
+  const today = getJakartaToday();
+  const monthStart = new Date(Date.UTC(today.year, today.month - 1, 1));
+  const tomorrow = new Date(Date.UTC(today.year, today.month - 1, today.day + 1));
+  const periodStartLabel = new Intl.DateTimeFormat("id-ID", {
+    day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Jakarta",
+  }).format(new Date(Date.UTC(today.year, today.month - 1, 1, 12)));
+  const periodEndLabel = new Intl.DateTimeFormat("id-ID", {
+    day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Jakarta",
+  }).format(new Date(Date.UTC(today.year, today.month - 1, today.day, 12)));
 
   // Get totals using raw SQL aggregation for simplicity
   const result = await db.execute(sql`
@@ -26,8 +52,8 @@ export default async function TransparansiPage() {
   const totalOut = Number(data[0]?.total_out || 0);
   const currentBalance = openingBalance.amount + totalIn - totalOut;
 
-  // Get recent 10 transactions
-  const recentTransactions = await db
+  // Seluruh transaksi pada bulan berjalan sampai hari ini (WIB).
+  const monthlyTransactions = await db
     .select({
       id: financialTransactions.id,
       type: financialTransactions.type,
@@ -40,12 +66,17 @@ export default async function TransparansiPage() {
     })
     .from(financialTransactions)
     .leftJoin(programs, eq(financialTransactions.programId, programs.id))
-    .where(sql`financial_transactions.deleted_at IS NULL`)
+    .where(
+      and(
+        isNull(financialTransactions.deletedAt),
+        gte(financialTransactions.date, monthStart),
+        lt(financialTransactions.date, tomorrow),
+      ),
+    )
     .orderBy(
       desc(financialTransactions.date),
       desc(financialTransactions.createdAt),
-    )
-    .limit(15);
+    );
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -98,8 +129,8 @@ export default async function TransparansiPage() {
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h2 className="text-lg font-bold text-slate-900">Riwayat Transaksi Terbaru</h2>
-              <p className="text-sm text-slate-500">15 transaksi terakhir yang tercatat di sistem.</p>
+              <h2 className="text-lg font-bold text-slate-900">Riwayat Transaksi Bulan Ini</h2>
+              <p className="text-sm text-slate-500">Seluruh transaksi ${periodStartLabel} - ${periodEndLabel} yang tercatat di sistem.</p>
             </div>
           </div>
           
@@ -114,15 +145,15 @@ export default async function TransparansiPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {recentTransactions.length === 0 ? (
+                {monthlyTransactions.length === 0 ? (
                   <tr>
                     <td colSpan={4} className="px-6 py-12 text-center text-slate-500">
                       <BookOpen className="h-8 w-8 text-slate-300 mx-auto mb-3" />
-                      Belum ada data transaksi yang tercatat.
+                      Belum ada transaksi pada bulan berjalan.
                     </td>
                   </tr>
                 ) : (
-                  recentTransactions.map((trx) => (
+                  monthlyTransactions.map((trx) => (
                     <tr key={trx.id} className="hover:bg-slate-50 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
                         {new Date(trx.date).toLocaleDateString('id-ID', {

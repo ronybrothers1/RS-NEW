@@ -112,8 +112,7 @@ export default async function KontakPage() {
               </h2>
               <p className="text-slate-600 leading-relaxed mb-8">
                 Gunakan kanal resmi di bawah ini agar pesan benar-benar
-                diterima oleh pengurus. Formulir kosong yang sebelumnya tidak
-                memiliki backend tidak lagi ditampilkan.
+                diterima oleh pengurus.
               </p>
 
               <div className="space-y-4">
