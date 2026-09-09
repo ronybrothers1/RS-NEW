@@ -1,88 +1,373 @@
 "use server";
 
-import { db } from "@/src/db";
-import { donations, financialTransactions, auditLogs } from "@/src/db/schema";
-import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
+import { db } from "@/src/db";
+import {
+  auditLogs,
+  donations,
+  financialTransactions,
+} from "@/src/db/schema";
+import {
+  and,
+  eq,
+} from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
-export async function verifyDonation(donationId: string) {
+function isUuid(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    value,
+  );
+}
+
+async function getAdminSession() {
   const session = await auth();
+
   if (!session?.user?.id) {
-    return { success: false, error: "Unauthorized" };
+    return null;
+  }
+
+  const role = (
+    session.user as {
+      role?: string;
+    }
+  ).role;
+
+  if (
+    role !== "ADMIN" &&
+    role !== "OPERATOR"
+  ) {
+    return null;
+  }
+
+  return {
+    userId: session.user.id,
+  };
+}
+
+function revalidateDonationPages() {
+  revalidatePath("/admin/donasi");
+  revalidatePath("/admin/dashboard");
+}
+
+function revalidateVerifiedDonationPages() {
+  revalidateDonationPages();
+  revalidatePath(
+    "/admin/keuangan/masuk",
+  );
+  revalidatePath(
+    "/admin/keuangan/riwayat",
+  );
+  revalidatePath("/transparansi");
+}
+
+export async function verifyDonation(
+  donationId: string,
+) {
+  const session =
+    await getAdminSession();
+
+  if (!session) {
+    return {
+      success: false,
+      error: "Unauthorized",
+    };
+  }
+
+  if (!isUuid(donationId)) {
+    return {
+      success: false,
+      error:
+        "ID donasi tidak valid.",
+    };
   }
 
   try {
-    // 1. Get donation data
-    const [donation] = await db.select().from(donations).where(eq(donations.id, donationId));
-    if (!donation) {
-      return { success: false, error: "Donasi tidak ditemukan." };
+    const result =
+      await db.transaction(
+        async (tx) => {
+          const [oldDonation] =
+            await tx
+              .select()
+              .from(donations)
+              .where(
+                eq(
+                  donations.id,
+                  donationId,
+                ),
+              )
+              .limit(1);
+
+          if (!oldDonation) {
+            return {
+              success: false as const,
+              error:
+                "Donasi tidak ditemukan.",
+            };
+          }
+
+          if (
+            oldDonation.status ===
+            "SUCCESS"
+          ) {
+            const [linkedTransaction] =
+              await tx
+                .select({
+                  id: financialTransactions.id,
+                })
+                .from(
+                  financialTransactions,
+                )
+                .where(
+                  eq(
+                    financialTransactions.donationId,
+                    donationId,
+                  ),
+                )
+                .limit(1);
+
+            if (linkedTransaction) {
+              return {
+                success: true as const,
+                error: null,
+              };
+            }
+
+            return {
+              success: false as const,
+              error:
+                "Donasi ini sudah berstatus berhasil, tetapi merupakan data lama yang belum memiliki tautan transaksi. Jangan verifikasi ulang.",
+            };
+          }
+
+          if (
+            oldDonation.status !==
+            "PENDING"
+          ) {
+            return {
+              success: false as const,
+              error:
+                "Donasi sudah diproses sebelumnya.",
+            };
+          }
+
+          const [updatedDonation] =
+            await tx
+              .update(donations)
+              .set({
+                status: "SUCCESS",
+              })
+              .where(
+                and(
+                  eq(
+                    donations.id,
+                    donationId,
+                  ),
+                  eq(
+                    donations.status,
+                    "PENDING",
+                  ),
+                ),
+              )
+              .returning();
+
+          if (!updatedDonation) {
+            return {
+              success: false as const,
+              error:
+                "Donasi sedang atau sudah diproses. Muat ulang halaman.",
+            };
+          }
+
+          const [newTransaction] =
+            await tx
+              .insert(
+                financialTransactions,
+              )
+              .values({
+                type: "IN",
+                amount:
+                  updatedDonation.amount,
+                date: new Date(),
+                description: `Donasi via Website - ${
+                  updatedDonation.paymentMethod ||
+                  "Transfer"
+                }`,
+                programId:
+                  updatedDonation.programId,
+                donationId:
+                  updatedDonation.id,
+                userId: session.userId,
+                donorName:
+                  updatedDonation.donorName,
+                isAnonymous:
+                  updatedDonation.isAnonymous,
+                updatedAt: new Date(),
+              })
+              .returning();
+
+          await tx
+            .insert(auditLogs)
+            .values({
+              userId: session.userId,
+              action:
+                "VERIFY_DONATION",
+              tableName: "donations",
+              recordId:
+                updatedDonation.id,
+              oldData: oldDonation,
+              newData: {
+                donation:
+                  updatedDonation,
+                transactionId:
+                  newTransaction.id,
+              },
+            });
+
+          return {
+            success: true as const,
+            error: null,
+          };
+        },
+      );
+
+    if (result.success) {
+      revalidateVerifiedDonationPages();
     }
-    if (donation.status !== 'PENDING') {
-      return { success: false, error: "Donasi sudah diproses sebelumnya." };
-    }
 
-    // 2. Update donation status to SUCCESS
-    await db.update(donations)
-      .set({ status: 'SUCCESS' })
-      .where(eq(donations.id, donationId));
+    return result;
+  } catch (error) {
+    console.error(
+      "Verify donation error:",
+      error,
+    );
 
-    // 3. Create financial transaction (Uang Masuk)
-    const [newTrx] = await db.insert(financialTransactions).values({
-      type: 'IN',
-      amount: donation.amount,
-      date: new Date(),
-      description: `Donasi via Website - ${donation.paymentMethod || 'Transfer'}`,
-      programId: donation.programId,
-      userId: session.user.id,
-      donorName: donation.donorName,
-      isAnonymous: donation.isAnonymous,
-    }).returning();
-
-    // 4. Audit Log
-    await db.insert(auditLogs).values({
-      userId: session.user.id,
-      action: 'VERIFY_DONATION',
-      tableName: 'donations',
-      recordId: donation.id,
-      newData: { status: 'SUCCESS', transactionId: newTrx.id },
-    });
-
-    revalidatePath('/admin/donasi');
-    revalidatePath('/admin/dashboard');
-    revalidatePath('/admin/keuangan/masuk');
-    revalidatePath('/admin/keuangan/riwayat');
-    revalidatePath('/transparansi');
-    
-    return { success: true, error: null };
-  } catch (err: any) {
-    return { success: false, error: "Gagal memverifikasi donasi." };
+    return {
+      success: false,
+      error:
+        "Gagal memverifikasi donasi.",
+    };
   }
 }
 
-export async function rejectDonation(donationId: string) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return { success: false, error: "Unauthorized" };
+export async function rejectDonation(
+  donationId: string,
+) {
+  const session =
+    await getAdminSession();
+
+  if (!session) {
+    return {
+      success: false,
+      error: "Unauthorized",
+    };
+  }
+
+  if (!isUuid(donationId)) {
+    return {
+      success: false,
+      error:
+        "ID donasi tidak valid.",
+    };
   }
 
   try {
-    await db.update(donations)
-      .set({ status: 'FAILED' })
-      .where(eq(donations.id, donationId));
+    const result =
+      await db.transaction(
+        async (tx) => {
+          const [oldDonation] =
+            await tx
+              .select()
+              .from(donations)
+              .where(
+                eq(
+                  donations.id,
+                  donationId,
+                ),
+              )
+              .limit(1);
 
-    await db.insert(auditLogs).values({
-      userId: session.user.id,
-      action: 'REJECT_DONATION',
-      tableName: 'donations',
-      recordId: donationId,
-      newData: { status: 'FAILED' },
-    });
+          if (!oldDonation) {
+            return {
+              success: false as const,
+              error:
+                "Donasi tidak ditemukan.",
+            };
+          }
 
-    revalidatePath('/admin/donasi');
-    revalidatePath('/admin/dashboard');
-    return { success: true, error: null };
-  } catch (err: any) {
-    return { success: false, error: "Gagal menolak donasi." };
+          if (
+            oldDonation.status !==
+            "PENDING"
+          ) {
+            return {
+              success: false as const,
+              error:
+                "Donasi sudah diproses sebelumnya.",
+            };
+          }
+
+          const [updatedDonation] =
+            await tx
+              .update(donations)
+              .set({
+                status: "FAILED",
+              })
+              .where(
+                and(
+                  eq(
+                    donations.id,
+                    donationId,
+                  ),
+                  eq(
+                    donations.status,
+                    "PENDING",
+                  ),
+                ),
+              )
+              .returning();
+
+          if (!updatedDonation) {
+            return {
+              success: false as const,
+              error:
+                "Donasi sedang atau sudah diproses. Muat ulang halaman.",
+            };
+          }
+
+          await tx
+            .insert(auditLogs)
+            .values({
+              userId: session.userId,
+              action:
+                "REJECT_DONATION",
+              tableName: "donations",
+              recordId: donationId,
+              oldData: oldDonation,
+              newData:
+                updatedDonation,
+            });
+
+          return {
+            success: true as const,
+            error: null,
+          };
+        },
+      );
+
+    if (result.success) {
+      revalidateDonationPages();
+    }
+
+    return result;
+  } catch (error) {
+    console.error(
+      "Reject donation error:",
+      error,
+    );
+
+    return {
+      success: false,
+      error:
+        "Gagal menolak donasi.",
+    };
   }
 }

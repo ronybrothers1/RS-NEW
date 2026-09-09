@@ -41,11 +41,15 @@ export const financialTransactions = pgTable('financial_transactions', {
   date: timestamp('date').notNull(),
   description: text('description').notNull(),
   programId: uuid('program_id').references(() => programs.id),
+  donationId: uuid('donation_id')
+    .references(() => donations.id)
+    .unique(),
   userId: uuid('user_id').references(() => users.id).notNull(),
   donorName: text('donor_name'),
   isAnonymous: boolean('is_anonymous').default(false).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-  deletedAt: timestamp('deleted_at'), // Soft delete
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  deletedAt: timestamp('deleted_at'),
 });
 
 export const activities = pgTable('activities', {

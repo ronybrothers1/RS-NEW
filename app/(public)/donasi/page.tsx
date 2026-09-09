@@ -23,6 +23,7 @@ export default async function DonasiPage() {
     BCA: settingsMap.bank_bca || '',
     MANDIRI: settingsMap.bank_mandiri || '',
     BSI: settingsMap.bank_bsi || '',
+    BRI: settingsMap.bank_bri || '',
   };
 
   return (

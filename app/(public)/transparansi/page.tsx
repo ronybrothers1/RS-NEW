@@ -37,7 +37,10 @@ export default async function TransparansiPage() {
     .from(financialTransactions)
     .leftJoin(programs, eq(financialTransactions.programId, programs.id))
     .where(sql`financial_transactions.deleted_at IS NULL`)
-    .orderBy(desc(financialTransactions.date))
+    .orderBy(
+      desc(financialTransactions.date),
+      desc(financialTransactions.createdAt),
+    )
     .limit(15);
 
   return (
@@ -61,7 +64,7 @@ export default async function TransparansiPage() {
               <ArrowDownRight className="h-6 w-6 text-emerald-600" />
             </div>
             <div>
-              <p className="text-sm font-medium text-slate-500">Total Donasi Masuk</p>
+              <p className="text-sm font-medium text-slate-500">Total Uang Masuk</p>
               <h3 className="text-2xl font-bold text-slate-900">Rp {totalIn.toLocaleString('id-ID')}</h3>
             </div>
           </div>
