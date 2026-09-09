@@ -58,6 +58,9 @@ function revalidateVerifiedDonationPages() {
     "/admin/keuangan/riwayat",
   );
   revalidatePath("/transparansi");
+  revalidatePath(
+    "/bantuan",
+  );
 }
 
 export async function verifyDonation(
@@ -222,6 +225,8 @@ export async function verifyDonation(
                 }`,
                 programId:
                   updatedDonation.programId,
+                campaignId:
+                  updatedDonation.campaignId,
                 donationId:
                   updatedDonation.id,
                 userId: session.userId,

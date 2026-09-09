@@ -14,7 +14,7 @@ export default function Navbar() {
     { name: "Program", path: "/program" },
     { name: "Kegiatan", path: "/kegiatan" },
     { name: "Berita", path: "/berita" },
-    { name: "Galeri", path: "/galeri" },
+    { name: "Bantu Mereka", path: "/bantuan" },
     { name: "Transparansi", path: "/transparansi" },
     { name: "Kontak", path: "/kontak" },
   ];

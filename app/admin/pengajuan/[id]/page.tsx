@@ -332,6 +332,26 @@ export default async function AdminAssistanceDetailPage({
         </div>
       )}
 
+{status ===
+  "APPROVED" && (
+  <section className="flex flex-col gap-4 rounded-2xl border border-teal-200 bg-teal-50 p-5 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <p className="text-sm font-bold text-teal-950">
+        Pengajuan siap menjadi kampanye publik
+      </p>
+      <p className="mt-1 max-w-2xl text-sm leading-6 text-teal-800">
+        Tinjau judul, cerita, lokasi publik, target, dan foto sampul sebelum ditampilkan pada menu Bantu Mereka.
+      </p>
+    </div>
+    <Link
+      href={`/admin/pengajuan/${application.id}/kampanye`}
+      className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800"
+    >
+      Kelola Kampanye Publik
+    </Link>
+  </section>
+)}
+
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(320px,0.8fr)]">
         <div className="space-y-6">
           <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">

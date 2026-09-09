@@ -20,6 +20,7 @@ import {
 import {
   assistanceApplications,
   auditLogs,
+  campaigns,
   users,
 } from "@/src/db/schema";
 
@@ -31,6 +32,35 @@ type ReviewDecision =
   | "revision"
   | "approve"
   | "reject";
+
+function toCampaignSlug(
+  title: string,
+  applicationId: string,
+) {
+  const base =
+    title
+      .toLowerCase()
+      .normalize("NFKD")
+      .replace(
+        /[\u0300-\u036f]/g,
+        "",
+      )
+      .replace(
+        /[^a-z0-9]+/g,
+        "-",
+      )
+      .replace(
+        /^-+|-+$/g,
+        "",
+      )
+      .slice(
+        0,
+        90,
+      ) ||
+    "bantu-mereka";
+
+  return `${base}-${applicationId.slice(0, 8)}`;
+}
 
 async function getStaffUser() {
   const session =
@@ -102,6 +132,9 @@ function refreshReviewPaths(
   );
   revalidatePath(
     `/akun/pengajuan/${applicationId}`,
+  );
+  revalidatePath(
+    "/bantuan",
   );
 }
 
@@ -195,6 +228,16 @@ export async function reviewAssistanceApplication(
           assistanceApplications.status,
         applicantId:
           assistanceApplications.applicantId,
+        programId:
+          assistanceApplications.programId,
+        targetAmount:
+          assistanceApplications.targetAmount,
+        beneficiaryName:
+          assistanceApplications.beneficiaryName,
+        subdistrict:
+          assistanceApplications.subdistrict,
+        regency:
+          assistanceApplications.regency,
         title:
           assistanceApplications.title,
         reviewNote:
@@ -292,6 +335,89 @@ export async function reviewAssistanceApplication(
             "APPLICATION_ALREADY_REVIEWED",
           );
         }
+
+if (
+  decision ===
+  "approve"
+) {
+  const campaignSlug =
+    toCampaignSlug(
+      existing.title,
+      applicationId,
+    );
+
+  const [
+    createdCampaign,
+  ] =
+    await tx
+      .insert(
+        campaigns,
+      )
+      .values({
+        applicationId,
+        programId:
+          existing.programId,
+        slug:
+          campaignSlug,
+        title:
+          existing.title,
+        summary: "",
+        story: "",
+        beneficiaryDisplayName:
+          existing.beneficiaryName,
+        publicLocation:
+          [
+            existing.subdistrict,
+            existing.regency,
+          ]
+            .filter(
+              Boolean,
+            )
+            .join(", "),
+        targetAmount:
+          existing.targetAmount,
+        status:
+          "DRAFT",
+        createdBy:
+          staff.id,
+        updatedBy:
+          staff.id,
+      })
+      .onConflictDoNothing({
+        target:
+          campaigns.applicationId,
+      })
+      .returning({
+        id:
+          campaigns.id,
+      });
+
+  if (
+    createdCampaign
+  ) {
+    await tx
+      .insert(
+        auditLogs,
+      )
+      .values({
+        userId:
+          staff.id,
+        action:
+          "CREATE_CAMPAIGN_DRAFT",
+        tableName:
+          "campaigns",
+        recordId:
+          createdCampaign.id,
+        newData: {
+          applicationId,
+          slug:
+            campaignSlug,
+          status:
+            "DRAFT",
+        },
+      });
+  }
+}
 
         await tx
           .insert(

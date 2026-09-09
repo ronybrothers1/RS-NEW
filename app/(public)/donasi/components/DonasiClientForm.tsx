@@ -78,6 +78,9 @@ export default function DonasiClientForm({
   const requestedProgram =
     searchParams?.get("program") || "";
 
+  const requestedCampaign =
+    searchParams?.get("campaign") || "";
+
   const defaultProgram = useMemo(
     () => {
       const requestedExists =
@@ -244,6 +247,23 @@ export default function DonasiClientForm({
       action={formAction}
       className="space-y-8"
     >
+      {requestedCampaign && (
+        <>
+          <input
+            type="hidden"
+            name="campaignId"
+            value={requestedCampaign}
+          />
+          <input
+            type="hidden"
+            name="programId"
+            value={defaultProgram}
+          />
+          <div className="rounded-xl border border-teal-200 bg-teal-50 p-4 text-sm font-medium leading-6 text-teal-900">
+            Donasi ini diarahkan khusus ke kampanye Bantu Mereka yang Anda pilih.
+          </div>
+        </>
+      )}
       {state.error && (
         <div
           role="alert"
@@ -278,6 +298,9 @@ export default function DonasiClientForm({
             defaultProgram
           }
           required
+          disabled={Boolean(
+            requestedCampaign,
+          )}
           className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 font-medium text-slate-900 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
         >
           <option

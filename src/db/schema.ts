@@ -15,6 +15,7 @@ export const trxTypeEnum = pgEnum('trx_type', ['IN', 'OUT']);
 export const articleStatusEnum = pgEnum('article_status', ['DRAFT', 'SCHEDULED', 'PUBLISHED', 'ARCHIVED']);
 export const donationStatusEnum = pgEnum('donation_status', ['PENDING', 'SUCCESS', 'FAILED']);
 export const programStatusEnum = pgEnum('program_status', ['ACTIVE', 'INACTIVE']);
+export const campaignStatusEnum = pgEnum('campaign_status', ['DRAFT', 'ACTIVE', 'PAUSED', 'COMPLETED', 'CANCELLED']);
 
 export const assistanceApplicationStatusEnum = pgEnum(
   'assistance_application_status',
@@ -131,6 +132,43 @@ export const assistanceApplicationPhotos = pgTable('assistance_application_photo
     .notNull(),
 });
 
+export const campaigns = pgTable('campaigns', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  applicationId: uuid('application_id')
+    .references(() => assistanceApplications.id, { onDelete: 'restrict' })
+    .unique()
+    .notNull(),
+  programId: uuid('program_id')
+    .references(() => programs.id, { onDelete: 'restrict' })
+    .notNull(),
+  slug: text('slug').unique().notNull(),
+  title: text('title').notNull(),
+  summary: text('summary').default('').notNull(),
+  story: text('story').default('').notNull(),
+  beneficiaryDisplayName: text('beneficiary_display_name'),
+  publicLocation: text('public_location'),
+  targetAmount: numeric('target_amount').notNull(),
+  coverPhotoId: uuid('cover_photo_id')
+    .references(() => assistanceApplicationPhotos.id, { onDelete: 'set null' }),
+  status: campaignStatusEnum('status')
+    .default('DRAFT')
+    .notNull(),
+  createdBy: uuid('created_by')
+    .references(() => users.id, { onDelete: 'restrict' })
+    .notNull(),
+  updatedBy: uuid('updated_by')
+    .references(() => users.id, { onDelete: 'restrict' })
+    .notNull(),
+  activatedAt: timestamp('activated_at'),
+  completedAt: timestamp('completed_at'),
+  createdAt: timestamp('created_at')
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp('updated_at')
+    .defaultNow()
+    .notNull(),
+});
+
 export const financialTransactions = pgTable('financial_transactions', {
   id: uuid('id').defaultRandom().primaryKey(),
   type: trxTypeEnum('type').notNull(),
@@ -138,6 +176,7 @@ export const financialTransactions = pgTable('financial_transactions', {
   date: timestamp('date').notNull(),
   description: text('description').notNull(),
   programId: uuid('program_id').references(() => programs.id),
+  campaignId: uuid('campaign_id').references(() => campaigns.id),
   donationId: uuid('donation_id')
     .references(() => donations.id)
     .unique(),
@@ -192,6 +231,7 @@ export const donations = pgTable('donations', {
   donorName: text('donor_name').notNull(),
   amount: numeric('amount').notNull(),
   programId: uuid('program_id').references(() => programs.id),
+  campaignId: uuid('campaign_id').references(() => campaigns.id),
   status: donationStatusEnum('status').default('PENDING').notNull(),
   paymentMethod: text('payment_method'),
   proofImage: text('proof_image'),

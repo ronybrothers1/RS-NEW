@@ -10,6 +10,7 @@ import { revalidatePath } from "next/cache";
 import { rateLimit } from "@/lib/rate-limit";
 import { db } from "@/src/db";
 import {
+  campaigns,
   donations,
   programs,
   settings,
@@ -239,6 +240,13 @@ export async function submitDonation(
       ),
     );
 
+  const campaignId =
+    cleanText(
+      formData.get(
+        "campaignId",
+      ),
+    );
+
   const paymentMethod =
     cleanText(
       formData.get(
@@ -290,6 +298,17 @@ export async function submitDonation(
       success: false,
       error:
         "Program yang dipilih tidak valid.",
+    };
+  }
+
+  if (
+    campaignId &&
+    !isUuid(campaignId)
+  ) {
+    return {
+      success: false,
+      error:
+        "Kampanye yang dipilih tidak valid.",
     };
   }
 
@@ -427,6 +446,51 @@ export async function submitDonation(
       };
     }
 
+    let campaignSlug:
+      string | null = null;
+
+    if (campaignId) {
+      const [
+        selectedCampaign,
+      ] =
+        await db
+          .select({
+            id:
+              campaigns.id,
+            programId:
+              campaigns.programId,
+            slug:
+              campaigns.slug,
+            status:
+              campaigns.status,
+          })
+          .from(campaigns)
+          .where(
+            eq(
+              campaigns.id,
+              campaignId,
+            ),
+          )
+          .limit(1);
+
+      if (
+        !selectedCampaign ||
+        selectedCampaign.status !==
+          "ACTIVE" ||
+        selectedCampaign.programId !==
+          programId
+      ) {
+        return {
+          success: false,
+          error:
+            "Kampanye sudah tidak aktif atau tidak sesuai dengan program yang dipilih.",
+        };
+      }
+
+      campaignSlug =
+        selectedCampaign.slug;
+    }
+
     await db
       .insert(donations)
       .values({
@@ -434,6 +498,9 @@ export async function submitDonation(
         amount:
           amount.toString(),
         programId,
+        campaignId:
+          campaignId ||
+          null,
         paymentMethod,
         isAnonymous,
         proofImage:
@@ -448,6 +515,16 @@ export async function submitDonation(
     revalidatePath(
       "/admin/dashboard",
     );
+
+    revalidatePath(
+      "/bantuan",
+    );
+
+    if (campaignSlug) {
+      revalidatePath(
+        `/bantuan/${campaignSlug}`,
+      );
+    }
 
     return {
       success: true,
