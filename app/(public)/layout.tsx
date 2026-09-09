@@ -13,11 +13,24 @@ export default function PublicLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50">
+    <div className="flex min-h-screen flex-col bg-slate-50">
+      <a
+        href="#main-content"
+        className="sr-only fixed left-4 top-4 z-[100] rounded-lg bg-white px-4 py-2 text-sm font-semibold text-slate-900 shadow-lg ring-1 ring-slate-200 focus:not-sr-only"
+      >
+        Lewati ke konten utama
+      </a>
+
       <Navbar />
-      <main className="flex-grow">
+
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className="flex-grow focus:outline-none"
+      >
         {children}
       </main>
+
       <Footer />
     </div>
   );

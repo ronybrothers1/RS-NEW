@@ -39,6 +39,13 @@ export default async function AdminLayout({
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50">
+      <a
+        href="#admin-main"
+        className="sr-only fixed left-4 top-4 z-[100] rounded-lg bg-white px-4 py-2 text-sm font-semibold text-slate-900 shadow-lg ring-1 ring-slate-200 focus:not-sr-only"
+      >
+        Lewati ke konten admin
+      </a>
+
       <AdminSidebar
         role={currentUser.role}
       />
@@ -46,9 +53,14 @@ export default async function AdminLayout({
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <AdminHeader
           user={session.user}
+          role={currentUser.role}
         />
 
-        <main className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-4 pb-8 pt-20 md:p-6 lg:p-8">
+        <main
+          id="admin-main"
+          tabIndex={-1}
+          className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-4 pb-8 pt-20 focus:outline-none md:p-6 lg:p-8"
+        >
           <div className="mx-auto w-full max-w-[1600px]">
             {children}
           </div>

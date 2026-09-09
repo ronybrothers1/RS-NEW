@@ -194,9 +194,10 @@ export default function AdminSidebar({ role }: AdminSidebarProps) {
         <button
           type="button"
           onClick={() => setIsMobileOpen(true)}
-          className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-red-500"
+          className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-white transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400"
           aria-label="Buka navigasi admin"
           aria-expanded={isMobileOpen}
+          aria-controls="admin-navigation"
         >
           <Menu className="h-6 w-6" />
         </button>
@@ -224,6 +225,7 @@ export default function AdminSidebar({ role }: AdminSidebarProps) {
       )}
 
       <aside
+        id="admin-navigation"
         className={clsx(
           "fixed inset-y-0 left-0 z-50 flex w-72 shrink-0 flex-col border-r border-slate-200 bg-white shadow-xl transition-transform duration-200 ease-out md:static md:z-auto md:h-screen md:w-64 md:translate-x-0 md:shadow-none",
           isMobileOpen ? "translate-x-0" : "-translate-x-full",
@@ -321,7 +323,7 @@ export default function AdminSidebar({ role }: AdminSidebarProps) {
           <button
             type="button"
             onClick={() => signOut({ callbackUrl: "/login" })}
-            className="mb-3 flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 px-3 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 md:hidden"
+            className="mb-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-slate-200 px-3 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 md:hidden"
           >
             <LogOut className="h-4 w-4" />
             Keluar

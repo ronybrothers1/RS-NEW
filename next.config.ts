@@ -55,6 +55,16 @@ const nextConfig: NextConfig = {
     ],
   },
 
+  async redirects() {
+    return [
+      {
+        source: "/galeri",
+        destination: "/kegiatan",
+        permanent: true,
+      },
+    ];
+  },
+
   async headers() {
     return [
       {
