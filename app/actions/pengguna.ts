@@ -22,6 +22,13 @@ export async function createUser(prevState: any, formData: FormData) {
     return { success: false, error: "Semua field wajib diisi." };
   }
 
+  if (role !== "ADMIN" && role !== "OPERATOR") {
+    return {
+      success: false,
+      error: "Role pengguna internal tidak valid.",
+    };
+  }
+
   if (password.length < 6) {
     return { success: false, error: "Password minimal 6 karakter." };
   }

@@ -91,7 +91,7 @@ export default function Navbar() {
               className="flex items-center gap-2 px-3 py-3 mt-4 text-base font-medium text-teal-400 hover:text-teal-300 hover:bg-slate-800 rounded-md border-t border-slate-800"
             >
               <User className="w-5 h-5" />
-              <span>Masuk / Akun Admin</span>
+              <span>Masuk / Daftar</span>
             </Link>
           </div>
         </div>

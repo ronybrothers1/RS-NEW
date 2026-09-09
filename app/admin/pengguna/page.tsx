@@ -29,7 +29,7 @@ export default async function PenggunaPage() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Manajemen Pengguna</h1>
-          <p className="text-slate-500 text-sm mt-1">Kelola akses admin dan operator yayasan.</p>
+          <p className="text-slate-500 text-sm mt-1">Kelola akun pengguna, operator, dan administrator yayasan.</p>
         </div>
         <Link 
           href="/admin/pengguna/tambah" 

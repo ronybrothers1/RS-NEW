@@ -5,11 +5,12 @@ import {
   timestamp, 
   boolean, 
   numeric,
+  integer,
   json,
   pgEnum
 } from "drizzle-orm/pg-core";
 
-export const roleEnum = pgEnum('role', ['ADMIN', 'OPERATOR']);
+export const roleEnum = pgEnum('role', ['ADMIN', 'OPERATOR', 'USER']);
 export const trxTypeEnum = pgEnum('trx_type', ['IN', 'OUT']);
 export const articleStatusEnum = pgEnum('article_status', ['DRAFT', 'SCHEDULED', 'PUBLISHED', 'ARCHIVED']);
 export const donationStatusEnum = pgEnum('donation_status', ['PENDING', 'SUCCESS', 'FAILED']);
@@ -19,9 +20,25 @@ export const users = pgTable('users', {
   id: uuid('id').defaultRandom().primaryKey(),
   name: text('name').notNull(),
   email: text('email').unique().notNull(),
+  phone: text('phone'),
+  emailVerifiedAt: timestamp('email_verified_at'),
   passwordHash: text('password_hash').notNull(),
   role: roleEnum('role').default('OPERATOR').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const emailVerificationCodes = pgTable('email_verification_codes', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id')
+    .references(() => users.id, { onDelete: 'cascade' })
+    .unique()
+    .notNull(),
+  codeHash: text('code_hash').notNull(),
+  expiresAt: timestamp('expires_at').notNull(),
+  attempts: integer('attempts').default(0).notNull(),
+  lastSentAt: timestamp('last_sent_at').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
 export const programs = pgTable('programs', {
