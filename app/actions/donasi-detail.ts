@@ -1,6 +1,8 @@
 "use server";
 
-import { auth } from "@/auth";
+import {
+  getCurrentStaffUser,
+} from "@/lib/current-authz";
 import { db } from "@/src/db";
 import {
   donations,
@@ -15,36 +17,13 @@ function isUuid(value: string) {
   );
 }
 
-async function getDonationSession() {
-  const session = await auth();
-
-  if (!session?.user?.id) {
-    return null;
-  }
-
-  const role = (
-    session.user as {
-      role?: string;
-    }
-  ).role;
-
-  if (
-    role !== "ADMIN" &&
-    role !== "OPERATOR"
-  ) {
-    return null;
-  }
-
-  return session;
-}
-
 export async function getDonationDetail(
   donationId: string,
 ) {
-  const session =
-    await getDonationSession();
+  const staff =
+    await getCurrentStaffUser();
 
-  if (!session) {
+  if (!staff) {
     return {
       success: false as const,
       error:
@@ -122,6 +101,10 @@ export async function getDonationDetail(
       error: null,
       data: {
         ...donation,
+        proofImage:
+          donation.proofImage
+            ? `/api/admin/donasi/${donation.id}/proof`
+            : null,
         createdAt:
           donation.createdAt.toISOString(),
       },

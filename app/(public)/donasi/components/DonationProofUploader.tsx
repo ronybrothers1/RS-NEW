@@ -1,7 +1,9 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 
-import { upload } from "@vercel/blob/client";
+import {
+  upload,
+} from "@vercel/blob/client";
 import {
   CheckCircle2,
   ImagePlus,
@@ -17,10 +19,11 @@ import {
 const MAX_FILE_SIZE =
   5 * 1024 * 1024;
 
-const ALLOWED_TYPES = [
-  "image/jpeg",
-  "image/png",
-];
+const ALLOWED_TYPES =
+  [
+    "image/jpeg",
+    "image/png",
+  ];
 
 type UploadState = {
   ready: boolean;
@@ -38,26 +41,34 @@ function sanitizeFilename(
           ?.toLowerCase()}`
       : "";
 
-  const base = filename
-    .replace(/\.[^/.]+$/, "")
-    .toLowerCase()
-    .normalize("NFKD")
-    .replace(
-      /[\u0300-\u036f]/g,
-      "",
-    )
-    .replace(
-      /[^a-z0-9]+/g,
-      "-",
-    )
-    .replace(
-      /^-+|-+$/g,
-      "",
-    )
-    .slice(0, 80);
+  const base =
+    filename
+      .replace(
+        /\.[^/.]+$/,
+        "",
+      )
+      .toLowerCase()
+      .normalize("NFKD")
+      .replace(
+        /[\u0300-\u036f]/g,
+        "",
+      )
+      .replace(
+        /[^a-z0-9]+/g,
+        "-",
+      )
+      .replace(
+        /^-+|-+$/g,
+        "",
+      )
+      .slice(
+        0,
+        80,
+      );
 
   return `${
-    base || "bukti-transfer"
+    base ||
+    "bukti-transfer"
   }${extension}`;
 }
 
@@ -65,7 +76,8 @@ export default function DonationProofUploader({
   onStateChange,
 }: {
   onStateChange: (
-    state: UploadState,
+    state:
+      UploadState,
   ) => void;
 }) {
   const inputRef =
@@ -76,6 +88,16 @@ export default function DonationProofUploader({
   const [
     proofImageUrl,
     setProofImageUrl,
+  ] = useState("");
+
+  const [
+    proofPathname,
+    setProofPathname,
+  ] = useState("");
+
+  const [
+    previewUrl,
+    setPreviewUrl,
   ] = useState("");
 
   const [
@@ -96,8 +118,41 @@ export default function DonationProofUploader({
   >(null);
 
   function selectFile() {
-    if (!isUploading) {
-      inputRef.current?.click();
+    if (
+      !isUploading
+    ) {
+      inputRef.current
+        ?.click();
+    }
+  }
+
+  async function deleteBlob(
+    pathname: string,
+  ) {
+    if (!pathname) {
+      return;
+    }
+
+    try {
+      await fetch(
+        "/api/donasi/proof/upload",
+        {
+          method:
+            "DELETE",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body:
+            JSON.stringify(
+              {
+                pathname,
+              },
+            ),
+        },
+      );
+    } catch {
+      // Cleanup bersifat best effort.
     }
   }
 
@@ -127,14 +182,20 @@ export default function DonationProofUploader({
       return;
     }
 
-    setProofImageUrl("");
-    setIsUploading(true);
+    setIsUploading(
+      true,
+    );
     setProgress(0);
 
     onStateChange({
       ready: false,
       uploading: true,
     });
+
+    const localPreview =
+      URL.createObjectURL(
+        file,
+      );
 
     try {
       const safeName =
@@ -147,34 +208,73 @@ export default function DonationProofUploader({
           `media/donasi/${Date.now()}-${safeName}`,
           file,
           {
-            access: "public",
+            access:
+              "private",
             handleUploadUrl:
               "/api/donasi/proof/upload",
             contentType:
               file.type,
-            onUploadProgress: ({
-              percentage,
-            }) => {
-              setProgress(
-                Math.round(
-                  percentage,
-                ),
-              );
-            },
+            onUploadProgress:
+              ({
+                percentage,
+              }) => {
+                setProgress(
+                  Math.round(
+                    percentage,
+                  ),
+                );
+              },
           },
         );
+
+      const previousPathname =
+        proofPathname;
+
+      const previousPreview =
+        previewUrl;
 
       setProofImageUrl(
         blob.url,
       );
-      setProgress(100);
+
+      setProofPathname(
+        blob.pathname,
+      );
+
+      setPreviewUrl(
+        localPreview,
+      );
+
+      setProgress(
+        100,
+      );
+
+      if (
+        previousPreview
+      ) {
+        URL.revokeObjectURL(
+          previousPreview,
+        );
+      }
+
+      if (
+        previousPathname
+      ) {
+        void deleteBlob(
+          previousPathname,
+        );
+      }
 
       onStateChange({
         ready: true,
         uploading: false,
       });
-    } catch (uploadError) {
-      setProofImageUrl("");
+    } catch (
+      uploadError
+    ) {
+      URL.revokeObjectURL(
+        localPreview,
+      );
 
       setError(
         uploadError instanceof
@@ -184,24 +284,49 @@ export default function DonationProofUploader({
       );
 
       onStateChange({
-        ready: false,
+        ready:
+          Boolean(
+            proofImageUrl,
+          ),
         uploading: false,
       });
     } finally {
-      setIsUploading(false);
+      setIsUploading(
+        false,
+      );
     }
   }
 
-  function removeProof() {
-    if (isUploading) {
+  async function removeProof() {
+    if (
+      isUploading
+    ) {
       return;
     }
 
+    const pathname =
+      proofPathname;
+
+    const localPreview =
+      previewUrl;
+
     setProofImageUrl("");
+    setProofPathname("");
+    setPreviewUrl("");
     setProgress(0);
     setError(null);
 
-    if (inputRef.current) {
+    if (
+      localPreview
+    ) {
+      URL.revokeObjectURL(
+        localPreview,
+      );
+    }
+
+    if (
+      inputRef.current
+    ) {
       inputRef.current.value =
         "";
     }
@@ -210,6 +335,10 @@ export default function DonationProofUploader({
       ready: false,
       uploading: false,
     });
+
+    await deleteBlob(
+      pathname,
+    );
   }
 
   return (
@@ -219,7 +348,9 @@ export default function DonationProofUploader({
         type="file"
         accept="image/jpeg,image/png"
         className="hidden"
-        onChange={(event) => {
+        onChange={(
+          event,
+        ) => {
           const file =
             event.target
               .files?.[0];
@@ -235,14 +366,20 @@ export default function DonationProofUploader({
       <input
         type="hidden"
         name="proofImageUrl"
-        value={proofImageUrl}
+        value={
+          proofImageUrl
+        }
       />
 
       {!proofImageUrl ? (
         <button
           type="button"
-          disabled={isUploading}
-          onClick={selectFile}
+          disabled={
+            isUploading
+          }
+          onClick={
+            selectFile
+          }
           className="flex min-h-44 w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 px-6 py-8 text-center transition hover:border-teal-400 hover:bg-teal-50/40 disabled:cursor-not-allowed disabled:opacity-70"
         >
           {isUploading ? (
@@ -262,7 +399,8 @@ export default function DonationProofUploader({
                 <div
                   className="h-full rounded-full bg-teal-600 transition-all"
                   style={{
-                    width: `${progress}%`,
+                    width:
+                      `${progress}%`,
                   }}
                 />
               </div>
@@ -274,12 +412,20 @@ export default function DonationProofUploader({
               </div>
 
               <span className="text-sm font-semibold text-slate-800">
-                Pilih bukti transfer
+                Pilih bukti
+                transfer
               </span>
 
               <span className="mt-1 text-xs leading-5 text-slate-500">
                 JPG atau PNG ·
                 maksimal 5 MB
+              </span>
+
+              <span className="mt-2 text-xs leading-5 text-slate-400">
+                File disimpan pada
+                penyimpanan privat dan
+                hanya dapat diperiksa
+                pengurus.
               </span>
             </>
           )}
@@ -287,16 +433,28 @@ export default function DonationProofUploader({
       ) : (
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
           <div className="relative bg-slate-100">
-            <img
-              src={proofImageUrl}
-              alt="Preview bukti transfer"
-              className="max-h-[420px] w-full object-contain"
-            />
+            {previewUrl ? (
+              <img
+                src={
+                  previewUrl
+                }
+                alt="Preview bukti transfer"
+                className="max-h-[420px] w-full object-contain"
+              />
+            ) : (
+              <div className="flex min-h-52 items-center justify-center text-sm text-slate-500">
+                Bukti transfer
+                tersimpan secara
+                privat.
+              </div>
+            )}
 
             <div className="absolute right-3 top-3 flex gap-2">
               <button
                 type="button"
-                onClick={selectFile}
+                onClick={
+                  selectFile
+                }
                 className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/95 text-slate-700 shadow-sm hover:bg-white"
                 title="Ganti bukti transfer"
                 aria-label="Ganti bukti transfer"
@@ -306,7 +464,9 @@ export default function DonationProofUploader({
 
               <button
                 type="button"
-                onClick={removeProof}
+                onClick={() =>
+                  void removeProof()
+                }
                 className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/95 text-rose-600 shadow-sm hover:bg-white"
                 title="Hapus bukti transfer"
                 aria-label="Hapus bukti transfer"
@@ -318,8 +478,9 @@ export default function DonationProofUploader({
 
           <div className="flex items-center gap-2 px-4 py-3 text-xs font-medium text-emerald-700">
             <CheckCircle2 className="h-4 w-4" />
-            Bukti transfer berhasil
-            diunggah.
+            Bukti transfer
+            berhasil diunggah
+            secara privat.
           </div>
         </div>
       )}

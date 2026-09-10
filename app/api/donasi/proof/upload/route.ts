@@ -2,17 +2,19 @@ import {
   handleUpload,
   type HandleUploadBody,
 } from "@vercel/blob/client";
-import { NextResponse } from "next/server";
+import {
+  NextResponse,
+} from "next/server";
 
-import { rateLimit } from "@/lib/rate-limit";
-
-const MAX_IMAGE_SIZE =
-  5 * 1024 * 1024;
-
-const ALLOWED_CONTENT_TYPES = [
-  "image/jpeg",
-  "image/png",
-];
+import {
+  DONATION_PROOF_BASE_PATH,
+  DONATION_PROOF_MAX_SIZE,
+  DONATION_PROOF_TYPES,
+  getDonationProofBlobToken,
+} from "@/lib/donation-proof-media";
+import {
+  rateLimit,
+} from "@/lib/rate-limit";
 
 function getRequestIp(
   request: Request,
@@ -36,19 +38,23 @@ function getRequestIp(
 export async function POST(
   request: Request,
 ): Promise<NextResponse> {
-  const ip = getRequestIp(
-    request,
-  );
+  const ip =
+    getRequestIp(
+      request,
+    );
 
   const {
-    success: rateLimitSuccess,
+    success:
+      rateLimitSuccess,
   } = rateLimit(
     `donation-proof-upload-${ip}`,
     8,
     10 * 60 * 1000,
   );
 
-  if (!rateLimitSuccess) {
+  if (
+    !rateLimitSuccess
+  ) {
     return NextResponse.json(
       {
         error:
@@ -64,20 +70,43 @@ export async function POST(
     );
   }
 
+  const token =
+    getDonationProofBlobToken();
+
+  if (!token) {
+    return NextResponse.json(
+      {
+        error:
+          "Penyimpanan bukti transfer belum dikonfigurasi.",
+      },
+      {
+        status: 503,
+        headers: {
+          "Cache-Control":
+            "no-store",
+        },
+      },
+    );
+  }
+
   try {
     const body =
-      (await request.json()) as HandleUploadBody;
+      (await request.json()) as
+        HandleUploadBody;
 
     const jsonResponse =
       await handleUpload({
         body,
         request,
+        token,
 
         onBeforeGenerateToken:
-          async (pathname) => {
+          async (
+            pathname,
+          ) => {
             if (
               !pathname.startsWith(
-                "media/donasi/",
+                `${DONATION_PROOF_BASE_PATH}/`,
               )
             ) {
               throw new Error(
@@ -87,17 +116,19 @@ export async function POST(
 
             return {
               allowedContentTypes:
-                ALLOWED_CONTENT_TYPES,
+                [
+                  ...DONATION_PROOF_TYPES,
+                ],
               maximumSizeInBytes:
-                MAX_IMAGE_SIZE,
-              addRandomSuffix: true,
+                DONATION_PROOF_MAX_SIZE,
+              addRandomSuffix:
+                true,
             };
           },
 
         onUploadCompleted:
           async () => {
-            // URL Blob disimpan saat
-            // formulir donasi dikirim.
+            // URL private disimpan ketika formulir donasi dikirim.
           },
       });
 

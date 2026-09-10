@@ -9,6 +9,9 @@ import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 
 import { rateLimit } from "@/lib/rate-limit";
+import {
+  validatePrivateDonationProof,
+} from "@/lib/donation-proof-media";
 import { db } from "@/src/db";
 import {
   campaigns,
@@ -16,15 +19,6 @@ import {
   programs,
   settings,
 } from "@/src/db/schema";
-
-const MAX_PROOF_SIZE =
-  5 * 1024 * 1024;
-
-const ALLOWED_PROOF_TYPES =
-  new Set([
-    "image/jpeg",
-    "image/png",
-  ]);
 
 const SUPPORTED_BANKS =
   new Set([
@@ -60,126 +54,6 @@ function isUuid(
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
     value,
   );
-}
-
-function isAllowedProofUrl(
-  value: string,
-) {
-  try {
-    const url =
-      new URL(value);
-
-    return (
-      url.protocol ===
-        "https:" &&
-      url.hostname.endsWith(
-        ".blob.vercel-storage.com",
-      ) &&
-      url.pathname.startsWith(
-        "/media/donasi/",
-      )
-    );
-  } catch {
-    return false;
-  }
-}
-
-async function validateProofUpload(
-  proofImageUrl: string,
-): Promise<ProofValidationResult> {
-  if (
-    !isAllowedProofUrl(
-      proofImageUrl,
-    )
-  ) {
-    return {
-      success: false,
-      error:
-        "Bukti transfer tidak valid. Silakan unggah ulang.",
-    };
-  }
-
-  try {
-    const response =
-      await fetch(
-        proofImageUrl,
-        {
-          method: "HEAD",
-          cache: "no-store",
-        },
-      );
-
-    if (!response.ok) {
-      return {
-        success: false,
-        error:
-          "Bukti transfer tidak dapat ditemukan. Silakan unggah ulang.",
-      };
-    }
-
-    const contentType =
-      (
-        response.headers.get(
-          "content-type",
-        ) || ""
-      )
-        .split(";")[0]
-        .trim()
-        .toLowerCase();
-
-    if (
-      !ALLOWED_PROOF_TYPES.has(
-        contentType,
-      )
-    ) {
-      return {
-        success: false,
-        error:
-          "Format bukti transfer tidak valid.",
-      };
-    }
-
-    const contentLengthRaw =
-      response.headers.get(
-        "content-length",
-      );
-
-    if (contentLengthRaw) {
-      const contentLength =
-        Number(
-          contentLengthRaw,
-        );
-
-      if (
-        Number.isFinite(
-          contentLength,
-        ) &&
-        contentLength >
-          MAX_PROOF_SIZE
-      ) {
-        return {
-          success: false,
-          error:
-            "Ukuran bukti transfer melebihi 5 MB.",
-        };
-      }
-    }
-
-    return {
-      success: true,
-    };
-  } catch (error) {
-    console.error(
-      "Proof validation error:",
-      error,
-    );
-
-    return {
-      success: false,
-      error:
-        "Bukti transfer tidak dapat diverifikasi. Silakan unggah ulang.",
-    };
-  }
 }
 
 export async function submitDonation(
@@ -347,7 +221,7 @@ export async function submitDonation(
   }
 
   const proofValidation =
-    await validateProofUpload(
+    await validatePrivateDonationProof(
       proofImageUrl,
     );
 
