@@ -91,11 +91,6 @@ export default function DonationProofUploader({
   ] = useState("");
 
   const [
-    proofPathname,
-    setProofPathname,
-  ] = useState("");
-
-  const [
     previewUrl,
     setPreviewUrl,
   ] = useState("");
@@ -123,36 +118,6 @@ export default function DonationProofUploader({
     ) {
       inputRef.current
         ?.click();
-    }
-  }
-
-  async function deleteBlob(
-    pathname: string,
-  ) {
-    if (!pathname) {
-      return;
-    }
-
-    try {
-      await fetch(
-        "/api/donasi/proof/upload",
-        {
-          method:
-            "DELETE",
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
-          body:
-            JSON.stringify(
-              {
-                pathname,
-              },
-            ),
-        },
-      );
-    } catch {
-      // Cleanup bersifat best effort.
     }
   }
 
@@ -227,18 +192,11 @@ export default function DonationProofUploader({
           },
         );
 
-      const previousPathname =
-        proofPathname;
-
       const previousPreview =
         previewUrl;
 
       setProofImageUrl(
         blob.url,
-      );
-
-      setProofPathname(
-        blob.pathname,
       );
 
       setPreviewUrl(
@@ -254,14 +212,6 @@ export default function DonationProofUploader({
       ) {
         URL.revokeObjectURL(
           previousPreview,
-        );
-      }
-
-      if (
-        previousPathname
-      ) {
-        void deleteBlob(
-          previousPathname,
         );
       }
 
@@ -297,21 +247,17 @@ export default function DonationProofUploader({
     }
   }
 
-  async function removeProof() {
+  function removeProof() {
     if (
       isUploading
     ) {
       return;
     }
 
-    const pathname =
-      proofPathname;
-
     const localPreview =
       previewUrl;
 
     setProofImageUrl("");
-    setProofPathname("");
     setPreviewUrl("");
     setProgress(0);
     setError(null);
@@ -336,9 +282,6 @@ export default function DonationProofUploader({
       uploading: false,
     });
 
-    await deleteBlob(
-      pathname,
-    );
   }
 
   return (
@@ -464,8 +407,8 @@ export default function DonationProofUploader({
 
               <button
                 type="button"
-                onClick={() =>
-                  void removeProof()
+                onClick={
+                  removeProof
                 }
                 className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/95 text-rose-600 shadow-sm hover:bg-white"
                 title="Hapus bukti transfer"
