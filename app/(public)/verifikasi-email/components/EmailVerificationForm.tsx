@@ -56,19 +56,38 @@ export default function EmailVerificationForm({
   );
 
   const [
-    resendState,
-    resendAction,
-    resendPending,
-  ] = useActionState(
-    resendEmailCode,
-    resendInitial,
-  );
-
-  const [
     countdown,
     setCountdown,
   ] = useState(
     initialCountdown,
+  );
+
+  const [
+    resendState,
+    resendAction,
+    resendPending,
+  ] = useActionState(
+    async (
+      previousState:
+        ResendEmailState,
+    ) => {
+      const nextState =
+        await resendEmailCode(
+          previousState,
+        );
+
+      if (
+        nextState.retryAfter >
+        0
+      ) {
+        setCountdown(
+          nextState.retryAfter,
+        );
+      }
+
+      return nextState;
+    },
+    resendInitial,
   );
 
   useEffect(() => {
@@ -96,18 +115,6 @@ export default function EmailVerificationForm({
       );
   }, [countdown]);
 
-  useEffect(() => {
-    if (
-      resendState.retryAfter >
-      0
-    ) {
-      setCountdown(
-        resendState.retryAfter,
-      );
-    }
-  }, [
-    resendState.retryAfter,
-  ]);
 
   useEffect(() => {
     if (!verifyState.success) {

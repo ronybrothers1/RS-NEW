@@ -43,7 +43,11 @@ type MenuItem = {
 
 export default function AdminSidebar({ role }: AdminSidebarProps) {
   const pathname = usePathname();
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [mobileOpenPath, setMobileOpenPath] =
+    useState<string | null>(null);
+
+  const isMobileOpen =
+    mobileOpenPath === pathname;
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({
     keuangan: pathname?.startsWith("/admin/keuangan") || false,
     kegiatan: pathname?.startsWith("/admin/kegiatan") || false,
@@ -54,19 +58,6 @@ export default function AdminSidebar({ role }: AdminSidebarProps) {
       false,
   });
 
-  useEffect(() => {
-    setIsMobileOpen(false);
-    setOpenMenus((prev) => ({
-      ...prev,
-      keuangan: pathname?.startsWith("/admin/keuangan") || prev.keuangan,
-      kegiatan: pathname?.startsWith("/admin/kegiatan") || prev.kegiatan,
-      berita: pathname?.startsWith("/admin/berita") || prev.berita,
-      program:
-        pathname?.startsWith("/admin/donasi") ||
-        pathname?.startsWith("/admin/program") ||
-        prev.program,
-    }));
-  }, [pathname]);
 
   useEffect(() => {
     if (!isMobileOpen) return;
@@ -75,7 +66,7 @@ export default function AdminSidebar({ role }: AdminSidebarProps) {
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        setIsMobileOpen(false);
+        setMobileOpenPath(null);
       }
     };
 
@@ -194,7 +185,7 @@ export default function AdminSidebar({ role }: AdminSidebarProps) {
       <div className="fixed inset-x-0 top-0 z-30 flex h-16 items-center justify-between border-b border-slate-800 bg-black px-4 md:hidden">
         <button
           type="button"
-          onClick={() => setIsMobileOpen(true)}
+          onClick={() => setMobileOpenPath(pathname)}
           className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-white transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400"
           aria-label="Buka navigasi admin"
           aria-expanded={isMobileOpen}
@@ -221,7 +212,7 @@ export default function AdminSidebar({ role }: AdminSidebarProps) {
           type="button"
           aria-label="Tutup navigasi admin"
           className="fixed inset-0 z-40 bg-slate-950/45 backdrop-blur-[1px] md:hidden"
-          onClick={() => setIsMobileOpen(false)}
+          onClick={() => setMobileOpenPath(null)}
         />
       )}
 
@@ -247,7 +238,7 @@ export default function AdminSidebar({ role }: AdminSidebarProps) {
           <button
             type="button"
             className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white md:hidden"
-            onClick={() => setIsMobileOpen(false)}
+            onClick={() => setMobileOpenPath(null)}
             aria-label="Tutup navigasi admin"
           >
             <X className="h-5 w-5" />
@@ -277,7 +268,10 @@ export default function AdminSidebar({ role }: AdminSidebarProps) {
               if (!item.children) return renderLink(item);
 
               const active = isParentActive(item);
-              const open = Boolean(item.id && openMenus[item.id]);
+              const open = Boolean(
+                item.id &&
+                  (active || openMenus[item.id]),
+              );
               const Icon = item.icon;
 
               return (

@@ -4,6 +4,7 @@ import {
 
 import {
   eq,
+  sql,
 } from "drizzle-orm";
 
 import { db } from "@/src/db";
@@ -89,6 +90,8 @@ export default async function VerifyEmailPage() {
       .select({
         lastSentAt:
           emailVerificationCodes.lastSentAt,
+        currentTime:
+          sql<Date>`CURRENT_TIMESTAMP`,
       })
       .from(
         emailVerificationCodes,
@@ -105,7 +108,7 @@ export default async function VerifyEmailPage() {
 
   if (verification) {
     const elapsed =
-      Date.now() -
+      verification.currentTime.getTime() -
       verification.lastSentAt.getTime();
 
     countdown =

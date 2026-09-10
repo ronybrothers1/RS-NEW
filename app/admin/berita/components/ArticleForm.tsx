@@ -4,7 +4,7 @@ import { createBerita, updateBerita } from "@/app/actions/berita";
 import { ArrowLeft, CheckCircle2, Eye } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useState } from "react";
 import "react-quill-new/dist/quill.snow.css";
 import FeaturedImageUploader from "./FeaturedImageUploader";
 
@@ -75,13 +75,12 @@ export default function ArticleForm({ article }: Props) {
   const [status, setStatus] = useState<ArticleStatus>(
     article?.status ?? "PUBLISHED",
   );
-  const [scheduledLocal, setScheduledLocal] = useState("");
-
-  useEffect(() => {
-    if (article?.scheduledAt) {
-      setScheduledLocal(toLocalInputValue(article.scheduledAt));
-    }
-  }, [article?.scheduledAt]);
+  const [scheduledLocal, setScheduledLocal] = useState(
+    () =>
+      article?.scheduledAt
+        ? toLocalInputValue(article.scheduledAt)
+        : "",
+  );
 
   if (state.success) {
     return (

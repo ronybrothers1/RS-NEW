@@ -57,15 +57,15 @@ export default function Navbar() {
     usePathname();
 
   const [
-    isMobileMenuOpen,
-    setIsMobileMenuOpen,
-  ] = useState(false);
+    mobileMenuPath,
+    setMobileMenuPath,
+  ] = useState<
+    string | null
+  >(null);
 
-  useEffect(() => {
-    setIsMobileMenuOpen(
-      false,
-    );
-  }, [pathname]);
+  const isMobileMenuOpen =
+    mobileMenuPath ===
+    pathname;
 
   useEffect(() => {
     if (
@@ -85,8 +85,8 @@ export default function Navbar() {
         event.key ===
         "Escape"
       ) {
-        setIsMobileMenuOpen(
-          false,
+        setMobileMenuPath(
+          null,
         );
       }
     };
@@ -202,9 +202,10 @@ export default function Navbar() {
               type="button"
               className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-slate-300 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 xl:hidden"
               onClick={() =>
-                setIsMobileMenuOpen(
-                  (open) =>
-                    !open,
+                setMobileMenuPath(
+                  isMobileMenuOpen
+                    ? null
+                    : pathname,
                 )
               }
               aria-label={
