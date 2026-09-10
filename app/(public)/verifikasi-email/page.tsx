@@ -91,7 +91,7 @@ export default async function VerifyEmailPage() {
         lastSentAt:
           emailVerificationCodes.lastSentAt,
         currentTime:
-          sql<Date>`CURRENT_TIMESTAMP`,
+          sql<string | Date>`CURRENT_TIMESTAMP`,
       })
       .from(
         emailVerificationCodes,
@@ -107,19 +107,38 @@ export default async function VerifyEmailPage() {
   let countdown = 0;
 
   if (verification) {
-    const elapsed =
-      verification.currentTime.getTime() -
+    const currentTimeMs =
+      verification.currentTime instanceof Date
+        ? verification.currentTime.getTime()
+        : new Date(
+            verification.currentTime,
+          ).getTime();
+
+    const lastSentAtMs =
       verification.lastSentAt.getTime();
 
-    countdown =
-      Math.max(
-        0,
-        Math.ceil(
-          (60_000 -
-            elapsed) /
-            1000,
-        ),
-      );
+    if (
+      Number.isFinite(
+        currentTimeMs,
+      ) &&
+      Number.isFinite(
+        lastSentAtMs,
+      )
+    ) {
+      const elapsed =
+        currentTimeMs -
+        lastSentAtMs;
+
+      countdown =
+        Math.max(
+          0,
+          Math.ceil(
+            (60_000 -
+              elapsed) /
+              1000,
+          ),
+        );
+    }
   }
 
   return (
