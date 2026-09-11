@@ -39,9 +39,11 @@ const resendInitial:
 export default function EmailVerificationForm({
   maskedEmail,
   initialCountdown,
+  initialDeliveryFailed,
 }: {
   maskedEmail: string;
   initialCountdown: number;
+  initialDeliveryFailed: boolean;
 }) {
   const router =
     useRouter();
@@ -63,6 +65,13 @@ export default function EmailVerificationForm({
   );
 
   const [
+    deliveryFailed,
+    setDeliveryFailed,
+  ] = useState(
+    initialDeliveryFailed,
+  );
+
+  const [
     resendState,
     resendAction,
     resendPending,
@@ -75,6 +84,20 @@ export default function EmailVerificationForm({
         await resendEmailCode(
           previousState,
         );
+
+      if (nextState.success) {
+        setDeliveryFailed(
+          false,
+        );
+      } else if (
+        nextState.error &&
+        nextState.retryAfter ===
+          0
+      ) {
+        setDeliveryFailed(
+          true,
+        );
+      }
 
       if (
         nextState.retryAfter >
@@ -145,10 +168,22 @@ export default function EmailVerificationForm({
           Verifikasi Email
         </h1>
 
-        <p className="mt-2 text-sm leading-6 text-slate-500">
-          Kami mengirim kode
-          verifikasi 6 digit ke
-        </p>
+        {deliveryFailed ? (
+          <p
+            role="status"
+            className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-800"
+          >
+            Kode verifikasi belum
+            dapat dikirim. Silakan
+            gunakan tombol Kirim
+            Ulang Kode di bawah.
+          </p>
+        ) : (
+          <p className="mt-2 text-sm leading-6 text-slate-500">
+            Kami telah mengirim kode
+            verifikasi 6 digit ke
+          </p>
+        )}
 
         <p className="mt-1 text-sm font-semibold text-slate-800">
           {maskedEmail}

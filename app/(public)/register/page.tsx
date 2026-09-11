@@ -271,22 +271,33 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            <label className="flex items-start gap-3 rounded-xl bg-slate-50 p-4">
+            <div className="flex items-start gap-3 rounded-xl bg-slate-50 p-4">
               <input
+                id="register-terms"
                 type="checkbox"
                 name="terms"
                 required
                 className="mt-1 h-4 w-4 rounded border-slate-300 text-teal-700 focus:ring-teal-500"
               />
 
-              <span className="text-sm leading-6 text-slate-600">
+              <label
+                htmlFor="register-terms"
+                className="text-sm leading-6 text-slate-600"
+              >
                 Saya menyatakan data yang
                 saya berikan benar dan
-                menyetujui ketentuan
-                penggunaan layanan Yayasan
-                Ruang Sejahtera.
-              </span>
-            </label>
+                telah membaca{" "}
+                <Link
+                  href="/kebijakan-privasi"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-semibold text-teal-700 underline decoration-teal-200 underline-offset-2 hover:text-teal-800"
+                >
+                  Kebijakan Privasi
+                </Link>{" "}
+                Yayasan Ruang Sejahtera.
+              </label>
+            </div>
 
             <button
               type="submit"

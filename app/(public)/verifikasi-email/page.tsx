@@ -104,6 +104,11 @@ export default async function VerifyEmailPage() {
       )
       .limit(1);
 
+  const initialDeliveryFailed =
+    !verification ||
+    verification.lastSentAt.getTime() <=
+      0;
+
   let countdown = 0;
 
   if (verification) {
@@ -150,6 +155,9 @@ export default async function VerifyEmailPage() {
           )}
           initialCountdown={
             countdown
+          }
+          initialDeliveryFailed={
+            initialDeliveryFailed
           }
         />
       </div>

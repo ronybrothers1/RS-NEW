@@ -234,7 +234,7 @@ export async function registerUser(
     return {
       success: false,
       error:
-        "Anda harus menyetujui ketentuan penggunaan.",
+        "Anda harus menyetujui pernyataan dan Kebijakan Privasi.",
       verificationRequired:
         false,
       emailSent: false,
