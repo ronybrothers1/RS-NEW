@@ -302,19 +302,19 @@ export default async function HomePage() {
       </section>
 
       {/* Program Section (Lighter Design) */}
-      <section className="py-16 md:py-[72px] bg-white">
+      <section className="py-12 sm:py-16 md:py-[72px] bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-10 md:mb-12">
+          <div className="text-center max-w-2xl mx-auto mb-7 sm:mb-10 md:mb-12">
             <h2 className="text-3xl font-bold text-slate-900">Program Utama Kami</h2>
             <p className="mt-4 text-slate-600">Salurkan donasi Anda melalui program-program yang tepat sasaran dan terverifikasi.</p>
           </div>
           
           {activePrograms.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 gap-3 sm:gap-8 md:grid-cols-2 lg:grid-cols-3">
               {activePrograms.map((program: any) => {
                 const IconComponent = iconMap[program.icon] || HeartHandshake;
                 return (
-                  <Link href={`/donasi?program=${program.id}`} key={program.id} className="group flex items-start gap-5 p-6 hover:bg-slate-50 rounded-2xl transition-colors">
+                  <Link href={`/donasi?program=${program.id}`} key={program.id} className="group flex items-start gap-4 p-3 hover:bg-slate-50 rounded-2xl transition-colors sm:gap-5 sm:p-6">
                     <div className="w-16 h-16 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center shrink-0 group-hover:bg-teal-600 group-hover:text-white transition-colors shadow-sm">
                       <IconComponent className="h-8 w-8" />
                     </div>
