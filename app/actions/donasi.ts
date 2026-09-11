@@ -135,6 +135,9 @@ export async function submitDonation(
       formData.get(
         "donorName",
       ),
+    ).replace(
+      /\s+/g,
+      " ",
     );
 
   const amountRaw =
@@ -177,6 +180,11 @@ export async function submitDonation(
       "isAnonymous",
     ) === "on";
 
+  const termsConsent =
+    formData.get(
+      "termsConsent",
+    ) === "on";
+
   if (
     !donorName ||
     !amountRaw ||
@@ -192,6 +200,20 @@ export async function submitDonation(
   }
 
   if (
+    donorName.length <
+      2 ||
+    !/\p{L}/u.test(
+      donorName,
+    )
+  ) {
+    return {
+      success: false,
+      error:
+        "Nama donatur harus berisi sedikitnya 2 karakter dan memiliki huruf.",
+    };
+  }
+
+  if (
     donorName.length >
     180
   ) {
@@ -199,6 +221,14 @@ export async function submitDonation(
       success: false,
       error:
         "Nama maksimal 180 karakter.",
+    };
+  }
+
+  if (!termsConsent) {
+    return {
+      success: false,
+      error:
+        "Anda harus menyetujui Ketentuan Donasi sebelum mengirim formulir.",
     };
   }
 
@@ -223,10 +253,23 @@ export async function submitDonation(
     };
   }
 
+  const amountFormatValid =
+    /^(?:\d+|\d{1,3}(?:\.\d{3})+)$/.test(
+      amountRaw,
+    );
+
+  if (!amountFormatValid) {
+    return {
+      success: false,
+      error:
+        "Format nominal donasi tidak valid.",
+    };
+  }
+
   const amount =
     Number(
       amountRaw.replace(
-        /\D/g,
+        /\./g,
         "",
       ),
     );

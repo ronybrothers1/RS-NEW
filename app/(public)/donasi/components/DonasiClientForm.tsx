@@ -684,17 +684,34 @@ export default function DonasiClientForm({
             : "Kirim untuk Diverifikasi"}
         </button>
 
-        <p className="mt-4 text-center text-xs leading-5 text-slate-500">
-          Dengan mengirim formulir ini,
-          Anda menyetujui{" "}
-          <Link
-            href="/ketentuan-donasi"
-            className="font-medium text-teal-700 underline underline-offset-2"
-          >
-            Ketentuan Donasi
-          </Link>
-          .
-        </p>
+        <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <div className="flex items-start gap-3">
+            <input
+              id="donation-terms-consent"
+              type="checkbox"
+              name="termsConsent"
+              required
+              className="mt-0.5 h-5 w-5 shrink-0 rounded border-slate-300 text-teal-700 focus:ring-teal-500"
+            />
+
+            <label
+              htmlFor="donation-terms-consent"
+              className="text-sm leading-6 text-slate-600"
+            >
+              Saya telah membaca dan
+              menyetujui{" "}
+              <Link
+                href="/ketentuan-donasi"
+                target="_blank"
+                rel="noreferrer"
+                className="font-semibold text-teal-700 underline underline-offset-2"
+              >
+                Ketentuan Donasi
+              </Link>
+              .
+            </label>
+          </div>
+        </div>
       </div>
     </form>
   );
