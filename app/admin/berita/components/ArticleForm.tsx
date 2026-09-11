@@ -85,7 +85,7 @@ export default function ArticleForm({ article }: Props) {
   if (state.success) {
     return (
       <div className="mx-auto mt-8 max-w-2xl">
-        <div className="flex flex-col items-center rounded-xl border border-emerald-100 bg-emerald-50 p-8 text-center text-emerald-700">
+        <div className="flex flex-col items-center rounded-2xl border border-emerald-100 bg-emerald-50 p-8 text-center text-emerald-700">
           <CheckCircle2 className="mb-4 h-16 w-16 text-emerald-600" />
 
           <h2 className="mb-2 text-2xl font-bold">
@@ -102,7 +102,7 @@ export default function ArticleForm({ article }: Props) {
 
           <Link
             href="/admin/berita"
-            className="rounded-lg border border-emerald-200 bg-white px-5 py-2.5 text-sm font-medium text-emerald-700 hover:bg-emerald-50"
+            className="rounded-xl border border-emerald-200 bg-white px-5 py-2.5 text-sm font-medium text-emerald-700 hover:bg-emerald-50"
           >
             Kembali ke Daftar Berita
           </Link>
@@ -134,10 +134,10 @@ export default function ArticleForm({ article }: Props) {
         </div>
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
         <form action={formAction} className="space-y-8">
           {state.error && (
-            <div className="rounded-lg border border-red-100 bg-red-50 p-4 text-sm text-red-600">
+            <div className="rounded-xl border border-red-100 bg-red-50 p-4 text-sm text-red-600">
               {state.error}
             </div>
           )}
@@ -154,7 +154,7 @@ export default function ArticleForm({ article }: Props) {
                 required
                 defaultValue={article?.title ?? ""}
                 placeholder="Masukkan judul berita"
-                className="w-full rounded-lg border border-slate-300 px-4 py-2 text-lg font-medium text-slate-900 focus:border-teal-500 focus:ring-teal-500"
+                className="w-full rounded-xl border border-slate-300 px-4 py-2 text-lg font-medium text-slate-900 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
               />
             </div>
 
@@ -168,7 +168,7 @@ export default function ArticleForm({ article }: Props) {
                 name="slug"
                 defaultValue={article?.slug ?? ""}
                 placeholder="Biarkan kosong untuk dibuat otomatis"
-                className="w-full rounded-lg border border-slate-300 px-4 py-2 text-slate-900 focus:border-teal-500 focus:ring-teal-500"
+                className="w-full rounded-xl border border-slate-300 px-4 py-2 text-slate-900 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
               />
 
               <p className="mt-1 text-xs text-slate-500">
@@ -181,7 +181,7 @@ export default function ArticleForm({ article }: Props) {
                 Konten / Isi Berita *
               </label>
 
-              <div className="overflow-hidden rounded-lg border border-slate-300 [&_.ql-container]:border-none [&_.ql-editor]:min-h-[300px] [&_.ql-editor]:text-base [&_.ql-toolbar]:border-none [&_.ql-toolbar]:border-b [&_.ql-toolbar]:border-slate-300 [&_.ql-toolbar]:bg-slate-50">
+              <div className="overflow-hidden rounded-xl border border-slate-300 [&_.ql-container]:border-none [&_.ql-editor]:min-h-[300px] [&_.ql-editor]:text-base [&_.ql-toolbar]:border-none [&_.ql-toolbar]:border-b [&_.ql-toolbar]:border-slate-300 [&_.ql-toolbar]:bg-slate-50">
                 <ReactQuill
                   theme="snow"
                   value={content}
@@ -230,7 +230,7 @@ export default function ArticleForm({ article }: Props) {
                   name="imageAlt"
                   defaultValue={article?.imageAlt ?? ""}
                   placeholder="Deskripsi gambar untuk aksesibilitas dan SEO"
-                  className="w-full rounded-lg border border-slate-300 px-4 py-2 text-slate-900 focus:border-teal-500 focus:ring-teal-500"
+                  className="w-full rounded-xl border border-slate-300 px-4 py-2 text-slate-900 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
                 />
 
                 <p className="mt-1 text-xs text-slate-500">
@@ -249,7 +249,7 @@ export default function ArticleForm({ article }: Props) {
                   maxLength={300}
                   defaultValue={article?.imageCaption ?? ""}
                   placeholder="Contoh: Kondisi rumah sebelum direnovasi di Desa Karanggayam, Sampang."
-                  className="w-full rounded-lg border border-slate-300 px-4 py-2 text-slate-900 focus:border-teal-500 focus:ring-teal-500"
+                  className="w-full rounded-xl border border-slate-300 px-4 py-2 text-slate-900 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
                 />
 
                 <p className="mt-1 text-xs text-slate-500">
@@ -274,7 +274,7 @@ export default function ArticleForm({ article }: Props) {
                   type="text"
                   name="metaTitle"
                   defaultValue={article?.metaTitle ?? ""}
-                  className="w-full rounded-lg border border-slate-300 px-4 py-2 text-slate-900"
+                  className="w-full rounded-xl border border-slate-300 px-4 py-2 text-slate-900 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
                 />
               </div>
 
@@ -287,7 +287,7 @@ export default function ArticleForm({ article }: Props) {
                   name="metaDescription"
                   rows={2}
                   defaultValue={article?.metaDescription ?? ""}
-                  className="w-full rounded-lg border border-slate-300 px-4 py-2 text-slate-900"
+                  className="w-full rounded-xl border border-slate-300 px-4 py-2 text-slate-900 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
                 />
               </div>
 
@@ -300,7 +300,7 @@ export default function ArticleForm({ article }: Props) {
                   name="excerpt"
                   rows={3}
                   defaultValue={article?.excerpt ?? ""}
-                  className="w-full rounded-lg border border-slate-300 px-4 py-2 text-slate-900"
+                  className="w-full rounded-xl border border-slate-300 px-4 py-2 text-slate-900 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
                 />
               </div>
             </div>
@@ -383,7 +383,7 @@ export default function ArticleForm({ article }: Props) {
                       setScheduledLocal(event.target.value)
                     }
                     required
-                    className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-900"
+                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2 text-slate-900 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
                   />
 
                   <input
@@ -413,7 +413,7 @@ export default function ArticleForm({ article }: Props) {
               <Link
                 href={`/admin/berita/${article.id}/preview`}
                 target="_blank"
-                className="inline-flex items-center gap-2 rounded-lg border border-teal-200 bg-teal-50 px-5 py-2.5 text-sm font-medium text-teal-700 hover:bg-teal-100"
+                className="inline-flex items-center gap-2 rounded-xl border border-teal-200 bg-teal-50 px-5 py-2.5 text-sm font-medium text-teal-700 hover:bg-teal-100"
               >
                 <Eye className="h-4 w-4" />
                 Pratinjau
@@ -421,7 +421,7 @@ export default function ArticleForm({ article }: Props) {
             )}
             <Link
               href="/admin/berita"
-              className="rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
+              className="rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
             >
               Batal
             </Link>
@@ -429,7 +429,7 @@ export default function ArticleForm({ article }: Props) {
             <button
               type="submit"
               disabled={isPending}
-              className="rounded-lg bg-teal-700 px-8 py-2.5 text-sm font-medium text-white hover:bg-teal-800 disabled:opacity-70"
+              className="rounded-xl bg-teal-700 px-8 py-2.5 text-sm font-medium text-white hover:bg-teal-800 disabled:opacity-70"
             >
               {isPending
                 ? "Menyimpan..."
