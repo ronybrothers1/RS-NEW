@@ -180,8 +180,7 @@ export const financialTransactions = pgTable('financial_transactions', {
   donationId: uuid('donation_id')
     .references(() => donations.id)
     .unique(),
-  userId: uuid('user_id')
-    .references(() => users.id, { onDelete: 'set null' }),
+  userId: uuid('user_id').references(() => users.id).notNull(),
   donorName: text('donor_name'),
   isAnonymous: boolean('is_anonymous').default(false).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
