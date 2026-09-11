@@ -53,6 +53,19 @@ export const emailVerificationCodes = pgTable('email_verification_codes', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
+export const passwordResetCodes = pgTable('password_reset_codes', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id')
+    .references(() => users.id, { onDelete: 'cascade' })
+    .unique()
+    .notNull(),
+  codeHash: text('code_hash').notNull(),
+  expiresAt: timestamp('expires_at').notNull(),
+  attempts: integer('attempts').default(0).notNull(),
+  lastSentAt: timestamp('last_sent_at').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
 export const programs = pgTable('programs', {
   id: uuid('id').defaultRandom().primaryKey(),
   name: text('name').notNull(),
