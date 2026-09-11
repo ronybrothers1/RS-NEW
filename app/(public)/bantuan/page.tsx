@@ -9,6 +9,7 @@ import {
   UserPlus,
 } from "lucide-react";
 import {
+  asc,
   desc,
   eq,
   inArray,
@@ -19,6 +20,7 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import {
   formatRupiah,
+  getProgramQuestions,
 } from "@/lib/assistance";
 import {
   db,
@@ -47,6 +49,7 @@ export default async function AssistanceCampaignsPage() {
   const [
     rows,
     ledgerRows,
+    activePrograms,
   ] =
     await Promise.all([
       db
@@ -117,6 +120,28 @@ export default async function AssistanceCampaignsPage() {
         .where(
           isNull(
             financialTransactions.deletedAt,
+          ),
+        ),
+
+      db
+        .select({
+          id:
+            programs.id,
+          name:
+            programs.name,
+          description:
+            programs.description,
+        })
+        .from(programs)
+        .where(
+          eq(
+            programs.status,
+            "ACTIVE",
+          ),
+        )
+        .orderBy(
+          asc(
+            programs.name,
           ),
         ),
     ]);
@@ -219,6 +244,175 @@ export default async function AssistanceCampaignsPage() {
                 </div>
               );
             })}
+          </div>
+
+          <div className="mt-10 rounded-3xl border border-slate-200 bg-slate-50 p-5 sm:p-6 lg:p-8">
+            <div className="max-w-3xl">
+              <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-700">
+                Persiapan Pengajuan
+              </p>
+
+              <h3 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">
+                Yang Perlu Disiapkan Sebelum Mengajukan
+              </h3>
+
+              <p className="mt-3 text-sm leading-7 text-slate-600 md:text-base">
+                Informasi ini dapat dilihat sebelum membuat akun agar Anda dapat
+                menyiapkan data terlebih dahulu. Form pengajuan tetap hanya dapat
+                dikirim melalui akun USER yang sudah terverifikasi.
+              </p>
+            </div>
+
+            <div className="mt-6 grid gap-3 md:grid-cols-2">
+              {[
+                {
+                  title:
+                    "Data calon penerima",
+                  text:
+                    "Nama calon penerima, hubungan pengaju dengan calon penerima, serta WhatsApp yang dapat dihubungi.",
+                },
+                {
+                  title:
+                    "Lokasi dan kondisi",
+                  text:
+                    "Desa/kelurahan, kecamatan, kabupaten/kota, alamat lengkap, serta penjelasan kondisi dan alasan membutuhkan bantuan.",
+                },
+                {
+                  title:
+                    "Rencana bantuan",
+                  text:
+                    "Pilih program yang sesuai, tulis judul pengajuan, dan tentukan perkiraan target bantuan yang dibutuhkan.",
+                },
+                {
+                  title:
+                    "Minimal 2 foto kondisi",
+                  text:
+                    "Siapkan sedikitnya dua foto yang membantu tim memahami kondisi calon penerima saat proses verifikasi.",
+                },
+              ].map(
+                (requirement) => (
+                  <div
+                    key={
+                      requirement.title
+                    }
+                    className="flex gap-3 rounded-2xl border border-slate-200 bg-white p-4"
+                  >
+                    <BadgeCheck className="mt-0.5 h-5 w-5 shrink-0 text-teal-700" />
+
+                    <div>
+                      <h4 className="text-sm font-bold text-slate-950">
+                        {
+                          requirement.title
+                        }
+                      </h4>
+
+                      <p className="mt-1 text-sm leading-6 text-slate-600">
+                        {
+                          requirement.text
+                        }
+                      </p>
+                    </div>
+                  </div>
+                ),
+              )}
+            </div>
+
+            <div className="mt-8 border-t border-slate-200 pt-7">
+              <h4 className="text-lg font-bold text-slate-950">
+                Pertanyaan sesuai program
+              </h4>
+
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+                Setiap program meminta informasi tambahan yang berbeda. Daftar di
+                bawah menggunakan pertanyaan yang sama dengan form pengajuan,
+                sehingga Anda dapat menyiapkan jawabannya sejak awal.
+              </p>
+
+              {activePrograms.length ===
+              0 ? (
+                <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-800">
+                  Belum ada program aktif yang dapat diajukan saat ini.
+                </div>
+              ) : (
+                <div className="mt-5 grid gap-3 lg:grid-cols-2">
+                  {activePrograms.map(
+                    (program) => {
+                      const questions =
+                        getProgramQuestions(
+                          program.name,
+                        );
+
+                      return (
+                        <details
+                          key={
+                            program.id
+                          }
+                          className="group rounded-2xl border border-slate-200 bg-white p-5"
+                        >
+                          <summary className="flex cursor-pointer list-none items-center justify-between gap-4">
+                            <span className="font-bold text-slate-950">
+                              {
+                                program.name
+                              }
+                            </span>
+
+                            <span className="shrink-0 text-xs font-semibold text-teal-700 group-open:hidden">
+                              Lihat pertanyaan
+                            </span>
+
+                            <span className="hidden shrink-0 text-xs font-semibold text-slate-500 group-open:inline">
+                              Tutup
+                            </span>
+                          </summary>
+
+                          {program.description && (
+                            <p className="mt-3 text-sm leading-6 text-slate-500">
+                              {
+                                program.description
+                              }
+                            </p>
+                          )}
+
+                          <ol className="mt-4 space-y-2">
+                            {questions.map(
+                              (
+                                question,
+                                index,
+                              ) => (
+                                <li
+                                  key={
+                                    question.key
+                                  }
+                                  className="flex gap-3 rounded-xl bg-slate-50 px-3 py-2.5 text-sm leading-6 text-slate-700"
+                                >
+                                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-teal-100 text-xs font-bold text-teal-800">
+                                    {
+                                      index +
+                                      1
+                                    }
+                                  </span>
+
+                                  <span>
+                                    {
+                                      question.label
+                                    }
+                                  </span>
+                                </li>
+                              ),
+                            )}
+                          </ol>
+                        </details>
+                      );
+                    },
+                  )}
+                </div>
+              )}
+            </div>
+
+            <p className="mt-6 text-xs leading-5 text-slate-500">
+              Pengajuan tetap melalui proses pemeriksaan. Menyiapkan data lengkap
+              tidak berarti pengajuan otomatis disetujui.
+            </p>
           </div>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
