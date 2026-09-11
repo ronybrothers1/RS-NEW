@@ -180,7 +180,8 @@ export const financialTransactions = pgTable('financial_transactions', {
   donationId: uuid('donation_id')
     .references(() => donations.id)
     .unique(),
-  userId: uuid('user_id').references(() => users.id).notNull(),
+  userId: uuid('user_id')
+    .references(() => users.id, { onDelete: 'set null' }),
   donorName: text('donor_name'),
   isAnonymous: boolean('is_anonymous').default(false).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -251,7 +252,8 @@ export const gallery = pgTable('gallery', {
 
 export const auditLogs = pgTable('audit_logs', {
   id: uuid('id').defaultRandom().primaryKey(),
-  userId: uuid('user_id').references(() => users.id).notNull(),
+  userId: uuid('user_id')
+    .references(() => users.id, { onDelete: 'set null' }),
   action: text('action').notNull(), // CREATE, UPDATE, DELETE, PUBLISH, LOGIN
   tableName: text('table_name').notNull(),
   recordId: text('record_id'),

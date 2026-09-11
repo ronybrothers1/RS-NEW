@@ -52,7 +52,11 @@ export default async function AuditLogsPage() {
                     {format(new Date(item.log.createdAt), "dd MMM yyyy, HH:mm", { locale: id })}
                   </td>
                   <td className="p-4">
-                    <div className="font-medium text-slate-900">{item.userName || 'System'}</div>
+                    <div className="font-medium text-slate-900">
+                      {item.log.userId
+                        ? item.userName || "Pengguna tidak ditemukan"
+                        : "Pengguna telah dihapus"}
+                    </div>
                     <div className="text-slate-500 text-xs">{item.userEmail || '-'}</div>
                   </td>
                   <td className="p-4">
