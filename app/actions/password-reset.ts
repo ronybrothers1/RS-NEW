@@ -10,6 +10,9 @@ import {
 import {
   headers,
 } from "next/headers";
+import {
+  redirect,
+} from "next/navigation";
 
 import {
   issuePasswordResetCode,
@@ -571,8 +574,7 @@ export async function completePasswordReset(
 
   await clearPendingPasswordResetCookie();
 
-  return {
-    success: true,
-    error: null,
-  };
+  redirect(
+    "/login?reset=1",
+  );
 }
