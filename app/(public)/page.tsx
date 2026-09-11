@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 import Link from "next/link";
 import { HeartHandshake, ArrowRight, Activity, Users, FileText, CheckCircle2, BookOpen, Stethoscope, Leaf } from "lucide-react";
 import { db } from "@/src/db";
-import { financialTransactions, programs, activities } from "@/src/db/schema";
+import { financialTransactions, programs, articles } from "@/src/db/schema";
 import { sql, eq } from "drizzle-orm";
 import { formatCurrency } from "@/lib/utils";
 import { getFinanceOpeningBalance } from "@/lib/finance-opening-balance";
@@ -41,37 +41,172 @@ export default async function HomePage() {
     .orderBy(programs.createdAt)
     .limit(6);
     
+  let latestArticle: {
+    title: string;
+    slug: string;
+    excerpt: string | null;
+    imageUrl: string | null;
+    imageAlt: string | null;
+    publishedAt: Date | null;
+    createdAt: Date;
+  } | undefined;
+
+  try {
+    [latestArticle] = await db
+      .select({
+        title: articles.title,
+        slug: articles.slug,
+        excerpt: articles.excerpt,
+        imageUrl: articles.imageUrl,
+        imageAlt: articles.imageAlt,
+        publishedAt: articles.publishedAt,
+        createdAt: articles.createdAt,
+      })
+      .from(articles)
+      .where(eq(articles.status, "PUBLISHED"))
+      .orderBy(
+        sql`${articles.publishedAt} DESC NULLS LAST, ${articles.createdAt} DESC`,
+      )
+      .limit(1);
+  } catch (error) {
+    console.error(
+      "home: failed to fetch latest published article",
+      error,
+    );
+  }
+
+  const latestArticleDate = latestArticle
+    ? new Intl.DateTimeFormat("id-ID", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      }).format(
+        latestArticle.publishedAt ?? latestArticle.createdAt,
+      )
+    : null;
+
   const hasRealData = Number(financialStats?.totalIn) > 0 || activePrograms.length > 0;
 
   return (
     <div className="min-h-screen bg-white">
-      
       {/* Hero Section */}
-      <section className="relative pt-14 pb-24 md:pt-20 md:pb-32 overflow-hidden bg-slate-950">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-teal-900/40 via-slate-950 to-slate-950 -z-10"></div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 flex flex-col md:flex-row items-center md:items-start gap-12">
-          
-          <div className="text-left max-w-2xl">
-            <h1 className="text-4xl md:text-6xl font-extrabold text-white tracking-tight leading-[1.1]">
-              KEPEDULIAN PERLU SAMPAI <br />
-              <span className="text-teal-400">KE TEMPAT YANG TEPAT.</span>
+      <section className="relative overflow-hidden bg-slate-950 pb-24 pt-12 sm:pt-14 md:pb-28 md:pt-16 lg:pb-32 lg:pt-20">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-teal-900/40 via-slate-950 to-slate-950"></div>
+        <div className="absolute -right-24 top-20 hidden h-80 w-80 rounded-full bg-teal-500/10 blur-3xl lg:block"></div>
+
+        <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-[minmax(0,1.08fr)_minmax(340px,0.92fr)] lg:gap-14 lg:px-8">
+          <div className="w-full max-w-2xl">
+            <h1 className="text-[clamp(2.75rem,11vw,4rem)] font-extrabold leading-[1.05] tracking-tight text-white lg:text-[clamp(3.75rem,5vw,4.75rem)]">
+              KEPEDULIAN PERLU SAMPAI
+              <span className="mt-1 block text-teal-400">
+                KE TEMPAT YANG TEPAT.
+              </span>
             </h1>
-            <p className="mt-6 text-xl text-slate-400 leading-relaxed max-w-xl">
+
+            <p className="mt-6 max-w-xl text-lg leading-relaxed text-slate-300 sm:text-xl">
               Yayasan Ruang Sejahtera adalah jembatan transparan antara niat baik Anda dan masyarakat yang membutuhkan.
             </p>
-            <div className="mt-10 flex flex-col sm:flex-row gap-4">
-              <Link href="/program" className="bg-teal-600 hover:bg-teal-500 text-white px-8 py-3.5 rounded-full font-medium transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 text-lg">
+
+            <div className="mt-9 flex flex-col gap-3 sm:mt-10 sm:flex-row sm:gap-4">
+              <Link
+                href="/program"
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-teal-600 px-8 py-3.5 text-base font-semibold text-white shadow-md transition-all hover:-translate-y-0.5 hover:bg-teal-500 hover:shadow-lg sm:text-lg"
+              >
                 Lihat Program
                 <ArrowRight className="h-5 w-5" />
               </Link>
-              <Link href="/donasi" className="bg-white/10 hover:bg-white/20 text-white border border-white/20 px-8 py-3.5 rounded-full font-medium transition-all flex items-center justify-center gap-2 text-lg">
+
+              <Link
+                href="/donasi"
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-white/20 bg-white/[0.07] px-8 py-3.5 text-base font-semibold text-white transition-all hover:-translate-y-0.5 hover:border-white/30 hover:bg-white/15 sm:text-lg"
+              >
                 Donasi Sekarang
               </Link>
             </div>
           </div>
-          
+
+          <div className="relative hidden lg:block">
+            <div className="absolute -inset-5 rounded-[2.25rem] bg-teal-500/10 blur-2xl"></div>
+
+            {latestArticle ? (
+              <Link
+                href={`/berita/${latestArticle.slug}`}
+                aria-label={`Baca berita terbaru: ${latestArticle.title}`}
+                className="group relative block overflow-hidden rounded-[2rem] border border-white/10 bg-slate-900/90 shadow-2xl shadow-black/30 ring-1 ring-white/5"
+              >
+                <div
+                  className="relative aspect-[16/11] overflow-hidden bg-slate-800 bg-cover bg-center"
+                  style={
+                    latestArticle.imageUrl
+                      ? {
+                          backgroundImage: `url("${latestArticle.imageUrl}")`,
+                        }
+                      : undefined
+                  }
+                >
+                  {!latestArticle.imageUrl && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-teal-950 via-slate-900 to-slate-950">
+                      <FileText className="h-16 w-16 text-teal-300/70" />
+                    </div>
+                  )}
+
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/10 to-transparent"></div>
+
+                  <div className="absolute left-5 top-5 inline-flex items-center rounded-full border border-white/15 bg-slate-950/75 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-teal-200 backdrop-blur-md">
+                    Berita Terbaru
+                  </div>
+                </div>
+
+                <div className="relative p-6 xl:p-7">
+                  {latestArticleDate && (
+                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
+                      {latestArticleDate}
+                    </p>
+                  )}
+
+                  <h2 className="mt-3 line-clamp-3 text-2xl font-bold leading-snug text-white transition-colors group-hover:text-teal-300">
+                    {latestArticle.title}
+                  </h2>
+
+                  {latestArticle.excerpt && (
+                    <p className="mt-3 line-clamp-2 text-sm leading-6 text-slate-400">
+                      {latestArticle.excerpt}
+                    </p>
+                  )}
+
+                  <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-teal-300 transition-colors group-hover:text-teal-200">
+                    Baca Selengkapnya
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  </span>
+                </div>
+              </Link>
+            ) : (
+              <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-slate-900/80 p-8 shadow-2xl ring-1 ring-white/5">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-teal-500/10 text-teal-300">
+                  <FileText className="h-7 w-7" />
+                </div>
+
+                <p className="mt-6 text-xs font-bold uppercase tracking-[0.14em] text-teal-300">
+                  Kabar Ruang Sejahtera
+                </p>
+
+                <h2 className="mt-3 text-2xl font-bold leading-snug text-white">
+                  Berita terbaru akan tampil di sini setelah dipublikasikan.
+                </h2>
+
+                <Link
+                  href="/berita"
+                  className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-teal-300 hover:text-teal-200"
+                >
+                  Lihat Semua Berita
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+            )}
+          </div>
         </div>
       </section>
+
 
       {/* Impact Strip */}
       <section className="bg-teal-800 py-8 text-white relative z-20 -mt-10 mx-4 sm:mx-6 lg:mx-auto max-w-7xl rounded-2xl shadow-xl">
