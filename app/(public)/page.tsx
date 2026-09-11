@@ -129,10 +129,10 @@ export default async function HomePage() {
               <Link
                 href={`/berita/${latestArticle.slug}`}
                 aria-label={`Baca berita terbaru: ${latestArticle.title}`}
-                className="group mt-8 grid grid-cols-[104px_minmax(0,1fr)] overflow-hidden rounded-2xl border border-white/10 bg-slate-900/90 shadow-xl ring-1 ring-white/5 transition hover:border-teal-400/20 sm:grid-cols-[168px_minmax(0,1fr)] lg:hidden"
+                className="group mt-8 block overflow-hidden rounded-2xl border border-white/10 bg-slate-900/90 shadow-xl ring-1 ring-white/5 transition hover:border-teal-400/20 sm:grid sm:grid-cols-[168px_minmax(0,1fr)] lg:hidden"
               >
                 <div
-                  className="relative min-h-[132px] overflow-hidden bg-slate-800 bg-cover bg-center sm:min-h-[160px]"
+                  className="relative aspect-[16/9] w-full overflow-hidden bg-slate-800 bg-cover bg-center sm:aspect-auto sm:min-h-[160px]"
                   style={
                     latestArticle.imageUrl
                       ? {
@@ -149,7 +149,7 @@ export default async function HomePage() {
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent to-slate-950/20"></div>
                 </div>
 
-                <div className="min-w-0 p-3.5 sm:p-5">
+                <div className="min-w-0 p-4 sm:p-5">
                   <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-teal-300 sm:text-[11px]">
                     Berita Terbaru
                   </p>
@@ -160,7 +160,7 @@ export default async function HomePage() {
                     </p>
                   )}
 
-                  <h2 className="mt-2 line-clamp-2 text-sm font-bold leading-snug text-white transition-colors group-hover:text-teal-300 sm:line-clamp-3 sm:text-lg">
+                  <h2 className="mt-2 line-clamp-3 text-base font-bold leading-snug text-white transition-colors group-hover:text-teal-300 sm:text-lg">
                     {latestArticle.title}
                   </h2>
 
