@@ -123,6 +123,71 @@ export default async function HomePage() {
                 Donasi Sekarang
               </Link>
             </div>
+
+            {/* Latest news — compact mobile/tablet presentation */}
+            {latestArticle ? (
+              <Link
+                href={`/berita/${latestArticle.slug}`}
+                aria-label={`Baca berita terbaru: ${latestArticle.title}`}
+                className="group mt-8 grid grid-cols-[104px_minmax(0,1fr)] overflow-hidden rounded-2xl border border-white/10 bg-slate-900/90 shadow-xl ring-1 ring-white/5 transition hover:border-teal-400/20 sm:grid-cols-[168px_minmax(0,1fr)] lg:hidden"
+              >
+                <div
+                  className="relative min-h-[132px] overflow-hidden bg-slate-800 bg-cover bg-center sm:min-h-[160px]"
+                  style={
+                    latestArticle.imageUrl
+                      ? {
+                          backgroundImage: `url("${latestArticle.imageUrl}")`,
+                        }
+                      : undefined
+                  }
+                >
+                  {!latestArticle.imageUrl && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-teal-950 via-slate-900 to-slate-950">
+                      <FileText className="h-9 w-9 text-teal-300/70 sm:h-11 sm:w-11" />
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent to-slate-950/20"></div>
+                </div>
+
+                <div className="min-w-0 p-3.5 sm:p-5">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-teal-300 sm:text-[11px]">
+                    Berita Terbaru
+                  </p>
+
+                  {latestArticleDate && (
+                    <p className="mt-1 text-[10px] font-medium text-slate-500 sm:text-xs">
+                      {latestArticleDate}
+                    </p>
+                  )}
+
+                  <h2 className="mt-2 line-clamp-2 text-sm font-bold leading-snug text-white transition-colors group-hover:text-teal-300 sm:line-clamp-3 sm:text-lg">
+                    {latestArticle.title}
+                  </h2>
+
+                  <span className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-teal-300 group-hover:text-teal-200 sm:text-sm">
+                    Baca
+                    <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1 sm:h-4 sm:w-4" />
+                  </span>
+                </div>
+              </Link>
+            ) : (
+              <Link
+                href="/berita"
+                className="mt-8 flex items-center gap-4 rounded-2xl border border-white/10 bg-slate-900/90 p-4 shadow-xl ring-1 ring-white/5 lg:hidden"
+              >
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-teal-500/10 text-teal-300">
+                  <FileText className="h-6 w-6" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-teal-300">
+                    Kabar Ruang Sejahtera
+                  </p>
+                  <p className="mt-1 text-sm font-semibold leading-5 text-white">
+                    Berita terbaru akan tampil setelah dipublikasikan.
+                  </p>
+                </div>
+              </Link>
+            )}
           </div>
 
           <div className="relative hidden lg:block">
