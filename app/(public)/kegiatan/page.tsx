@@ -1,4 +1,4 @@
-﻿// Rendered on-demand because this page reads directly from the database.
+// Rendered on-demand because this page reads directly from the database.
 export const dynamic = "force-dynamic";
 
 import { db } from "@/src/db";
@@ -45,17 +45,18 @@ export default async function PublicKegiatanPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <section className="border-b border-slate-200 bg-white">
-        <div className="mx-auto w-full max-w-7xl px-4 py-12 text-center sm:px-6 sm:py-16 lg:px-8 lg:py-20">
+      <section className="relative overflow-hidden bg-slate-950">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-teal-900/40 via-slate-950 to-slate-950"></div>
+        <div className="relative z-10 mx-auto w-full max-w-7xl px-4 py-16 text-center sm:px-6 md:py-24 lg:px-8">
           <span className="inline-flex rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-teal-700">
             Jejak Kegiatan
           </span>
 
-          <h1 className="mx-auto mt-4 max-w-3xl text-3xl font-bold leading-tight text-slate-900 sm:text-4xl md:text-5xl">
+          <h1 className="mx-auto mt-4 max-w-3xl text-3xl font-bold leading-tight text-white sm:text-4xl md:text-5xl">
             Kegiatan Yayasan Ruang Sejahtera
           </h1>
 
-          <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">
+          <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg sm:leading-8">
             Dokumentasi kegiatan sosial, penyaluran bantuan, dan pelaksanaan program Yayasan Ruang Sejahtera di masyarakat.
           </p>
         </div>

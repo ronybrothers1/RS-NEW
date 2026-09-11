@@ -32,8 +32,9 @@ export default async function PublicBeritaPage() {
     <div className="min-h-screen bg-slate-50">
       
       
-      <div className="bg-slate-900 py-16 md:py-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <div className="relative overflow-hidden bg-slate-950 py-16 md:py-24">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-teal-900/40 via-slate-950 to-slate-950"></div>
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-3xl md:text-5xl font-bold text-white mb-6">Berita & Artikel</h1>
           <p className="text-slate-300 text-lg md:text-xl max-w-2xl mx-auto">
             Kisah inspiratif, update program, dan literasi kebaikan dari Yayasan Ruang Sejahtera.

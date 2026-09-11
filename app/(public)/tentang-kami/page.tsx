@@ -8,11 +8,11 @@ export default function TentangKamiPage() {
     <div className="min-h-screen bg-slate-50">
       
       
-      <div className="bg-teal-800 py-16 md:py-24 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
+      <div className="relative overflow-hidden bg-slate-950 py-16 md:py-24">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-teal-900/40 via-slate-950 to-slate-950"></div>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <h1 className="text-3xl md:text-5xl font-bold text-white mb-6">Membangun Harapan, Mewujudkan Kesejahteraan</h1>
-          <p className="text-teal-100 text-lg md:text-xl leading-relaxed">
+          <p className="text-slate-300 text-lg md:text-xl leading-relaxed">
             Yayasan Ruang Sejahtera adalah lembaga non-profit yang berdedikasi untuk meningkatkan kualitas hidup masyarakat melalui program sosial, pendidikan, dan kemanusiaan.
           </p>
         </div>
