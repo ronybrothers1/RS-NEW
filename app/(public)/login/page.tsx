@@ -49,6 +49,11 @@ export default function LoginPage() {
       "registered",
     ) === "1";
 
+  const passwordReset =
+    searchParams.get(
+      "reset",
+    ) === "1";
+
   useEffect(() => {
     if (
       state.requiresVerification
@@ -124,6 +129,14 @@ export default function LoginPage() {
               </div>
             )}
 
+            {passwordReset && (
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
+                Password berhasil diperbarui.
+                Silakan masuk menggunakan
+                password baru Anda.
+              </div>
+            )}
+
             {state.error && (
               <div
                 role="alert"
@@ -157,12 +170,21 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label
-                htmlFor="login-password"
-                className="mb-2 block text-sm font-medium text-slate-700"
-              >
-                Password
-              </label>
+              <div className="mb-2 flex items-center justify-between gap-4">
+                <label
+                  htmlFor="login-password"
+                  className="block text-sm font-medium text-slate-700"
+                >
+                  Password
+                </label>
+
+                <Link
+                  href="/lupa-password"
+                  className="text-sm font-semibold text-teal-700 transition hover:text-teal-800"
+                >
+                  Lupa Password?
+                </Link>
+              </div>
 
               <div className="relative">
                 <Lock className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
