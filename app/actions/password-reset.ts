@@ -155,13 +155,38 @@ export async function requestPasswordReset(
 
   if (user) {
     try {
-      await issuePasswordResetCode(
-        user.id,
-        user.email,
-      );
+      const [existing] =
+        await db
+          .select({
+            lastSentAt:
+              passwordResetCodes.lastSentAt,
+          })
+          .from(
+            passwordResetCodes,
+          )
+          .where(
+            eq(
+              passwordResetCodes.userId,
+              user.id,
+            ),
+          )
+          .limit(1);
+
+      const canSend =
+        !existing ||
+        Date.now() -
+          existing.lastSentAt.getTime() >=
+          60_000;
+
+      if (canSend) {
+        await issuePasswordResetCode(
+          user.id,
+          user.email,
+        );
+      }
     } catch (error) {
       console.error(
-        "Initial password reset email failed:",
+        "Initial password reset request cooldown check failed:",
         error,
       );
     }
