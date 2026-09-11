@@ -56,6 +56,42 @@ function isUuid(
   );
 }
 
+function formatDonationReference(
+  donationId: string,
+) {
+  return `RS-DON-${donationId.toUpperCase()}`;
+}
+
+function parseDonationReference(
+  value: string,
+) {
+  const normalized =
+    value
+      .trim()
+      .toUpperCase();
+
+  const prefix =
+    "RS-DON-";
+
+  const rawId =
+    normalized.startsWith(
+      prefix,
+    )
+      ? normalized.slice(
+          prefix.length,
+        )
+      : normalized;
+
+  const donationId =
+    rawId.toLowerCase();
+
+  return isUuid(
+    donationId,
+  )
+    ? donationId
+    : null;
+}
+
 export async function submitDonation(
   _prevState: unknown,
   formData: FormData,
@@ -388,28 +424,41 @@ export async function submitDonation(
               .limit(1);
 
           if (duplicate) {
-            return false;
+            return null;
           }
 
-          await tx
-            .insert(donations)
-            .values({
-              donorName,
-              amount:
-                amount.toString(),
-              programId,
-              campaignId:
-                campaignId ||
-                null,
-              paymentMethod,
-              isAnonymous,
-              proofImage:
-                proofImageUrl,
-              status:
-                "PENDING",
-            });
+          const [
+            createdDonation,
+          ] =
+            await tx
+              .insert(
+                donations,
+              )
+              .values({
+                donorName,
+                amount:
+                  amount.toString(),
+                programId,
+                campaignId:
+                  campaignId ||
+                  null,
+                paymentMethod,
+                isAnonymous,
+                proofImage:
+                  proofImageUrl,
+                status:
+                  "PENDING",
+              })
+              .returning({
+                id:
+                  donations.id,
+              });
 
-          return true;
+          return (
+            createdDonation
+              ?.id ||
+            null
+          );
         },
       );
 
@@ -442,6 +491,10 @@ export async function submitDonation(
     return {
       success: true,
       error: null,
+      reference:
+        formatDonationReference(
+          inserted,
+        ),
     };
   } catch (error) {
     console.error(
@@ -452,7 +505,142 @@ export async function submitDonation(
     return {
       success: false,
       error:
-        "Gagal memproses donasi. Silakan coba lagi.",
+        "Terjadi gangguan saat memproses formulir. Jangan melakukan transfer ulang. Silakan coba kirim formulir ini kembali beberapa saat lagi; bukti transfer yang sama tidak akan dicatat dua kali.",
+    };
+  }
+}
+
+export async function checkDonationStatus(
+  _prevState: unknown,
+  formData: FormData,
+) {
+  const headersList =
+    await headers();
+
+  const forwardedFor =
+    headersList.get(
+      "x-forwarded-for",
+    );
+
+  const ip =
+    forwardedFor
+      ?.split(",")[0]
+      ?.trim() ||
+    headersList.get(
+      "x-real-ip",
+    ) ||
+    "unknown-ip";
+
+  const {
+    success:
+      rateLimitSuccess,
+  } = rateLimit(
+    `donation-status-${ip}`,
+    15,
+    10 * 60 * 1000,
+  );
+
+  if (!rateLimitSuccess) {
+    return {
+      success: false,
+      error:
+        "Terlalu banyak pemeriksaan status. Silakan coba beberapa saat lagi.",
+      data: null,
+    };
+  }
+
+  const reference =
+    cleanText(
+      formData.get(
+        "reference",
+      ),
+    );
+
+  const donationId =
+    parseDonationReference(
+      reference,
+    );
+
+  if (!donationId) {
+    return {
+      success: false,
+      error:
+        "Nomor referensi tidak ditemukan atau tidak valid.",
+      data: null,
+    };
+  }
+
+  try {
+    const [
+      donation,
+    ] =
+      await db
+        .select({
+          id:
+            donations.id,
+          amount:
+            donations.amount,
+          status:
+            donations.status,
+          createdAt:
+            donations.createdAt,
+          programName:
+            programs.name,
+        })
+        .from(donations)
+        .leftJoin(
+          programs,
+          eq(
+            donations.programId,
+            programs.id,
+          ),
+        )
+        .where(
+          eq(
+            donations.id,
+            donationId,
+          ),
+        )
+        .limit(1);
+
+    if (!donation) {
+      return {
+        success: false,
+        error:
+          "Nomor referensi tidak ditemukan atau tidak valid.",
+        data: null,
+      };
+    }
+
+    return {
+      success: true,
+      error: null,
+      data: {
+        reference:
+          formatDonationReference(
+            donation.id,
+          ),
+        status:
+          donation.status,
+        amount:
+          donation.amount,
+        programName:
+          donation.programName,
+        createdAt:
+          donation.createdAt.toISOString(),
+      },
+    };
+  } catch (error) {
+    console.error(
+      "Check donation status error:",
+      error,
+    );
+
+    return {
+      success: false,
+      error:
+        "Status donasi belum dapat diperiksa. Silakan coba kembali beberapa saat lagi.",
+      data: null,
     };
   }
 }

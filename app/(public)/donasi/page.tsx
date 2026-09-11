@@ -7,6 +7,7 @@ import {
 } from "@/src/db/schema";
 
 import DonasiClientForm from "./components/DonasiClientForm";
+import DonationStatusChecker from "./components/DonationStatusChecker";
 
 export const dynamic = "force-dynamic";
 
@@ -79,13 +80,22 @@ export default async function DonasiPage() {
       </section>
 
       <section className="relative z-10 mx-auto -mt-10 max-w-3xl px-4 pb-16 sm:px-6 lg:px-8">
-        <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-xl md:p-10">
-          <DonasiClientForm
-            programs={activePrograms}
-            bankAccounts={
-              bankAccounts
-            }
-          />
+        <div className="space-y-6">
+          <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-xl md:p-10">
+            <DonasiClientForm
+              programs={activePrograms}
+              bankAccounts={
+                bankAccounts
+              }
+            />
+          </div>
+
+          <div
+            id="cek-status"
+            className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8"
+          >
+            <DonationStatusChecker />
+          </div>
         </div>
       </section>
     </div>
