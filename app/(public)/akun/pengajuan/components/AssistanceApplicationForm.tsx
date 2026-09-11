@@ -69,6 +69,11 @@ const initialState:
     error: null,
   };
 
+const MINIMUM_PHOTOS = 2;
+
+const MINIMUM_PHOTO_ERROR =
+  "Minimal 2 foto diperlukan sebelum pengajuan dikirim.";
+
 const inputClass =
   "mt-2 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:ring-4 focus:ring-teal-50";
 
@@ -109,6 +114,22 @@ export default function AssistanceApplicationForm({
       "",
   );
 
+  const [
+    photoCount,
+    setPhotoCount,
+  ] = useState(
+    initialApplication
+      ?.photos.length ||
+      0,
+  );
+
+  const [
+    lastSubmittedPhotoCount,
+    setLastSubmittedPhotoCount,
+  ] = useState<
+    number | null
+  >(null);
+
   const selectedProgram =
     useMemo(
       () =>
@@ -135,19 +156,37 @@ export default function AssistanceApplicationForm({
     initialApplication
       ?.programData || {};
 
+  const visibleError =
+    state.error ===
+      MINIMUM_PHOTO_ERROR &&
+    photoCount >=
+      MINIMUM_PHOTOS &&
+    (
+      pending ||
+      lastSubmittedPhotoCount !==
+        photoCount
+    )
+      ? null
+      : state.error;
+
   return (
     <form
       action={
         formAction
       }
+      onSubmit={() => {
+        setLastSubmittedPhotoCount(
+          photoCount,
+        );
+      }}
       className="space-y-6"
     >
-      {state.error && (
+      {visibleError && (
         <div
           role="alert"
           className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm leading-6 text-rose-700"
         >
-          {state.error}
+          {visibleError}
         </div>
       )}
 
@@ -645,6 +684,9 @@ export default function AssistanceApplicationForm({
               initialApplication
                 ?.photos ||
               []
+            }
+            onPhotoCountChange={
+              setPhotoCount
             }
           />
         </div>

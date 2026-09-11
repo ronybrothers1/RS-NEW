@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import {
   ChangeEvent,
+  useEffect,
   useState,
 } from "react";
 
@@ -68,9 +69,13 @@ function safeFileName(
 export default function AssistancePhotoUploader({
   userId,
   initialPhotos = [],
+  onPhotoCountChange,
 }: {
   userId: string;
   initialPhotos?: InitialPhoto[];
+  onPhotoCountChange?: (
+    count: number,
+  ) => void;
 }) {
   const [
     photos,
@@ -106,6 +111,15 @@ export default function AssistancePhotoUploader({
   ] = useState<
     string | null
   >(null);
+
+  useEffect(() => {
+    onPhotoCountChange?.(
+      photos.length,
+    );
+  }, [
+    photos.length,
+    onPhotoCountChange,
+  ]);
 
   async function handleFiles(
     event:
