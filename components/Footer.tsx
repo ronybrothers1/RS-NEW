@@ -55,12 +55,12 @@ export default async function Footer() {
   ].filter((item) => item.href);
 
   return (
-    <footer className="border-t border-brand-900 bg-brand-950 pb-8 pt-16 text-brand-100">
+    <footer className="border-t border-brand-900 bg-brand-950 pb-8 pt-16 text-white/85">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
           <div className="space-y-6">
             <SiteLogo name={name} />
-            <p className="text-sm leading-relaxed text-brand-200">
+            <p className="text-sm leading-relaxed text-white/75">
               Membangun harapan dan mewujudkan kesejahteraan melalui
               program-program sosial, pendidikan, dan kemanusiaan yang
               terukur dan transparan.
@@ -74,7 +74,7 @@ export default async function Footer() {
                     href={href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-900 text-brand-200 transition-colors hover:bg-brand-700 hover:text-white"
+                    className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-900 text-white/85 transition-colors hover:bg-brand-700 hover:text-white"
                     aria-label={label}
                   >
                     <Icon className="h-5 w-5" />
@@ -86,7 +86,7 @@ export default async function Footer() {
 
           <div>
             <h3 className="text-white font-bold text-lg mb-6">Organisasi</h3>
-            <ul className="space-y-4">
+            <ul className="space-y-4 text-white/85">
               <li>
                 <Link href="/tentang-kami" className="transition-colors hover:text-citrus-300">
                   Tentang Kami
@@ -114,7 +114,7 @@ export default async function Footer() {
             <h3 className="text-white font-bold text-lg mb-6">
               Informasi Publik
             </h3>
-            <ul className="space-y-4">
+            <ul className="space-y-4 text-white/85">
               <li>
                 <Link href="/transparansi" className="transition-colors hover:text-citrus-300">
                   Transparansi Keuangan
@@ -143,19 +143,19 @@ export default async function Footer() {
             <ul className="space-y-4">
               <li className="flex items-start gap-3">
                 <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-brand-300" />
-                <span className="whitespace-pre-line text-sm leading-relaxed text-brand-200">
+                <span className="whitespace-pre-line text-sm leading-relaxed text-white/80">
                   {address}
                 </span>
               </li>
               <li className="flex items-center gap-3">
                 <Phone className="h-5 w-5 shrink-0 text-brand-300" />
-                <span className="whitespace-pre-line text-sm text-brand-200">
+                <span className="whitespace-pre-line text-sm text-white/80">
                   {phone}
                 </span>
               </li>
               <li className="flex items-center gap-3">
                 <Mail className="h-5 w-5 shrink-0 text-brand-300" />
-                <span className="break-all whitespace-pre-line text-sm text-brand-200">
+                <span className="break-all whitespace-pre-line text-sm text-white/80">
                   {email}
                 </span>
               </li>
@@ -171,10 +171,10 @@ export default async function Footer() {
         </div>
 
         <div className="flex flex-col items-center justify-between gap-4 border-t border-brand-900 pt-8 text-center md:flex-row">
-          <p className="text-sm text-brand-300">
+          <p className="text-sm text-white/65">
             &copy; {new Date().getFullYear()} {name}. Seluruh hak cipta dilindungi.
           </p>
-          <div className="text-sm text-brand-300">
+          <div className="text-sm text-white/65">
             Dibangun dengan misi kebaikan untuk semua.
           </div>
         </div>
