@@ -8,6 +8,8 @@ import {
 } from "lucide-react";
 import {
   useActionState,
+  useEffect,
+  useRef,
 } from "react";
 
 import {
@@ -69,6 +71,7 @@ function formatCurrency(
       : 0,
   );
 }
+
 
 function formatDateTime(
   value: string,
@@ -157,6 +160,20 @@ export default function DonationStatusChecker() {
   const StatusIcon =
     statusMeta?.Icon;
 
+  const resultReference =
+    state.data?.reference;
+
+  const resultRef =
+    useRef<HTMLDivElement>(
+      null,
+    );
+
+  useEffect(() => {
+    if (resultReference) {
+      resultRef.current?.focus();
+    }
+  }, [resultReference]);
+
   return (
     <div>
       <div className="max-w-2xl">
@@ -224,17 +241,30 @@ export default function DonationStatusChecker() {
       {state.data &&
         statusMeta &&
         StatusIcon && (
-          <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
-            <div
+          <div
+            ref={resultRef}
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+            aria-labelledby="donation-status-result"
+            aria-describedby="donation-status-description"
+            tabIndex={-1}
+            className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 sm:p-6"
+          >
+            <h3
+              id="donation-status-result"
               className={`inline-flex items-center rounded-full border px-3 py-1.5 text-sm font-semibold ${statusMeta.className}`}
             >
               <StatusIcon className="mr-2 h-4 w-4" />
               {
                 statusMeta.label
               }
-            </div>
+            </h3>
 
-            <p className="mt-4 text-sm leading-6 text-slate-600">
+            <p
+              id="donation-status-description"
+              className="mt-4 text-sm leading-6 text-slate-600"
+            >
               {
                 statusMeta.description
               }

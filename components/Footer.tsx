@@ -162,7 +162,7 @@ export default async function Footer() {
             </ul>
             <Link
               href="/donasi"
-              className="mt-6 flex items-center justify-center gap-2 w-full py-3 bg-amber-600 hover:bg-amber-500 text-white font-medium rounded-xl transition-colors"
+              className="mt-6 flex items-center justify-center gap-2 w-full py-3 bg-amber-700 hover:bg-amber-800 text-white font-medium rounded-xl transition-colors"
             >
               <HeartHandshake className="h-4 w-4" />
               Donasi Sekarang
@@ -171,10 +171,10 @@ export default async function Footer() {
         </div>
 
         <div className="pt-8 border-t border-slate-800 text-center flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-slate-500 text-sm">
+          <p className="text-slate-400 text-sm">
             &copy; {new Date().getFullYear()} {name}. Seluruh hak cipta dilindungi.
           </p>
-          <div className="text-slate-500 text-sm">
+          <div className="text-slate-400 text-sm">
             Dibangun dengan misi kebaikan untuk semua.
           </div>
         </div>

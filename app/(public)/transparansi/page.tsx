@@ -24,6 +24,7 @@ function getJakartaToday() {
   };
 }
 
+
 export default async function TransparansiPage() {
   const openingBalance =
     await getFinanceOpeningBalance();
@@ -100,7 +101,7 @@ export default async function TransparansiPage() {
             </div>
             <div>
               <p className="text-sm font-medium text-slate-500">Total Uang Masuk</p>
-              <h3 className="text-2xl font-bold text-slate-900">Rp {totalIn.toLocaleString('id-ID')}</h3>
+              <p className="text-2xl font-bold text-slate-900">Rp {totalIn.toLocaleString('id-ID')}</p>
             </div>
           </div>
           <div className="bg-white rounded-2xl p-6 shadow-lg border border-slate-100 flex items-center gap-4">
@@ -109,7 +110,7 @@ export default async function TransparansiPage() {
             </div>
             <div>
               <p className="text-sm font-medium text-slate-500">Total Penyaluran</p>
-              <h3 className="text-2xl font-bold text-slate-900">Rp {totalOut.toLocaleString('id-ID')}</h3>
+              <p className="text-2xl font-bold text-slate-900">Rp {totalOut.toLocaleString('id-ID')}</p>
             </div>
           </div>
           <div className="bg-white rounded-2xl p-6 shadow-lg border border-teal-100 ring-1 ring-teal-500 flex items-center gap-4 relative overflow-hidden">
@@ -121,7 +122,7 @@ export default async function TransparansiPage() {
             </div>
             <div className="relative z-10">
               <p className="text-sm font-medium text-slate-500">Saldo Kas Saat Ini</p>
-              <h3 className="text-2xl font-bold text-teal-700">Rp {currentBalance.toLocaleString('id-ID')}</h3>
+              <p className="text-2xl font-bold text-teal-700">Rp {currentBalance.toLocaleString('id-ID')}</p>
             </div>
           </div>
         </div>
@@ -138,12 +139,15 @@ export default async function TransparansiPage() {
           
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left text-slate-600">
+              <caption className="sr-only">
+                Riwayat transaksi keuangan bulan ini
+              </caption>
               <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-100">
                 <tr>
-                  <th className="px-6 py-4">Tanggal</th>
-                  <th className="px-6 py-4">Keterangan</th>
-                  <th className="px-6 py-4">Program</th>
-                  <th className="px-6 py-4 text-right">Nominal</th>
+                  <th scope="col" className="px-6 py-4">Tanggal</th>
+                  <th scope="col" className="px-6 py-4">Keterangan</th>
+                  <th scope="col" className="px-6 py-4">Program</th>
+                  <th scope="col" className="px-6 py-4 text-right">Nominal</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">

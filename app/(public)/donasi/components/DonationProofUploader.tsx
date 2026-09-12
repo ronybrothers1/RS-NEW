@@ -72,6 +72,7 @@ function sanitizeFilename(
   }${extension}`;
 }
 
+
 export default function DonationProofUploader({
   onStateChange,
 }: {
@@ -364,7 +365,7 @@ export default function DonationProofUploader({
                 maksimal 5 MB
               </span>
 
-              <span className="mt-2 text-xs leading-5 text-slate-400">
+              <span className="mt-2 text-xs leading-5 text-slate-600">
                 File disimpan pada
                 penyimpanan privat dan
                 hanya dapat diperiksa

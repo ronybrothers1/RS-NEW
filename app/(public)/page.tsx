@@ -111,7 +111,7 @@ export default async function HomePage() {
             <div className="mt-9 flex flex-col gap-3 sm:mt-10 sm:flex-row sm:gap-4">
               <Link
                 href="/program"
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-teal-600 px-8 py-3.5 text-base font-semibold text-white shadow-md transition-all hover:-translate-y-0.5 hover:bg-teal-500 hover:shadow-lg sm:text-lg"
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-teal-700 px-8 py-3.5 text-base font-semibold text-white shadow-md transition-all hover:-translate-y-0.5 hover:bg-teal-800 hover:shadow-lg sm:text-lg"
               >
                 Lihat Program
                 <ArrowRight className="h-5 w-5" />

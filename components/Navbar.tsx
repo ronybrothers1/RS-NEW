@@ -187,7 +187,7 @@ export default function Navbar() {
 
             <Link
               href="/donasi"
-              className="flex min-h-11 items-center gap-2 rounded-full bg-amber-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-amber-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 sm:px-5 sm:text-base"
+              className="flex min-h-11 items-center gap-2 rounded-full bg-amber-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-amber-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 sm:px-5 sm:text-base"
             >
               <HeartHandshake className="h-4 w-4" />
               <span className="hidden sm:inline">
