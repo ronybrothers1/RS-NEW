@@ -55,12 +55,12 @@ export default async function Footer() {
   ].filter((item) => item.href);
 
   return (
-    <footer className="bg-slate-950 text-slate-300 pt-16 pb-8 border-t border-slate-800">
+    <footer className="border-t border-brand-900 bg-brand-950 pb-8 pt-16 text-brand-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
           <div className="space-y-6">
             <SiteLogo name={name} />
-            <p className="text-slate-400 text-sm leading-relaxed">
+            <p className="text-sm leading-relaxed text-brand-200">
               Membangun harapan dan mewujudkan kesejahteraan melalui
               program-program sosial, pendidikan, dan kemanusiaan yang
               terukur dan transparan.
@@ -74,7 +74,7 @@ export default async function Footer() {
                     href={href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center text-slate-400 hover:bg-teal-700 hover:text-white transition-colors"
+                    className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-900 text-brand-200 transition-colors hover:bg-brand-700 hover:text-white"
                     aria-label={label}
                   >
                     <Icon className="h-5 w-5" />
@@ -88,22 +88,22 @@ export default async function Footer() {
             <h3 className="text-white font-bold text-lg mb-6">Organisasi</h3>
             <ul className="space-y-4">
               <li>
-                <Link href="/tentang-kami" className="hover:text-teal-400 transition-colors">
+                <Link href="/tentang-kami" className="transition-colors hover:text-citrus-300">
                   Tentang Kami
                 </Link>
               </li>
               <li>
-                <Link href="/program" className="hover:text-teal-400 transition-colors">
+                <Link href="/program" className="transition-colors hover:text-citrus-300">
                   Program Utama
                 </Link>
               </li>
               <li>
-                <Link href="/kegiatan" className="hover:text-teal-400 transition-colors">
+                <Link href="/kegiatan" className="transition-colors hover:text-citrus-300">
                   Kegiatan
                 </Link>
               </li>
               <li>
-                <Link href="/berita" className="hover:text-teal-400 transition-colors">
+                <Link href="/berita" className="transition-colors hover:text-citrus-300">
                   Berita & Publikasi
                 </Link>
               </li>
@@ -116,22 +116,22 @@ export default async function Footer() {
             </h3>
             <ul className="space-y-4">
               <li>
-                <Link href="/transparansi" className="hover:text-teal-400 transition-colors">
+                <Link href="/transparansi" className="transition-colors hover:text-citrus-300">
                   Transparansi Keuangan
                 </Link>
               </li>
               <li>
-                <Link href="/kontak" className="hover:text-teal-400 transition-colors">
+                <Link href="/kontak" className="transition-colors hover:text-citrus-300">
                   Hubungi Kami
                 </Link>
               </li>
               <li>
-                <Link href="/kebijakan-privasi" className="hover:text-teal-400 transition-colors">
+                <Link href="/kebijakan-privasi" className="transition-colors hover:text-citrus-300">
                   Kebijakan Privasi
                 </Link>
               </li>
               <li>
-                <Link href="/ketentuan-donasi" className="hover:text-teal-400 transition-colors">
+                <Link href="/ketentuan-donasi" className="transition-colors hover:text-citrus-300">
                   Ketentuan Donasi
                 </Link>
               </li>
@@ -142,27 +142,27 @@ export default async function Footer() {
             <h3 className="text-white font-bold text-lg mb-6">Kontak</h3>
             <ul className="space-y-4">
               <li className="flex items-start gap-3">
-                <MapPin className="h-5 w-5 text-teal-500 shrink-0 mt-0.5" />
-                <span className="text-slate-400 text-sm leading-relaxed whitespace-pre-line">
+                <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-brand-300" />
+                <span className="whitespace-pre-line text-sm leading-relaxed text-brand-200">
                   {address}
                 </span>
               </li>
               <li className="flex items-center gap-3">
-                <Phone className="h-5 w-5 text-teal-500 shrink-0" />
-                <span className="text-slate-400 text-sm whitespace-pre-line">
+                <Phone className="h-5 w-5 shrink-0 text-brand-300" />
+                <span className="whitespace-pre-line text-sm text-brand-200">
                   {phone}
                 </span>
               </li>
               <li className="flex items-center gap-3">
-                <Mail className="h-5 w-5 text-teal-500 shrink-0" />
-                <span className="text-slate-400 text-sm whitespace-pre-line break-all">
+                <Mail className="h-5 w-5 shrink-0 text-brand-300" />
+                <span className="break-all whitespace-pre-line text-sm text-brand-200">
                   {email}
                 </span>
               </li>
             </ul>
             <Link
               href="/donasi"
-              className="mt-6 flex items-center justify-center gap-2 w-full py-3 bg-amber-700 hover:bg-amber-800 text-white font-medium rounded-xl transition-colors"
+              className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-citrus-400 py-3 font-semibold text-brand-950 transition-colors hover:bg-citrus-300"
             >
               <HeartHandshake className="h-4 w-4" />
               Donasi Sekarang
@@ -170,11 +170,11 @@ export default async function Footer() {
           </div>
         </div>
 
-        <div className="pt-8 border-t border-slate-800 text-center flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-slate-400 text-sm">
+        <div className="flex flex-col items-center justify-between gap-4 border-t border-brand-900 pt-8 text-center md:flex-row">
+          <p className="text-sm text-brand-300">
             &copy; {new Date().getFullYear()} {name}. Seluruh hak cipta dilindungi.
           </p>
-          <div className="text-slate-400 text-sm">
+          <div className="text-sm text-brand-300">
             Dibangun dengan misi kebaikan untuk semua.
           </div>
         </div>

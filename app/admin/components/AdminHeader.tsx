@@ -93,14 +93,14 @@ export default function AdminHeader({
       .slice(1);
 
   return (
-    <header className="sticky top-0 z-20 hidden h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white/95 px-6 backdrop-blur md:flex">
+    <header className="sticky top-0 z-20 hidden h-16 shrink-0 items-center justify-between border-b border-frame bg-white/95 px-6 backdrop-blur md:flex">
       <nav
         className="flex min-w-0 items-center text-sm"
         aria-label="Breadcrumb"
       >
         <Link
           href="/admin/dashboard"
-          className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-teal-700"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-brand-50 hover:text-brand-800"
           aria-label="Dashboard admin"
         >
           <Home className="h-4 w-4" />
@@ -148,7 +148,7 @@ export default function AdminHeader({
                     href={
                       href
                     }
-                    className="max-w-48 truncate rounded-md px-1 py-1 font-medium text-slate-500 transition-colors hover:text-teal-700"
+                    className="max-w-48 truncate rounded-md px-1 py-1 font-medium text-slate-500 transition-colors hover:text-brand-800"
                   >
                     {label}
                   </Link>
@@ -164,7 +164,7 @@ export default function AdminHeader({
           href="/"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex min-h-10 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-teal-700"
+          className="inline-flex min-h-10 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-brand-50 hover:text-brand-800"
         >
           Lihat Website
           <ExternalLink className="h-4 w-4" />
@@ -187,7 +187,7 @@ export default function AdminHeader({
             </span>
           </div>
 
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-600 ring-1 ring-slate-200">
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-50 text-brand-800 ring-1 ring-brand-100">
             <User className="h-4 w-4" />
           </div>
         </div>

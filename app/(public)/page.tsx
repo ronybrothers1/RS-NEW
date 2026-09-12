@@ -89,29 +89,29 @@ export default async function HomePage() {
   const hasRealData = Number(financialStats?.totalIn) > 0 || activePrograms.length > 0;
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-canvas text-ink">
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-slate-950 pb-24 pt-12 sm:pt-14 md:pb-28 md:pt-16 lg:pb-32 lg:pt-20">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-teal-900/40 via-slate-950 to-slate-950"></div>
-        <div className="absolute -right-24 top-20 hidden h-80 w-80 rounded-full bg-teal-500/10 blur-3xl lg:block"></div>
+      <section className="relative overflow-hidden bg-brand-950 pb-24 pt-12 sm:pt-14 md:pb-28 md:pt-16 lg:pb-32 lg:pt-20">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-brand-700/45 via-brand-950 to-brand-950"></div>
+        <div className="absolute -right-24 top-20 hidden h-80 w-80 rounded-full bg-brand-400/10 blur-3xl lg:block"></div>
 
         <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-8 px-4 sm:gap-10 sm:px-6 lg:grid-cols-[minmax(0,1.08fr)_minmax(340px,0.92fr)] lg:gap-14 lg:px-8">
           <div className="w-full max-w-2xl">
             <h1 className="text-[clamp(2.75rem,11vw,4rem)] font-extrabold leading-[1.05] tracking-tight text-white lg:text-[clamp(3.75rem,5vw,4.75rem)]">
               KEPEDULIAN PERLU SAMPAI
-              <span className="mt-1 block text-teal-400">
+              <span className="mt-1 block text-citrus-300">
                 KE TEMPAT YANG TEPAT.
               </span>
             </h1>
 
-            <p className="mt-6 max-w-xl text-lg leading-relaxed text-slate-300 sm:text-xl">
+            <p className="mt-6 max-w-xl text-lg leading-relaxed text-brand-100 sm:text-xl">
               Yayasan Ruang Sejahtera adalah jembatan transparan antara niat baik Anda dan masyarakat yang membutuhkan.
             </p>
 
             <div className="mt-9 flex flex-col gap-3 sm:mt-10 sm:flex-row sm:gap-4">
               <Link
                 href="/program"
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-teal-700 px-8 py-3.5 text-base font-semibold text-white shadow-md transition-all hover:-translate-y-0.5 hover:bg-teal-800 hover:shadow-lg sm:text-lg"
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-citrus-400 px-8 py-3.5 text-base font-semibold text-brand-950 shadow-md transition-all hover:-translate-y-0.5 hover:bg-citrus-300 hover:shadow-lg sm:text-lg"
               >
                 Lihat Program
                 <ArrowRight className="h-5 w-5" />
@@ -128,15 +128,15 @@ export default async function HomePage() {
           </div>
 
           <div className="relative">
-            <div className="absolute -inset-5 hidden rounded-[2.25rem] bg-teal-500/10 blur-2xl lg:block"></div>
+            <div className="absolute -inset-5 hidden rounded-[2.25rem] bg-brand-400/10 blur-2xl lg:block"></div>
 
             {latestArticle ? (
               <Link
                 href={`/berita/${latestArticle.slug}`}
                 aria-label={`Baca berita terbaru: ${latestArticle.title}`}
-                className="group relative block overflow-hidden rounded-2xl border border-white/10 bg-slate-900/90 shadow-xl ring-1 ring-white/5 transition hover:border-teal-400/20 sm:grid sm:grid-cols-[168px_minmax(0,1fr)] lg:block lg:rounded-[2rem] lg:shadow-2xl lg:shadow-black/30"
+                className="group relative block overflow-hidden rounded-2xl border border-white/15 bg-brand-900/90 shadow-xl ring-1 ring-white/5 transition hover:border-brand-300/40 sm:grid sm:grid-cols-[168px_minmax(0,1fr)] lg:block lg:rounded-[2rem] lg:shadow-2xl lg:shadow-black/30"
               >
-                <div className="relative aspect-[16/9] w-full overflow-hidden bg-slate-800 sm:aspect-auto sm:min-h-[160px] lg:aspect-[16/11] lg:min-h-0">
+                <div className="relative aspect-[16/9] w-full overflow-hidden bg-brand-900 sm:aspect-auto sm:min-h-[160px] lg:aspect-[16/11] lg:min-h-0">
                   {latestArticle.imageUrl ? (
                     <Image
                       src={latestArticle.imageUrl}
@@ -149,41 +149,41 @@ export default async function HomePage() {
                       className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
                     />
                   ) : (
-                    <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-teal-950 via-slate-900 to-slate-950">
-                      <FileText className="h-9 w-9 text-teal-300/70 sm:h-11 sm:w-11 lg:h-16 lg:w-16" />
+                    <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-brand-900 via-brand-950 to-brand-950">
+                      <FileText className="h-9 w-9 text-brand-200/70 sm:h-11 sm:w-11 lg:h-16 lg:w-16" />
                     </div>
                   )}
 
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent to-slate-950/20 lg:hidden"></div>
-                  <div className="absolute inset-0 hidden bg-gradient-to-t from-slate-950 via-slate-950/10 to-transparent lg:block"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent to-brand-950/20 lg:hidden"></div>
+                  <div className="absolute inset-0 hidden bg-gradient-to-t from-brand-950 via-brand-950/10 to-transparent lg:block"></div>
 
-                  <div className="absolute left-5 top-5 hidden items-center rounded-full border border-white/15 bg-slate-950/75 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-teal-200 backdrop-blur-md lg:inline-flex">
+                  <div className="absolute left-5 top-5 hidden items-center rounded-full border border-white/15 bg-brand-950/80 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-brand-100 backdrop-blur-md lg:inline-flex">
                     Berita Terbaru
                   </div>
                 </div>
 
                 <div className="relative min-w-0 p-4 sm:p-5 lg:p-6 xl:p-7">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-teal-300 sm:text-[11px] lg:hidden">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-brand-200 sm:text-[11px] lg:hidden">
                     Berita Terbaru
                   </p>
 
                   {latestArticleDate && (
-                    <p className="mt-1 text-[10px] font-medium text-slate-300 sm:text-xs lg:mt-0 lg:font-semibold lg:uppercase lg:tracking-[0.12em] lg:text-slate-400">
+                    <p className="mt-1 text-[10px] font-medium text-brand-100 sm:text-xs lg:mt-0 lg:font-semibold lg:uppercase lg:tracking-[0.12em] lg:text-brand-200">
                       {latestArticleDate}
                     </p>
                   )}
 
-                  <h2 className="mt-2 line-clamp-3 text-base font-bold leading-snug text-white transition-colors group-hover:text-teal-300 sm:text-lg lg:mt-3 lg:text-2xl">
+                  <h2 className="mt-2 line-clamp-3 text-base font-bold leading-snug text-white transition-colors group-hover:text-citrus-300 sm:text-lg lg:mt-3 lg:text-2xl">
                     {latestArticle.title}
                   </h2>
 
                   {latestArticle.excerpt && (
-                    <p className="mt-3 hidden text-sm leading-6 text-slate-400 lg:line-clamp-2">
+                    <p className="mt-3 hidden text-sm leading-6 text-brand-200 lg:line-clamp-2">
                       {latestArticle.excerpt}
                     </p>
                   )}
 
-                  <span className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-teal-300 transition-colors group-hover:text-teal-200 sm:text-sm lg:mt-5 lg:gap-2">
+                  <span className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-citrus-300 transition-colors group-hover:text-citrus-100 sm:text-sm lg:mt-5 lg:gap-2">
                     <span className="lg:hidden">Baca</span>
                     <span className="hidden lg:inline">Baca Selengkapnya</span>
                     <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1 sm:h-4 sm:w-4" />
@@ -191,13 +191,13 @@ export default async function HomePage() {
                 </div>
               </Link>
             ) : (
-              <div className="relative flex items-center gap-4 overflow-hidden rounded-2xl border border-white/10 bg-slate-900/80 p-4 shadow-xl ring-1 ring-white/5 lg:block lg:rounded-[2rem] lg:p-8 lg:shadow-2xl">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-teal-500/10 text-teal-300 lg:h-14 lg:w-14 lg:rounded-2xl">
+              <div className="relative flex items-center gap-4 overflow-hidden rounded-2xl border border-white/15 bg-brand-900/80 p-4 shadow-xl ring-1 ring-white/5 lg:block lg:rounded-[2rem] lg:p-8 lg:shadow-2xl">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-400/15 text-brand-200 lg:h-14 lg:w-14 lg:rounded-2xl">
                   <FileText className="h-6 w-6 lg:h-7 lg:w-7" />
                 </div>
 
                 <div className="min-w-0">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-teal-300 lg:mt-6 lg:text-xs lg:tracking-[0.14em]">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-brand-200 lg:mt-6 lg:text-xs lg:tracking-[0.14em]">
                     Kabar Ruang Sejahtera
                   </p>
 
@@ -207,7 +207,7 @@ export default async function HomePage() {
 
                   <Link
                     href="/berita"
-                    className="mt-6 hidden items-center gap-2 text-sm font-semibold text-teal-300 hover:text-teal-200 lg:inline-flex"
+                    className="mt-6 hidden items-center gap-2 text-sm font-semibold text-citrus-300 hover:text-citrus-100 lg:inline-flex"
                   >
                     Lihat Semua Berita
                     <ArrowRight className="h-4 w-4" />
@@ -221,35 +221,35 @@ export default async function HomePage() {
 
 
       {/* Impact Strip */}
-      <section className="bg-teal-800 py-8 text-white relative z-20 -mt-10 mx-4 sm:mx-6 lg:mx-auto max-w-7xl rounded-2xl shadow-xl">
+      <section className="relative z-20 mx-4 -mt-10 max-w-7xl rounded-2xl border border-frame bg-white py-8 text-ink shadow-xl sm:mx-6 lg:mx-auto">
         {hasRealData ? (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 px-8 text-center divide-x divide-teal-700/50">
+          <div className="grid grid-cols-2 gap-8 divide-x divide-frame px-8 text-center md:grid-cols-4">
             <div>
               <div className="text-3xl font-bold mb-1">{activePrograms.length}</div>
-              <div className="text-teal-200 text-sm">Program Sosial</div>
+              <div className="text-sm text-ink-muted">Program Sosial</div>
             </div>
             <div>
               <div className="text-3xl font-bold mb-1">Rp {((Number(financialStats?.totalOut || 0)) / 1000000).toFixed(1)} Jt</div>
-              <div className="text-teal-200 text-sm">Total Pengeluaran</div>
+              <div className="text-sm text-ink-muted">Total Pengeluaran</div>
             </div>
             <div>
               <div className="text-3xl font-bold mb-1">Rp {((Number(financialStats?.totalIn || 0)) / 1000000).toFixed(1)} Jt</div>
-              <div className="text-teal-200 text-sm">Total Penerimaan</div>
+              <div className="text-sm text-ink-muted">Total Penerimaan</div>
             </div>
             <div>
               <div className="text-3xl font-bold mb-1">Terbuka</div>
-              <div className="text-teal-200 text-sm">Laporan Keuangan</div>
+              <div className="text-sm text-ink-muted">Laporan Keuangan</div>
             </div>
           </div>
         ) : (
           <div className="px-8 text-center py-2">
-            <p className="text-teal-100 font-medium">Data dampak akan diperbarui setelah laporan kegiatan pertama terverifikasi.</p>
+            <p className="font-medium text-brand-800">Data dampak akan diperbarui setelah laporan kegiatan pertama terverifikasi.</p>
           </div>
         )}
       </section>
 
       {/* Program Section (Lighter Design) */}
-      <section className="py-12 sm:py-16 md:py-[72px] bg-white">
+      <section className="bg-canvas py-12 sm:py-16 md:py-[72px]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-7 sm:mb-10 md:mb-12">
             <h2 className="text-3xl font-bold text-slate-900">Program Utama Kami</h2>
@@ -261,12 +261,12 @@ export default async function HomePage() {
               {activePrograms.map((program: any) => {
                 const IconComponent = iconMap[program.icon] || HeartHandshake;
                 return (
-                  <Link href={`/donasi?program=${program.id}`} key={program.id} className="group flex items-start gap-4 p-3 hover:bg-slate-50 rounded-2xl transition-colors sm:gap-5 sm:p-6">
-                    <div className="w-16 h-16 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center shrink-0 group-hover:bg-teal-600 group-hover:text-white transition-colors shadow-sm">
+                  <Link href={`/donasi?program=${program.id}`} key={program.id} className="group flex items-start gap-4 rounded-2xl p-3 transition-colors hover:bg-brand-50 sm:gap-5 sm:p-6">
+                    <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-brand-50 text-brand-700 shadow-sm transition-colors group-hover:bg-brand-700 group-hover:text-white">
                       <IconComponent className="h-8 w-8" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold text-slate-900 mb-1 group-hover:text-teal-700 transition-colors">{program.name}</h3>
+                      <h3 className="mb-1 text-lg font-bold text-slate-900 transition-colors group-hover:text-brand-800">{program.name}</h3>
                       <p className="text-slate-500 text-sm line-clamp-2 leading-relaxed">
                         {program.description}
                       </p>
@@ -285,7 +285,7 @@ export default async function HomePage() {
       </section>
 
       {/* Workflow Section */}
-      <section className="pt-16 pb-10 sm:py-16 md:py-[72px] bg-slate-50">
+      <section className="bg-brand-50/60 pb-10 pt-16 sm:py-16 md:py-[72px]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-10 md:mb-12">
             <h2 className="text-3xl font-bold text-slate-900">Cara Bantuan Bekerja</h2>
@@ -296,7 +296,7 @@ export default async function HomePage() {
             <div className="hidden md:block absolute top-12 left-1/8 right-1/8 h-0.5 bg-slate-200 z-0"></div>
             
             <div className="relative z-10 text-center">
-              <div className="w-24 h-24 mx-auto bg-white border-4 border-slate-50 rounded-full flex items-center justify-center shadow-sm text-teal-600 mb-6">
+              <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full border-4 border-brand-50 bg-white text-brand-700 shadow-sm">
                 <FileText className="h-10 w-10" />
               </div>
               <h3 className="font-bold text-slate-900 text-lg mb-2">1. Pengajuan</h3>
@@ -304,7 +304,7 @@ export default async function HomePage() {
             </div>
             
             <div className="relative z-10 text-center">
-              <div className="w-24 h-24 mx-auto bg-white border-4 border-slate-50 rounded-full flex items-center justify-center shadow-sm text-teal-600 mb-6">
+              <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full border-4 border-brand-50 bg-white text-brand-700 shadow-sm">
                 <CheckCircle2 className="h-10 w-10" />
               </div>
               <h3 className="font-bold text-slate-900 text-lg mb-2">2. Verifikasi</h3>
@@ -320,7 +320,7 @@ export default async function HomePage() {
             </div>
             
             <div className="relative z-10 text-center">
-              <div className="w-24 h-24 mx-auto bg-white border-4 border-slate-50 rounded-full flex items-center justify-center shadow-sm text-teal-600 mb-6">
+              <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full border-4 border-brand-50 bg-white text-brand-700 shadow-sm">
                 <Activity className="h-10 w-10" />
               </div>
               <h3 className="font-bold text-slate-900 text-lg mb-2">4. Laporan</h3>
@@ -331,25 +331,25 @@ export default async function HomePage() {
       </section>
 
       {/* Transparency Section */}
-      <section className="py-16 md:py-[72px] bg-slate-900 text-white relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-teal-400 via-transparent to-transparent"></div>
+      <section className="relative overflow-hidden bg-brand-900 py-16 text-white md:py-[72px]">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-brand-500/20 via-transparent to-transparent"></div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             
             <div>
               <h2 className="text-3xl md:text-4xl font-bold mb-6">Transparansi Adalah Janji Kami</h2>
-              <p className="text-slate-300 text-lg mb-8 leading-relaxed">
+              <p className="mb-8 text-lg leading-relaxed text-brand-100">
                 Kami percaya bahwa setiap rupiah yang dipercayakan kepada yayasan adalah amanah. Laporan penerimaan, pengeluaran, dan saldo kas disajikan dari transaksi yang tercatat di sistem dan dapat diakses oleh masyarakat.
               </p>
               <ul className="space-y-4 mb-8">
-                <li className="flex items-center gap-3 text-slate-200">
-                  <CheckCircle2 className="h-6 w-6 text-teal-400" /> Penerimaan dan pengeluaran tercatat pada ledger keuangan
+                <li className="flex items-center gap-3 text-brand-100">
+                  <CheckCircle2 className="h-6 w-6 text-citrus-300" /> Penerimaan dan pengeluaran tercatat pada ledger keuangan
                 </li>
-                <li className="flex items-center gap-3 text-slate-200">
-                  <CheckCircle2 className="h-6 w-6 text-teal-400" /> Transaksi terhubung ke program atau kampanye bila relevan
+                <li className="flex items-center gap-3 text-brand-100">
+                  <CheckCircle2 className="h-6 w-6 text-citrus-300" /> Transaksi terhubung ke program atau kampanye bila relevan
                 </li>
-                <li className="flex items-center gap-3 text-slate-200">
-                  <CheckCircle2 className="h-6 w-6 text-teal-400" /> Riwayat transaksi terbaru dapat dilihat oleh masyarakat
+                <li className="flex items-center gap-3 text-brand-100">
+                  <CheckCircle2 className="h-6 w-6 text-citrus-300" /> Riwayat transaksi terbaru dapat dilihat oleh masyarakat
                 </li>
               </ul>
               <Link href="/transparansi" className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-full font-medium transition-colors border border-white/10">
@@ -357,20 +357,20 @@ export default async function HomePage() {
               </Link>
             </div>
             
-            <div className="bg-slate-800 rounded-3xl p-8 border border-slate-700 shadow-2xl">
+            <div className="rounded-3xl border border-brand-700 bg-brand-800 p-8 shadow-2xl">
               <div className="space-y-6">
                 <div>
-                  <div className="text-slate-400 text-sm font-medium mb-1">Total Penerimaan</div>
+                  <div className="mb-1 text-sm font-medium text-brand-200">Total Penerimaan</div>
                   <div className="text-3xl font-bold text-emerald-400">{formatCurrency(Number(financialStats?.totalIn || 0))}</div>
                 </div>
-                <div className="h-px bg-slate-700"></div>
+                <div className="h-px bg-brand-700"></div>
                 <div>
-                  <div className="text-slate-400 text-sm font-medium mb-1">Total Pengeluaran</div>
+                  <div className="mb-1 text-sm font-medium text-brand-200">Total Pengeluaran</div>
                   <div className="text-3xl font-bold text-amber-400">{formatCurrency(Number(financialStats?.totalOut || 0))}</div>
                 </div>
-                <div className="h-px bg-slate-700"></div>
+                <div className="h-px bg-brand-700"></div>
                 <div>
-                  <div className="text-slate-400 text-sm font-medium mb-1">Saldo Kas Saat Ini</div>
+                  <div className="mb-1 text-sm font-medium text-brand-200">Saldo Kas Saat Ini</div>
                   <div className="text-3xl font-bold text-white">{formatCurrency(saldo)}</div>
                 </div>
               </div>

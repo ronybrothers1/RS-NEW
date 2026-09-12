@@ -501,7 +501,7 @@ export default async function DashboardPage() {
     <div className="space-y-8">
       <section className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <div className="mb-2 inline-flex items-center rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-700 ring-1 ring-inset ring-teal-100">
+          <div className="mb-2 inline-flex items-center rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-800 ring-1 ring-inset ring-brand-100">
             Ringkasan operasional
           </div>
 
@@ -564,7 +564,7 @@ export default async function DashboardPage() {
 
           <Link
             href="/admin/keuangan/masuk"
-            className="mt-2 inline-flex items-center text-xs font-semibold text-teal-700 hover:text-teal-800"
+            className="mt-2 inline-flex items-center text-xs font-semibold text-brand-800 hover:text-brand-900"
           >
             Catat pemasukan
             <ChevronRight className="ml-1 h-3.5 w-3.5" />
@@ -588,7 +588,7 @@ export default async function DashboardPage() {
 
           <Link
             href="/admin/keuangan/keluar"
-            className="mt-2 inline-flex items-center text-xs font-semibold text-teal-700 hover:text-teal-800"
+            className="mt-2 inline-flex items-center text-xs font-semibold text-brand-800 hover:text-brand-900"
           >
             Catat pengeluaran
             <ChevronRight className="ml-1 h-3.5 w-3.5" />
@@ -653,9 +653,9 @@ export default async function DashboardPage() {
               <Link
                 key={action.href}
                 href={action.href}
-                className="group flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-teal-200 hover:shadow-md"
+                className="group flex items-center gap-3 rounded-xl border border-frame bg-white p-4 shadow-sm transition hover:border-brand-200 hover:shadow-md"
               >
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-700 transition group-hover:bg-teal-700 group-hover:text-white">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-800 transition group-hover:bg-brand-700 group-hover:text-white">
                   <Icon className="h-5 w-5" />
                 </div>
 
@@ -684,7 +684,7 @@ export default async function DashboardPage() {
       >
         <Link
           href="/admin/program"
-          className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-teal-200 hover:shadow-md"
+          className="rounded-2xl border border-frame bg-white p-5 shadow-sm transition hover:border-brand-200 hover:shadow-md"
         >
           <div className="flex items-start justify-between">
             <div>
@@ -697,7 +697,7 @@ export default async function DashboardPage() {
               </p>
             </div>
 
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-50 text-teal-600">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-800">
               <Layers3 className="h-5 w-5" />
             </div>
           </div>
@@ -725,7 +725,7 @@ export default async function DashboardPage() {
 
         <Link
           href="/admin/kegiatan"
-          className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-teal-200 hover:shadow-md"
+          className="rounded-2xl border border-frame bg-white p-5 shadow-sm transition hover:border-brand-200 hover:shadow-md"
         >
           <div className="flex items-start justify-between">
             <div>
@@ -781,7 +781,7 @@ export default async function DashboardPage() {
 
         <Link
           href="/admin/berita"
-          className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-teal-200 hover:shadow-md"
+          className="rounded-2xl border border-frame bg-white p-5 shadow-sm transition hover:border-brand-200 hover:shadow-md"
         >
           <div className="flex items-start justify-between">
             <div>
@@ -848,7 +848,7 @@ export default async function DashboardPage() {
 
         <Link
           href="/admin/donasi"
-          className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-teal-200 hover:shadow-md"
+          className="rounded-2xl border border-frame bg-white p-5 shadow-sm transition hover:border-brand-200 hover:shadow-md"
         >
           <div className="flex items-start justify-between">
             <div>
@@ -910,7 +910,7 @@ export default async function DashboardPage() {
 
             <Link
               href="/admin/keuangan/riwayat"
-              className="text-xs font-semibold text-teal-700 hover:text-teal-800"
+              className="text-xs font-semibold text-brand-800 hover:text-brand-900"
             >
               Lihat semua
             </Link>
@@ -981,7 +981,7 @@ export default async function DashboardPage() {
 
             <Link
               href="/admin/kegiatan"
-              className="text-xs font-semibold text-teal-700 hover:text-teal-800"
+              className="text-xs font-semibold text-brand-800 hover:text-brand-900"
             >
               Lihat semua
             </Link>
@@ -1046,7 +1046,7 @@ export default async function DashboardPage() {
 
             <Link
               href="/admin/berita"
-              className="text-xs font-semibold text-teal-700 hover:text-teal-800"
+              className="text-xs font-semibold text-brand-800 hover:text-brand-900"
             >
               Lihat semua
             </Link>

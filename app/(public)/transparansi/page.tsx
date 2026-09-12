@@ -183,7 +183,7 @@ export default async function TransparansiPage() {
                       </td>
                       <td className="px-6 py-4 text-right font-medium">
                         {trx.type === 'IN' ? (
-                          <span className="text-emerald-600 flex items-center justify-end gap-1">
+                          <span className="flex items-center justify-end gap-1 text-emerald-700">
                             + Rp {Number(trx.amount).toLocaleString('id-ID')}
                           </span>
                         ) : (

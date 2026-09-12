@@ -130,7 +130,7 @@ export default function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-800 bg-slate-950/95 backdrop-blur-md">
+    <header className="sticky top-0 z-50 border-b border-brand-900 bg-brand-950/95 shadow-sm backdrop-blur-md">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-20 items-center justify-between">
           <SiteLogo name="Yayasan Ruang Sejahtera" />
@@ -159,10 +159,10 @@ export default function Navbar() {
                         ? "page"
                         : undefined
                     }
-                    className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 ${
+                    className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-citrus-300 ${
                       active
-                        ? "bg-white/10 text-white"
-                        : "text-slate-300 hover:bg-white/5 hover:text-white"
+                        ? "bg-brand-700 text-white"
+                        : "text-brand-100 hover:bg-white/10 hover:text-white"
                     }`}
                   >
                     {
@@ -177,7 +177,7 @@ export default function Navbar() {
           <div className="flex items-center gap-2 sm:gap-3">
             <Link
               href="/login"
-              className="hidden items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-400 transition-colors hover:bg-white/5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 xl:flex"
+              className="hidden items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-brand-200 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-citrus-300 xl:flex"
             >
               <User className="h-4 w-4" />
               <span>
@@ -187,7 +187,7 @@ export default function Navbar() {
 
             <Link
               href="/donasi"
-              className="flex min-h-11 items-center gap-2 rounded-full bg-amber-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-amber-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 sm:px-5 sm:text-base"
+              className="flex min-h-11 items-center gap-2 rounded-full bg-citrus-400 px-4 py-2.5 text-sm font-semibold text-brand-950 shadow-sm transition-colors hover:bg-citrus-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-citrus-100 sm:px-5 sm:text-base"
             >
               <HeartHandshake className="h-4 w-4" />
               <span className="hidden sm:inline">
@@ -200,7 +200,7 @@ export default function Navbar() {
 
             <button
               type="button"
-              className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-slate-300 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 xl:hidden"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-brand-100 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-citrus-300 xl:hidden"
               onClick={() =>
                 setMobileMenuPath(
                   isMobileMenuOpen
@@ -231,7 +231,7 @@ export default function Navbar() {
       {isMobileMenuOpen && (
         <div
           id="public-mobile-menu"
-          className="border-b border-slate-800 bg-slate-900 shadow-xl xl:hidden"
+          className="border-b border-brand-900 bg-brand-950 shadow-xl xl:hidden"
         >
           <nav
             className="mx-auto max-w-7xl space-y-1 px-4 pb-6 pt-2 sm:px-6"
@@ -259,8 +259,8 @@ export default function Navbar() {
                     }
                     className={`block min-h-11 rounded-xl px-3 py-3 text-base font-medium transition-colors ${
                       active
-                        ? "bg-teal-950 text-teal-200 ring-1 ring-inset ring-teal-800"
-                        : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                        ? "bg-brand-700 text-white ring-1 ring-inset ring-brand-500"
+                        : "text-brand-100 hover:bg-brand-900 hover:text-white"
                     }`}
                   >
                     {
@@ -273,7 +273,7 @@ export default function Navbar() {
 
             <Link
               href="/login"
-              className="mt-4 flex min-h-11 items-center gap-2 border-t border-slate-800 px-3 py-3 text-base font-medium text-teal-400 transition-colors hover:bg-slate-800 hover:text-teal-300"
+              className="mt-4 flex min-h-11 items-center gap-2 border-t border-brand-900 px-3 py-3 text-base font-medium text-brand-100 transition-colors hover:bg-brand-900 hover:text-white"
             >
               <User className="h-5 w-5" />
               <span>

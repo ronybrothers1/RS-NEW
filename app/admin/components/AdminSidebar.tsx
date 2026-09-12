@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
@@ -162,8 +163,8 @@ export default function AdminSidebar({ role }: AdminSidebarProps) {
         className={clsx(
           "group flex min-h-10 w-full items-center rounded-lg px-3 text-sm font-medium transition-colors",
           isActive
-            ? "bg-teal-50 text-teal-800 ring-1 ring-inset ring-teal-100"
-            : "text-slate-600 hover:bg-slate-100 hover:text-slate-950",
+            ? "bg-brand-700 text-white ring-1 ring-inset ring-brand-500"
+            : "text-brand-100 hover:bg-brand-900 hover:text-white",
           isChild ? "pl-11" : "",
         )}
       >
@@ -171,7 +172,7 @@ export default function AdminSidebar({ role }: AdminSidebarProps) {
           <Icon
             className={clsx(
               "mr-3 h-5 w-5 shrink-0",
-              isActive ? "text-teal-700" : "text-slate-400 group-hover:text-slate-600",
+              isActive ? "text-white" : "text-brand-300 group-hover:text-white",
             )}
           />
         )}
@@ -182,11 +183,11 @@ export default function AdminSidebar({ role }: AdminSidebarProps) {
 
   return (
     <>
-      <div className="fixed inset-x-0 top-0 z-30 flex h-16 items-center justify-between border-b border-slate-800 bg-black px-4 md:hidden">
+      <div className="fixed inset-x-0 top-0 z-30 flex h-16 items-center justify-between border-b border-brand-900 bg-brand-950 px-4 md:hidden">
         <button
           type="button"
           onClick={() => setMobileOpenPath(pathname)}
-          className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-white transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400"
+          className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-white transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-citrus-300"
           aria-label="Buka navigasi admin"
           aria-expanded={isMobileOpen}
           aria-controls="admin-navigation"
@@ -198,9 +199,12 @@ export default function AdminSidebar({ role }: AdminSidebarProps) {
           className="flex items-center"
           aria-label="Dashboard Ruang Sejahtera"
         >
-          <img
+          <Image
             src="/brand/ruang-sejahtera-logo.png"
             alt="Ruang Sejahtera"
+            width={1100}
+            height={500}
+            sizes="180px"
             className="h-11 w-auto max-w-[180px] object-contain"
           />
         </Link>
@@ -211,7 +215,7 @@ export default function AdminSidebar({ role }: AdminSidebarProps) {
         <button
           type="button"
           aria-label="Tutup navigasi admin"
-          className="fixed inset-0 z-40 bg-slate-950/45 backdrop-blur-[1px] md:hidden"
+          className="fixed inset-0 z-40 bg-brand-950/55 backdrop-blur-[1px] md:hidden"
           onClick={() => setMobileOpenPath(null)}
         />
       )}
@@ -219,25 +223,28 @@ export default function AdminSidebar({ role }: AdminSidebarProps) {
       <aside
         id="admin-navigation"
         className={clsx(
-          "fixed inset-y-0 left-0 z-50 flex w-72 shrink-0 flex-col border-r border-slate-200 bg-white shadow-xl transition-transform duration-200 ease-out md:static md:z-auto md:h-screen md:w-64 md:translate-x-0 md:shadow-none",
+          "fixed inset-y-0 left-0 z-50 flex w-72 shrink-0 flex-col border-r border-brand-900 bg-brand-950 text-brand-100 shadow-xl transition-transform duration-200 ease-out md:static md:z-auto md:h-screen md:w-64 md:translate-x-0 md:shadow-none",
           isMobileOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
-        <div className="flex h-16 shrink-0 items-center justify-between border-b border-slate-800 bg-black px-5">
+        <div className="flex h-16 shrink-0 items-center justify-between border-b border-brand-900 bg-brand-950 px-5">
           <Link
             href="/admin/dashboard"
             className="flex min-w-0 items-center"
             aria-label="Dashboard Ruang Sejahtera"
           >
-            <img
+            <Image
               src="/brand/ruang-sejahtera-logo.png"
               alt="Ruang Sejahtera"
+              width={1100}
+              height={500}
+              sizes="205px"
               className="h-12 w-auto max-w-[205px] object-contain"
             />
           </Link>
           <button
             type="button"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white md:hidden"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-brand-200 hover:bg-brand-900 hover:text-white md:hidden"
             onClick={() => setMobileOpenPath(null)}
             aria-label="Tutup navigasi admin"
           >
@@ -245,14 +252,14 @@ export default function AdminSidebar({ role }: AdminSidebarProps) {
           </button>
         </div>
 
-        <div className="border-b border-slate-100 px-4 py-4">
-          <div className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-teal-700 shadow-sm ring-1 ring-slate-200">
+        <div className="border-b border-brand-900 px-4 py-4">
+          <div className="flex items-center gap-3 rounded-xl bg-brand-900 px-3 py-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-800 shadow-sm ring-1 ring-brand-700">
               <CircleDollarSign className="h-5 w-5" />
             </div>
             <div className="min-w-0">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Mode kerja</p>
-              <p className="truncate text-sm font-semibold text-slate-800">
+              <p className="text-xs font-semibold uppercase tracking-wide text-brand-300">Mode kerja</p>
+              <p className="truncate text-sm font-semibold text-white">
                 {role === "ADMIN" ? "Administrator" : "Operator"}
               </p>
             </div>
@@ -260,7 +267,7 @@ export default function AdminSidebar({ role }: AdminSidebarProps) {
         </div>
 
         <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label="Navigasi admin">
-          <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+          <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-brand-300">
             Operasional
           </p>
           <div className="space-y-1">
@@ -282,8 +289,8 @@ export default function AdminSidebar({ role }: AdminSidebarProps) {
                     className={clsx(
                       "flex min-h-10 w-full items-center justify-between rounded-lg px-3 text-sm font-medium transition-colors",
                       active
-                        ? "bg-teal-50 text-teal-800"
-                        : "text-slate-600 hover:bg-slate-100 hover:text-slate-950",
+                        ? "bg-brand-700 text-white"
+                        : "text-brand-100 hover:bg-brand-900 hover:text-white",
                     )}
                     aria-expanded={open}
                   >
@@ -291,7 +298,7 @@ export default function AdminSidebar({ role }: AdminSidebarProps) {
                       <Icon
                         className={clsx(
                           "mr-3 h-5 w-5 shrink-0",
-                          active ? "text-teal-700" : "text-slate-400",
+                          active ? "text-white" : "text-brand-300",
                         )}
                       />
                       <span className="truncate">{item.name}</span>
@@ -314,17 +321,17 @@ export default function AdminSidebar({ role }: AdminSidebarProps) {
           </div>
         </nav>
 
-        <div className="shrink-0 border-t border-slate-200 px-4 py-3">
+        <div className="shrink-0 border-t border-brand-900 px-4 py-3">
           <button
             type="button"
             onClick={() => signOut({ callbackUrl: "/login" })}
-            className="mb-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-slate-200 px-3 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 md:hidden"
+            className="mb-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-rose-400/40 px-3 py-2.5 text-sm font-semibold text-rose-200 transition-colors hover:border-rose-300 hover:bg-rose-950/40 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-300 md:hidden"
           >
             <LogOut className="h-4 w-4" />
             Keluar
           </button>
 
-          <p className="text-xs leading-5 text-slate-400">
+          <p className="text-xs leading-5 text-brand-300">
             Yayasan Ruang Sejahtera<br />
             Sistem manajemen internal
           </p>

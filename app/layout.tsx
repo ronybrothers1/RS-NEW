@@ -41,7 +41,7 @@ export default function RootLayout({
     <html lang="id">
       <body
         suppressHydrationWarning
-        className="antialiased text-slate-900 bg-slate-50"
+        className="bg-canvas text-ink antialiased"
       >
         {children}
       </body>
