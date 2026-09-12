@@ -258,7 +258,7 @@ export default async function HomePage() {
                   <div className="flex h-12 w-12 items-center justify-center rounded-full border-4 border-surface-muted bg-white text-brand-700 shadow-sm md:mx-auto"><Icon className="h-5 w-5" /></div>
                   <div className="md:mt-4">
                     <h3 className="text-sm font-extrabold text-slate-950">{index + 1}. {step.title}</h3>
-                    <p className="mt-1 text-xs leading-5 text-slate-500">{step.description}</p>
+                    <p className="mt-1 text-xs leading-5 text-slate-600">{step.description}</p>
                   </div>
                 </div>
               );
