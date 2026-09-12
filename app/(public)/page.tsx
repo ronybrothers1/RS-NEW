@@ -143,7 +143,8 @@ export default async function HomePage() {
                       alt={latestArticle.imageAlt?.trim() || latestArticle.title}
                       fill
                       priority
-                      quality={72}
+                      fetchPriority="high"
+                      quality={65}
                       sizes="(max-width: 639px) calc(100vw - 2rem), (max-width: 1023px) 168px, (max-width: 1279px) 42vw, 560px"
                       className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
                     />
