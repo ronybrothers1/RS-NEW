@@ -138,8 +138,18 @@ export default async function HomePage() {
         )}
         <div className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgba(2,44,34,0.98)_0%,rgba(2,44,34,0.94)_42%,rgba(2,44,34,0.58)_72%,rgba(2,44,34,0.5)_100%)]" />
         <div className="absolute inset-0 -z-10 bg-[linear-gradient(0deg,rgba(2,44,34,0.92)_0%,transparent_48%)] lg:bg-[linear-gradient(0deg,rgba(2,44,34,0.72)_0%,transparent_45%)]" />
+        <Image
+          src="/images/decor/hero-leaves.webp"
+          alt=""
+          width={2154}
+          height={730}
+          loading="eager"
+          fetchPriority="low"
+          sizes="100vw"
+          className="pointer-events-none absolute inset-x-0 top-0 z-0 h-auto w-full select-none opacity-70 sm:opacity-80"
+        />
 
-        <div className="mx-auto grid min-h-[590px] max-w-7xl items-center gap-8 px-4 pb-24 pt-10 sm:min-h-[620px] sm:px-6 sm:pb-28 lg:min-h-[560px] lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)] lg:px-8 lg:pb-24 lg:pt-12">
+        <div className="relative z-10 mx-auto grid min-h-[590px] max-w-7xl items-center gap-8 px-4 pb-24 pt-10 sm:min-h-[620px] sm:px-6 sm:pb-28 lg:min-h-[560px] lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)] lg:px-8 lg:pb-24 lg:pt-12">
           <div className="max-w-[660px] self-center">
             <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-brand-50 backdrop-blur-md">
               <ShieldCheck className="h-3.5 w-3.5 text-citrus-300" />
@@ -258,9 +268,15 @@ export default async function HomePage() {
       </section>
 
       <section className="relative isolate overflow-hidden bg-brand-950 py-14 text-white sm:py-16">
-        {latestArticle?.imageUrl && <Image src={latestArticle.imageUrl} alt="" fill quality={55} sizes="100vw" className="-z-20 object-cover opacity-25 blur-[1px]" />}
-        <div className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgba(2,44,34,0.98)_0%,rgba(2,44,34,0.9)_58%,rgba(2,44,34,0.78)_100%)]" />
-        <div className="mx-auto grid max-w-7xl items-center gap-9 px-4 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:px-8">
+        <Image
+          src="/images/decor/transparency-leaves.webp"
+          alt=""
+          fill
+          sizes="100vw"
+          className="-z-20 object-cover object-right-bottom opacity-75"
+        />
+        <div className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgba(2,44,34,0.99)_0%,rgba(2,44,34,0.94)_48%,rgba(2,44,34,0.56)_100%)]" />
+        <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-9 px-4 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:px-8">
           <div>
             <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">Transparansi Adalah Janji Kami</h2>
             <p className="mt-4 max-w-2xl text-sm leading-6 text-brand-100 sm:text-base">Kami percaya bahwa setiap rupiah yang dipercayakan kepada yayasan adalah amanah. Laporan penerimaan, pengeluaran, dan saldo kas dapat diakses oleh masyarakat.</p>

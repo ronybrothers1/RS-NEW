@@ -15,13 +15,13 @@ export default function SiteLogo({ name }: SiteLogoProps) {
       aria-label={`${name} - Beranda`}
     >
       <Image
-        src="/brand/ruang-sejahtera-logo.png"
+        src="/brand/ruang-sejahtera-logo-outlined.png"
         alt="Ruang Sejahtera"
-        width={1100}
-        height={500}
+        width={525}
+        height={235}
         priority
         sizes="(max-width: 639px) 134px, 150px"
-        className="h-[60px] w-auto object-contain sm:h-[68px]"
+        className="h-[60px] w-auto object-contain drop-shadow-[0_1px_1px_rgba(0,0,0,0.9)] sm:h-[68px]"
       />
     </Link>
   );

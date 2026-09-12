@@ -200,12 +200,12 @@ export default function AdminSidebar({ role }: AdminSidebarProps) {
           aria-label="Dashboard Ruang Sejahtera"
         >
           <Image
-            src="/brand/ruang-sejahtera-logo.png"
+            src="/brand/ruang-sejahtera-logo-outlined.png"
             alt="Ruang Sejahtera"
-            width={1100}
-            height={500}
+            width={525}
+            height={235}
             sizes="180px"
-            className="h-11 w-auto max-w-[180px] object-contain"
+            className="h-11 w-auto max-w-[180px] object-contain drop-shadow-[0_1px_1px_rgba(0,0,0,0.9)]"
           />
         </Link>
         <div className="h-10 w-10" aria-hidden="true" />
@@ -234,12 +234,12 @@ export default function AdminSidebar({ role }: AdminSidebarProps) {
             aria-label="Dashboard Ruang Sejahtera"
           >
             <Image
-              src="/brand/ruang-sejahtera-logo.png"
+              src="/brand/ruang-sejahtera-logo-outlined.png"
               alt="Ruang Sejahtera"
-              width={1100}
-              height={500}
+              width={525}
+              height={235}
               sizes="160px"
-              className="h-9 w-auto max-w-[160px] object-contain"
+              className="h-9 w-auto max-w-[160px] object-contain drop-shadow-[0_1px_1px_rgba(0,0,0,0.9)]"
             />
           </Link>
           <button
