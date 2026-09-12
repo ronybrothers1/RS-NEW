@@ -167,7 +167,7 @@ export default async function HomePage() {
                   </p>
 
                   {latestArticleDate && (
-                    <p className="mt-1 text-[10px] font-medium text-slate-500 sm:text-xs lg:mt-0 lg:font-semibold lg:uppercase lg:tracking-[0.12em] lg:text-slate-400">
+                    <p className="mt-1 text-[10px] font-medium text-slate-300 sm:text-xs lg:mt-0 lg:font-semibold lg:uppercase lg:tracking-[0.12em] lg:text-slate-400">
                       {latestArticleDate}
                     </p>
                   )}
