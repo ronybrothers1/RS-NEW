@@ -13,7 +13,9 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
+  useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
@@ -61,6 +63,11 @@ type ConfirmAction =
   | "VERIFY"
   | "REJECT"
   | null;
+
+type CopyStatus =
+  | "IDLE"
+  | "SUCCESS"
+  | "ERROR";
 
 function statusLabel(
   status: DonationStatus,
@@ -110,6 +117,62 @@ function formatDonationRegistration(
   donationId: string,
 ) {
   return `RS-DON-${donationId.toUpperCase()}`;
+}
+
+async function copyText(
+  value: string,
+) {
+  if (
+    window.isSecureContext &&
+    navigator.clipboard
+  ) {
+    try {
+      await navigator.clipboard.writeText(
+        value,
+      );
+      return true;
+    } catch {
+      // Continue with the compatibility fallback below.
+    }
+  }
+
+  const textArea =
+    document.createElement(
+      "textarea",
+    );
+
+  textArea.value = value;
+  textArea.setAttribute(
+    "readonly",
+    "",
+  );
+  textArea.style.position =
+    "fixed";
+  textArea.style.inset = "0";
+  textArea.style.opacity = "0";
+  textArea.style.pointerEvents =
+    "none";
+
+  document.body.appendChild(
+    textArea,
+  );
+
+  try {
+    textArea.focus();
+    textArea.select();
+    textArea.setSelectionRange(
+      0,
+      value.length,
+    );
+
+    return document.execCommand(
+      "copy",
+    );
+  } catch {
+    return false;
+  } finally {
+    textArea.remove();
+  }
 }
 
 function getSafeProofImage(
@@ -204,6 +267,40 @@ export default function AdminDonasiClient({
     reviewNote,
     setReviewNote,
   ] = useState("");
+
+  const [
+    copyStatus,
+    setCopyStatus,
+  ] = useState<CopyStatus>(
+    "IDLE",
+  );
+
+  const copyResetTimer =
+    useRef<ReturnType<
+      typeof setTimeout
+    > | null>(null);
+
+  function clearCopyResetTimer() {
+    if (copyResetTimer.current) {
+      clearTimeout(
+        copyResetTimer.current,
+      );
+      copyResetTimer.current =
+        null;
+    }
+  }
+
+  useEffect(() => {
+    return () => {
+      if (
+        copyResetTimer.current
+      ) {
+        clearTimeout(
+          copyResetTimer.current,
+        );
+      }
+    };
+  }, []);
 
   const summary = useMemo(() => {
     return donations.reduce(
@@ -347,6 +444,8 @@ export default function AdminDonasiClient({
   async function openDetail(
     donationId: string,
   ) {
+    clearCopyResetTimer();
+    setCopyStatus("IDLE");
     setDetail(null);
     setDetailError(null);
     setActionError(null);
@@ -383,10 +482,40 @@ export default function AdminDonasiClient({
     }
 
     setDetail(null);
+    clearCopyResetTimer();
+    setCopyStatus("IDLE");
     setDetailError(null);
     setConfirmAction(null);
     setActionError(null);
     setReviewNote("");
+  }
+
+  async function copyRegistrationNumber() {
+    if (!detail) {
+      return;
+    }
+
+    clearCopyResetTimer();
+    setCopyStatus("IDLE");
+
+    const copied = await copyText(
+      formatDonationRegistration(
+        detail.id,
+      ),
+    );
+
+    if (!copied) {
+      setCopyStatus("ERROR");
+      return;
+    }
+
+    setCopyStatus("SUCCESS");
+    copyResetTimer.current =
+      setTimeout(() => {
+        setCopyStatus("IDLE");
+        copyResetTimer.current =
+          null;
+      }, 2000);
   }
 
   async function processDonation() {
@@ -823,24 +952,53 @@ export default function AdminDonasiClient({
 
                       <button
                         type="button"
-                        onClick={() =>
-                          navigator.clipboard
-                            .writeText(
-                              formatDonationRegistration(
-                                detail.id,
-                              ),
-                            )
-                            .catch(
-                              () =>
-                                undefined,
-                            )
+                        onClick={
+                          copyRegistrationNumber
                         }
-                        className="inline-flex w-fit items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                        aria-label={
+                          copyStatus ===
+                          "SUCCESS"
+                            ? "Nomor registrasi telah disalin"
+                            : "Salin nomor registrasi donasi"
+                        }
+                        className={`inline-flex w-fit items-center rounded-lg border px-3 py-2 text-xs font-semibold transition ${
+                          copyStatus ===
+                          "SUCCESS"
+                            ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                            : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                        }`}
                       >
-                        <Copy className="mr-1.5 h-3.5 w-3.5" />
-                        Salin
+                        {copyStatus ===
+                        "SUCCESS" ? (
+                          <Check className="mr-1.5 h-3.5 w-3.5" />
+                        ) : (
+                          <Copy className="mr-1.5 h-3.5 w-3.5" />
+                        )}
+                        {copyStatus ===
+                        "SUCCESS"
+                          ? "Tersalin"
+                          : "Salin"}
                       </button>
                     </dd>
+
+                    <p
+                      role="status"
+                      aria-live="polite"
+                      className={
+                        copyStatus ===
+                        "ERROR"
+                          ? "mt-2 text-xs font-medium text-rose-600"
+                          : "sr-only"
+                      }
+                    >
+                      {copyStatus ===
+                      "SUCCESS"
+                        ? "Nomor registrasi berhasil disalin."
+                        : copyStatus ===
+                            "ERROR"
+                          ? "Nomor tidak dapat disalin otomatis. Silakan blok dan salin nomor secara manual."
+                          : ""}
+                    </p>
                   </div>
 
                   <div>
