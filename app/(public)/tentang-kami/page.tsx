@@ -1,15 +1,16 @@
 export const revalidate = 60;
 
-import type { Metadata } from "next";
 import { HeartHandshake, ShieldCheck, Target, Users } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { createPageMetadata } from "@/lib/seo-metadata";
 
-export const metadata: Metadata = {
-  alternates: {
-    canonical: "/tentang-kami",
-  },
-};
+export const metadata = createPageMetadata({
+  title: "Tentang Kami",
+  description:
+    "Kenali visi, misi, nilai, dan komitmen Yayasan Ruang Sejahtera dalam menjalankan program sosial dan kemanusiaan untuk masyarakat Sampang.",
+  path: "/tentang-kami",
+});
 
 export default function TentangKamiPage() {
   return (

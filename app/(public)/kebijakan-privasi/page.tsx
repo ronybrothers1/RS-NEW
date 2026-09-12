@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
+import { createPageMetadata } from "@/lib/seo-metadata";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "Kebijakan Privasi",
   description:
-    "Kebijakan privasi penggunaan website Yayasan Ruang Sejahtera.",
-  alternates: {
-    canonical: "/kebijakan-privasi",
-  },
-};
+    "Pelajari cara Yayasan Ruang Sejahtera memproses, menggunakan, menyimpan, dan melindungi data pengguna layanan donasi serta pengajuan bantuan.",
+  path: "/kebijakan-privasi",
+});
 
 export default function KebijakanPrivasiPage() {
   return (

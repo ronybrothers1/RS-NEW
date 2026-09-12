@@ -8,60 +8,16 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Calendar, User } from "lucide-react";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { cache } from "react";
 import { sanitizeArticleHtml } from "@/lib/article-content";
 import { publishDueArticles } from "@/lib/article-publication";
+import { createPageMetadata, createSeoDescription } from "@/lib/seo-metadata";
 
 type Props = {
   params: Promise<{ slug: string }>;
 };
 
-export async function generateMetadata(
-  props: Props,
-): Promise<Metadata> {
-  const { slug } = await props.params;
-
-  await publishDueArticles();
-
-  const [article] = await db
-    .select()
-    .from(articles)
-    .where(
-      and(
-        eq(articles.slug, slug),
-        eq(articles.status, "PUBLISHED"),
-      ),
-    )
-    .limit(1);
-
-  if (!article) {
-    return {
-      title: "Berita Tidak Ditemukan",
-      alternates: {
-        canonical: `/berita/${slug}`,
-      },
-      robots: {
-        index: false,
-        follow: false,
-      },
-    };
-  }
-
-  return {
-    title: article.metaTitle || article.title,
-    description:
-      article.metaDescription || article.excerpt || "",
-    alternates: {
-      canonical: `/berita/${slug}`,
-    },
-    openGraph: {
-      images: article.imageUrl ? [article.imageUrl] : [],
-    },
-  };
-}
-
-export default async function BeritaDetailPage(props: Props) {
-  const { slug } = await props.params;
-
+const getPublishedArticle = cache(async (slug: string) => {
   await publishDueArticles();
 
   const [articleData] = await db
@@ -78,6 +34,54 @@ export default async function BeritaDetailPage(props: Props) {
       ),
     )
     .limit(1);
+
+  return articleData;
+});
+
+export async function generateMetadata(
+  props: Props,
+): Promise<Metadata> {
+  const { slug } = await props.params;
+
+  const articleData = await getPublishedArticle(slug);
+
+  if (!articleData) {
+    return {
+      title: "Berita Tidak Ditemukan",
+      alternates: {
+        canonical: `/berita/${slug}`,
+      },
+      robots: {
+        index: false,
+        follow: false,
+      },
+    };
+  }
+
+  const { article, authorName } = articleData;
+  const description = createSeoDescription(
+    [article.metaDescription, article.excerpt, article.content],
+    "Berita dan kegiatan terbaru Yayasan Ruang Sejahtera di Kabupaten Sampang.",
+  );
+
+  return createPageMetadata({
+    title: article.metaTitle || article.title,
+    description,
+    path: `/berita/${slug}`,
+    image: article.imageUrl,
+    imageAlt: article.imageAlt || article.title,
+    article: {
+      publishedTime: article.publishedAt ?? article.createdAt,
+      modifiedTime: article.updatedAt,
+      authors: [authorName ?? "Yayasan Ruang Sejahtera"],
+    },
+  });
+}
+
+export default async function BeritaDetailPage(props: Props) {
+  const { slug } = await props.params;
+
+  const articleData = await getPublishedArticle(slug);
 
   if (!articleData) {
     notFound();

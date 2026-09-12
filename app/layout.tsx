@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { SITE_DESCRIPTION, SITE_NAME } from '@/lib/seo-metadata';
 import { getSiteUrl } from '@/lib/site-url';
 
 const siteUrl = getSiteUrl();
@@ -7,24 +8,21 @@ const siteUrl = getSiteUrl();
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: 'Yayasan Ruang Sejahtera',
+    default: SITE_NAME,
     template: '%s | Ruang Sejahtera',
   },
-  description:
-    'Membangun Harapan, Mewujudkan Kesejahteraan melalui program sosial, pendidikan, dan kemanusiaan.',
+  description: SITE_DESCRIPTION,
   openGraph: {
-    title: 'Yayasan Ruang Sejahtera',
-    description:
-      'Membangun Harapan, Mewujudkan Kesejahteraan melalui program sosial, pendidikan, dan kemanusiaan.',
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
     type: 'website',
-    siteName: 'Yayasan Ruang Sejahtera',
+    siteName: SITE_NAME,
     locale: 'id_ID',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Yayasan Ruang Sejahtera',
-    description:
-      'Membangun Harapan, Mewujudkan Kesejahteraan melalui program sosial, pendidikan, dan kemanusiaan.',
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
   },
 };
 

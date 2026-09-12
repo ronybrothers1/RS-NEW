@@ -1,17 +1,18 @@
 export const revalidate = 60;
 
-import type { Metadata } from "next";
 import { db } from "@/src/db";
 import { programs } from "@/src/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { HeartHandshake, BookOpen, Stethoscope, Leaf, Users, Activity, FileText, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { createPageMetadata } from "@/lib/seo-metadata";
 
-export const metadata: Metadata = {
-  alternates: {
-    canonical: "/program",
-  },
-};
+export const metadata = createPageMetadata({
+  title: "Program Sosial",
+  description:
+    "Jelajahi program sosial Yayasan Ruang Sejahtera di Sampang: Berbagi Rasa, REHAT, Berbagi Air Bersih, Berbagi Masa Depan, dan Bantuan Kesehatan.",
+  path: "/program",
+});
 
 const iconMap: Record<string, React.ElementType> = {
   'BookOpen': BookOpen,

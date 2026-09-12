@@ -23,6 +23,7 @@ import {
   formatRupiah,
   getProgramQuestions,
 } from "@/lib/assistance";
+import { createPageMetadata } from "@/lib/seo-metadata";
 import {
   db,
 } from "@/src/db";
@@ -35,15 +36,12 @@ import {
 export const dynamic =
   "force-dynamic";
 
-export const metadata: Metadata = {
-  title:
-    "Bantu Mereka",
+export const metadata: Metadata = createPageMetadata({
+  title: "Kampanye Bantuan",
   description:
-    "Kampanye bantuan yang telah melalui proses verifikasi Yayasan Ruang Sejahtera.",
-  alternates: {
-    canonical: "/bantuan",
-  },
-};
+    "Lihat kampanye bantuan yang telah diverifikasi Yayasan Ruang Sejahtera dan pantau target, dana terkumpul, serta penyalurannya secara transparan.",
+  path: "/bantuan",
+});
 
 export default async function AssistanceCampaignsPage() {
   const session = await auth();

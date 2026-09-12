@@ -13,6 +13,7 @@ import {
 } from "drizzle-orm";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { cache } from "react";
 import {
   notFound,
 } from "next/navigation";
@@ -20,6 +21,7 @@ import {
 import {
   formatRupiah,
 } from "@/lib/assistance";
+import { createPageMetadata, createSeoDescription } from "@/lib/seo-metadata";
 import {
   db,
 } from "@/src/db";
@@ -38,16 +40,72 @@ type Props = {
   }>;
 };
 
+const getPublicCampaign = cache(async (slug: string) => {
+  const [campaign] = await db
+    .select({
+      id: campaigns.id,
+      programId: campaigns.programId,
+      slug: campaigns.slug,
+      title: campaigns.title,
+      summary: campaigns.summary,
+      story: campaigns.story,
+      beneficiaryDisplayName: campaigns.beneficiaryDisplayName,
+      publicLocation: campaigns.publicLocation,
+      targetAmount: campaigns.targetAmount,
+      coverPhotoId: campaigns.coverPhotoId,
+      status: campaigns.status,
+      programName: programs.name,
+    })
+    .from(campaigns)
+    .innerJoin(
+      programs,
+      eq(campaigns.programId, programs.id),
+    )
+    .where(
+      and(
+        eq(campaigns.slug, slug),
+        inArray(campaigns.status, ["ACTIVE", "COMPLETED"]),
+      ),
+    )
+    .limit(1);
+
+  return campaign;
+});
+
 export async function generateMetadata({
   params,
 }: Props): Promise<Metadata> {
   const { slug } = await params;
 
-  return {
-    alternates: {
-      canonical: `/bantuan/${slug}`,
-    },
-  };
+  const campaign = await getPublicCampaign(slug);
+
+  if (!campaign) {
+    return {
+      title: "Kampanye Tidak Ditemukan",
+      alternates: {
+        canonical: `/bantuan/${slug}`,
+      },
+      robots: {
+        index: false,
+        follow: false,
+      },
+    };
+  }
+
+  const description = createSeoDescription(
+    [campaign.summary, campaign.story],
+    "Kampanye bantuan terverifikasi Yayasan Ruang Sejahtera di Kabupaten Sampang.",
+  );
+
+  return createPageMetadata({
+    title: campaign.title,
+    description,
+    path: `/bantuan/${slug}`,
+    image: campaign.coverPhotoId
+      ? `/api/bantuan/${campaign.slug}/cover`
+      : undefined,
+    imageAlt: `Foto kampanye ${campaign.title}`,
+  });
 }
 
 export default async function CampaignDetailPage({
@@ -57,60 +115,7 @@ export default async function CampaignDetailPage({
     slug,
   } = await params;
 
-  const [
-    campaign,
-  ] =
-    await db
-      .select({
-        id:
-          campaigns.id,
-        programId:
-          campaigns.programId,
-        slug:
-          campaigns.slug,
-        title:
-          campaigns.title,
-        summary:
-          campaigns.summary,
-        story:
-          campaigns.story,
-        beneficiaryDisplayName:
-          campaigns.beneficiaryDisplayName,
-        publicLocation:
-          campaigns.publicLocation,
-        targetAmount:
-          campaigns.targetAmount,
-        coverPhotoId:
-          campaigns.coverPhotoId,
-        status:
-          campaigns.status,
-        programName:
-          programs.name,
-      })
-      .from(campaigns)
-      .innerJoin(
-        programs,
-        eq(
-          campaigns.programId,
-          programs.id,
-        ),
-      )
-      .where(
-        and(
-          eq(
-            campaigns.slug,
-            slug,
-          ),
-          inArray(
-            campaigns.status,
-            [
-              "ACTIVE",
-              "COMPLETED",
-            ],
-          ),
-        ),
-      )
-      .limit(1);
+  const campaign = await getPublicCampaign(slug);
 
   if (!campaign) {
     notFound();

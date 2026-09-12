@@ -14,15 +14,14 @@ import {
 } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { createPageMetadata } from "@/lib/seo-metadata";
 
-export const metadata: Metadata = {
-  title: "Kegiatan",
+export const metadata: Metadata = createPageMetadata({
+  title: "Dokumentasi Kegiatan",
   description:
-    "Dokumentasi kegiatan dan penyaluran program Yayasan Ruang Sejahtera untuk masyarakat.",
-  alternates: {
-    canonical: "/kegiatan",
-  },
-};
+    "Dokumentasi kegiatan, penyaluran bantuan, lokasi, dan program sosial yang telah dilaksanakan Yayasan Ruang Sejahtera di Kabupaten Sampang.",
+  path: "/kegiatan",
+});
 
 export default async function PublicKegiatanPage() {
   const allActivities = await db

@@ -1,15 +1,17 @@
 import { Mail, MapPin, Phone, MessageCircle } from "lucide-react";
 import type { Metadata } from "next";
+import { createPageMetadata } from "@/lib/seo-metadata";
 import { db } from "@/src/db";
 import { settings } from "@/src/db/schema";
 
 export const dynamic = 'force-dynamic';
 
-export const metadata: Metadata = {
-  alternates: {
-    canonical: "/kontak",
-  },
-};
+export const metadata: Metadata = createPageMetadata({
+  title: "Kontak",
+  description:
+    "Hubungi Yayasan Ruang Sejahtera untuk menyampaikan pertanyaan, informasi calon penerima manfaat, saran, atau inisiatif kolaborasi di Sampang.",
+  path: "/kontak",
+});
 
 function normalizeWhatsappNumber(value: string) {
   const firstNumber = value.split(/[\n,;/]/)[0] || "";

@@ -1,5 +1,6 @@
 import { db } from "@/src/db";
 import type { Metadata } from "next";
+import { createPageMetadata } from "@/lib/seo-metadata";
 import { getFinanceOpeningBalance } from "@/lib/finance-opening-balance";
 import { financialTransactions, programs } from "@/src/db/schema";
 import { and, desc, eq, gte, isNull, lt, sql } from "drizzle-orm";
@@ -9,11 +10,12 @@ import Link from "next/link";
 
 export const dynamic = 'force-dynamic';
 
-export const metadata: Metadata = {
-  alternates: {
-    canonical: "/transparansi",
-  },
-};
+export const metadata: Metadata = createPageMetadata({
+  title: "Transparansi Keuangan",
+  description:
+    "Pantau penerimaan, pengeluaran, saldo kas, dan riwayat transaksi Yayasan Ruang Sejahtera yang dipublikasikan secara terbuka dan terukur.",
+  path: "/transparansi",
+});
 
 function getJakartaToday() {
   const parts = new Intl.DateTimeFormat("en-CA", {

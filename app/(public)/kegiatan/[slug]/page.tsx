@@ -13,63 +13,15 @@ import {
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { cache } from "react";
+import { createPageMetadata, createSeoDescription } from "@/lib/seo-metadata";
 import TikTokEmbed from "./components/TikTokEmbed";
 
 type Props = {
   params: Promise<{ slug: string }>;
 };
 
-export async function generateMetadata(
-  props: Props,
-): Promise<Metadata> {
-  const { slug } = await props.params;
-
-  const [activity] = await db
-    .select()
-    .from(activities)
-    .where(
-      and(
-        eq(activities.slug, slug),
-        eq(activities.isPublished, true),
-        isNull(activities.archivedAt),
-      ),
-    )
-    .limit(1);
-
-  if (!activity) {
-    return {
-      title: "Kegiatan Tidak Ditemukan",
-      alternates: {
-        canonical: `/kegiatan/${slug}`,
-      },
-      robots: {
-        index: false,
-        follow: false,
-      },
-    };
-  }
-
-  const description =
-    activity.description
-      ?.replace(/\s+/g, " ")
-      .trim()
-      .slice(0, 160) ||
-    "Dokumentasi kegiatan Yayasan Ruang Sejahtera.";
-
-  return {
-    title: `${activity.title} | Ruang Sejahtera`,
-    description,
-    alternates: {
-      canonical: `/kegiatan/${slug}`,
-    },
-  };
-}
-
-export default async function KegiatanDetailPage(
-  props: Props,
-) {
-  const { slug } = await props.params;
-
+const getPublishedActivity = cache(async (slug: string) => {
   const [data] = await db
     .select({
       activity: activities,
@@ -88,6 +40,55 @@ export default async function KegiatanDetailPage(
       ),
     )
     .limit(1);
+
+  return data;
+});
+
+export async function generateMetadata(
+  props: Props,
+): Promise<Metadata> {
+  const { slug } = await props.params;
+
+  const data = await getPublishedActivity(slug);
+
+  if (!data) {
+    return {
+      title: "Kegiatan Tidak Ditemukan",
+      alternates: {
+        canonical: `/kegiatan/${slug}`,
+      },
+      robots: {
+        index: false,
+        follow: false,
+      },
+    };
+  }
+
+  const { activity } = data;
+  const description = createSeoDescription(
+    [activity.description],
+    "Dokumentasi kegiatan Yayasan Ruang Sejahtera di Kabupaten Sampang.",
+  );
+
+  return createPageMetadata({
+    title: activity.title,
+    description,
+    path: `/kegiatan/${slug}`,
+    image: activity.imageUrl,
+    imageAlt: activity.imageAlt || activity.title,
+    article: {
+      publishedTime: activity.createdAt,
+      modifiedTime: activity.updatedAt,
+    },
+  });
+}
+
+export default async function KegiatanDetailPage(
+  props: Props,
+) {
+  const { slug } = await props.params;
+
+  const data = await getPublishedActivity(slug);
 
   if (!data) {
     notFound();

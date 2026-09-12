@@ -2,6 +2,7 @@ import { asc, eq } from "drizzle-orm";
 import type { Metadata } from "next";
 
 import { db } from "@/src/db";
+import { createPageMetadata } from "@/lib/seo-metadata";
 import {
   programs,
   settings,
@@ -12,11 +13,12 @@ import DonationStatusChecker from "./components/DonationStatusChecker";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  alternates: {
-    canonical: "/donasi",
-  },
-};
+export const metadata: Metadata = createPageMetadata({
+  title: "Donasi",
+  description:
+    "Dukung program Yayasan Ruang Sejahtera melalui formulir donasi resmi, unggah bukti transfer, dan pantau status verifikasi dengan nomor registrasi.",
+  path: "/donasi",
+});
 
 export default async function DonasiPage() {
   const [

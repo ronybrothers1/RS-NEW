@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
+import { createPageMetadata } from "@/lib/seo-metadata";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "Ketentuan Donasi",
   description:
-    "Ketentuan penggunaan layanan donasi Yayasan Ruang Sejahtera.",
-  alternates: {
-    canonical: "/ketentuan-donasi",
-  },
-};
+    "Baca ketentuan donasi Yayasan Ruang Sejahtera mengenai rekening resmi, verifikasi bukti transfer, pilihan program, anonimitas, dan koreksi data.",
+  path: "/ketentuan-donasi",
+});
 
 export default function KetentuanDonasiPage() {
   return (
