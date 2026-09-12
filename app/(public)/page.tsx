@@ -131,7 +131,7 @@ export default async function HomePage() {
             fill
             priority
             fetchPriority="high"
-            quality={68}
+            quality={60}
             sizes="100vw"
             className="-z-20 object-cover object-center lg:object-[70%_center]"
           />
@@ -144,7 +144,7 @@ export default async function HomePage() {
           width={2152}
           height={731}
           loading="eager"
-          fetchPriority="low"
+          fetchPriority="high"
           sizes="100vw"
           className="pointer-events-none absolute inset-x-0 top-0 z-0 h-auto w-full select-none opacity-70 sm:opacity-80"
         />
