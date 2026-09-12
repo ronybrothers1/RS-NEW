@@ -2,6 +2,7 @@
 // queries the database, which is not reachable from the build machine.
 export const dynamic = 'force-dynamic';
 
+import Image from "next/image";
 import Link from "next/link";
 import { HeartHandshake, ArrowRight, Activity, Users, FileText, CheckCircle2, BookOpen, Stethoscope, Leaf } from "lucide-react";
 import { db } from "@/src/db";
@@ -94,7 +95,7 @@ export default async function HomePage() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-teal-900/40 via-slate-950 to-slate-950"></div>
         <div className="absolute -right-24 top-20 hidden h-80 w-80 rounded-full bg-teal-500/10 blur-3xl lg:block"></div>
 
-        <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-[minmax(0,1.08fr)_minmax(340px,0.92fr)] lg:gap-14 lg:px-8">
+        <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-8 px-4 sm:gap-10 sm:px-6 lg:grid-cols-[minmax(0,1.08fr)_minmax(340px,0.92fr)] lg:gap-14 lg:px-8">
           <div className="w-full max-w-2xl">
             <h1 className="text-[clamp(2.75rem,11vw,4rem)] font-extrabold leading-[1.05] tracking-tight text-white lg:text-[clamp(3.75rem,5vw,4.75rem)]">
               KEPEDULIAN PERLU SAMPAI
@@ -124,148 +125,93 @@ export default async function HomePage() {
               </Link>
             </div>
 
-            {/* Latest news — compact mobile/tablet presentation */}
+          </div>
+
+          <div className="relative">
+            <div className="absolute -inset-5 hidden rounded-[2.25rem] bg-teal-500/10 blur-2xl lg:block"></div>
+
             {latestArticle ? (
               <Link
                 href={`/berita/${latestArticle.slug}`}
                 aria-label={`Baca berita terbaru: ${latestArticle.title}`}
-                className="group mt-8 block overflow-hidden rounded-2xl border border-white/10 bg-slate-900/90 shadow-xl ring-1 ring-white/5 transition hover:border-teal-400/20 sm:grid sm:grid-cols-[168px_minmax(0,1fr)] lg:hidden"
+                className="group relative block overflow-hidden rounded-2xl border border-white/10 bg-slate-900/90 shadow-xl ring-1 ring-white/5 transition hover:border-teal-400/20 sm:grid sm:grid-cols-[168px_minmax(0,1fr)] lg:block lg:rounded-[2rem] lg:shadow-2xl lg:shadow-black/30"
               >
-                <div
-                  className="relative aspect-[16/9] w-full overflow-hidden bg-slate-800 bg-cover bg-center sm:aspect-auto sm:min-h-[160px]"
-                  style={
-                    latestArticle.imageUrl
-                      ? {
-                          backgroundImage: `url("${latestArticle.imageUrl}")`,
-                        }
-                      : undefined
-                  }
-                >
-                  {!latestArticle.imageUrl && (
+                <div className="relative aspect-[16/9] w-full overflow-hidden bg-slate-800 sm:aspect-auto sm:min-h-[160px] lg:aspect-[16/11] lg:min-h-0">
+                  {latestArticle.imageUrl ? (
+                    <Image
+                      src={latestArticle.imageUrl}
+                      alt={latestArticle.imageAlt?.trim() || latestArticle.title}
+                      fill
+                      priority
+                      quality={72}
+                      sizes="(max-width: 639px) calc(100vw - 2rem), (max-width: 1023px) 168px, (max-width: 1279px) 42vw, 560px"
+                      className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+                    />
+                  ) : (
                     <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-teal-950 via-slate-900 to-slate-950">
-                      <FileText className="h-9 w-9 text-teal-300/70 sm:h-11 sm:w-11" />
+                      <FileText className="h-9 w-9 text-teal-300/70 sm:h-11 sm:w-11 lg:h-16 lg:w-16" />
                     </div>
                   )}
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent to-slate-950/20"></div>
+
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent to-slate-950/20 lg:hidden"></div>
+                  <div className="absolute inset-0 hidden bg-gradient-to-t from-slate-950 via-slate-950/10 to-transparent lg:block"></div>
+
+                  <div className="absolute left-5 top-5 hidden items-center rounded-full border border-white/15 bg-slate-950/75 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-teal-200 backdrop-blur-md lg:inline-flex">
+                    Berita Terbaru
+                  </div>
                 </div>
 
-                <div className="min-w-0 p-4 sm:p-5">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-teal-300 sm:text-[11px]">
+                <div className="relative min-w-0 p-4 sm:p-5 lg:p-6 xl:p-7">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-teal-300 sm:text-[11px] lg:hidden">
                     Berita Terbaru
                   </p>
 
                   {latestArticleDate && (
-                    <p className="mt-1 text-[10px] font-medium text-slate-500 sm:text-xs">
+                    <p className="mt-1 text-[10px] font-medium text-slate-500 sm:text-xs lg:mt-0 lg:font-semibold lg:uppercase lg:tracking-[0.12em] lg:text-slate-400">
                       {latestArticleDate}
                     </p>
                   )}
 
-                  <h2 className="mt-2 line-clamp-3 text-base font-bold leading-snug text-white transition-colors group-hover:text-teal-300 sm:text-lg">
+                  <h2 className="mt-2 line-clamp-3 text-base font-bold leading-snug text-white transition-colors group-hover:text-teal-300 sm:text-lg lg:mt-3 lg:text-2xl">
                     {latestArticle.title}
                   </h2>
 
-                  <span className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-teal-300 group-hover:text-teal-200 sm:text-sm">
-                    Baca
+                  {latestArticle.excerpt && (
+                    <p className="mt-3 hidden text-sm leading-6 text-slate-400 lg:line-clamp-2">
+                      {latestArticle.excerpt}
+                    </p>
+                  )}
+
+                  <span className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-teal-300 transition-colors group-hover:text-teal-200 sm:text-sm lg:mt-5 lg:gap-2">
+                    <span className="lg:hidden">Baca</span>
+                    <span className="hidden lg:inline">Baca Selengkapnya</span>
                     <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1 sm:h-4 sm:w-4" />
                   </span>
                 </div>
               </Link>
             ) : (
-              <Link
-                href="/berita"
-                className="mt-8 flex items-center gap-4 rounded-2xl border border-white/10 bg-slate-900/90 p-4 shadow-xl ring-1 ring-white/5 lg:hidden"
-              >
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-teal-500/10 text-teal-300">
-                  <FileText className="h-6 w-6" />
+              <div className="relative flex items-center gap-4 overflow-hidden rounded-2xl border border-white/10 bg-slate-900/80 p-4 shadow-xl ring-1 ring-white/5 lg:block lg:rounded-[2rem] lg:p-8 lg:shadow-2xl">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-teal-500/10 text-teal-300 lg:h-14 lg:w-14 lg:rounded-2xl">
+                  <FileText className="h-6 w-6 lg:h-7 lg:w-7" />
                 </div>
+
                 <div className="min-w-0">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-teal-300">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-teal-300 lg:mt-6 lg:text-xs lg:tracking-[0.14em]">
                     Kabar Ruang Sejahtera
                   </p>
-                  <p className="mt-1 text-sm font-semibold leading-5 text-white">
+
+                  <h2 className="mt-1 text-sm font-semibold leading-5 text-white lg:mt-3 lg:text-2xl lg:font-bold lg:leading-snug">
                     Berita terbaru akan tampil setelah dipublikasikan.
-                  </p>
-                </div>
-              </Link>
-            )}
-          </div>
-
-          <div className="relative hidden lg:block">
-            <div className="absolute -inset-5 rounded-[2.25rem] bg-teal-500/10 blur-2xl"></div>
-
-            {latestArticle ? (
-              <Link
-                href={`/berita/${latestArticle.slug}`}
-                aria-label={`Baca berita terbaru: ${latestArticle.title}`}
-                className="group relative block overflow-hidden rounded-[2rem] border border-white/10 bg-slate-900/90 shadow-2xl shadow-black/30 ring-1 ring-white/5"
-              >
-                <div
-                  className="relative aspect-[16/11] overflow-hidden bg-slate-800 bg-cover bg-center"
-                  style={
-                    latestArticle.imageUrl
-                      ? {
-                          backgroundImage: `url("${latestArticle.imageUrl}")`,
-                        }
-                      : undefined
-                  }
-                >
-                  {!latestArticle.imageUrl && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-teal-950 via-slate-900 to-slate-950">
-                      <FileText className="h-16 w-16 text-teal-300/70" />
-                    </div>
-                  )}
-
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/10 to-transparent"></div>
-
-                  <div className="absolute left-5 top-5 inline-flex items-center rounded-full border border-white/15 bg-slate-950/75 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-teal-200 backdrop-blur-md">
-                    Berita Terbaru
-                  </div>
-                </div>
-
-                <div className="relative p-6 xl:p-7">
-                  {latestArticleDate && (
-                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
-                      {latestArticleDate}
-                    </p>
-                  )}
-
-                  <h2 className="mt-3 line-clamp-3 text-2xl font-bold leading-snug text-white transition-colors group-hover:text-teal-300">
-                    {latestArticle.title}
                   </h2>
 
-                  {latestArticle.excerpt && (
-                    <p className="mt-3 line-clamp-2 text-sm leading-6 text-slate-400">
-                      {latestArticle.excerpt}
-                    </p>
-                  )}
-
-                  <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-teal-300 transition-colors group-hover:text-teal-200">
-                    Baca Selengkapnya
-                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                  </span>
+                  <Link
+                    href="/berita"
+                    className="mt-6 hidden items-center gap-2 text-sm font-semibold text-teal-300 hover:text-teal-200 lg:inline-flex"
+                  >
+                    Lihat Semua Berita
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
                 </div>
-              </Link>
-            ) : (
-              <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-slate-900/80 p-8 shadow-2xl ring-1 ring-white/5">
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-teal-500/10 text-teal-300">
-                  <FileText className="h-7 w-7" />
-                </div>
-
-                <p className="mt-6 text-xs font-bold uppercase tracking-[0.14em] text-teal-300">
-                  Kabar Ruang Sejahtera
-                </p>
-
-                <h2 className="mt-3 text-2xl font-bold leading-snug text-white">
-                  Berita terbaru akan tampil di sini setelah dipublikasikan.
-                </h2>
-
-                <Link
-                  href="/berita"
-                  className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-teal-300 hover:text-teal-200"
-                >
-                  Lihat Semua Berita
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
               </div>
             )}
           </div>
