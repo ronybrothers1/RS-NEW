@@ -4,6 +4,9 @@ export const metadata: Metadata = {
   title: "Ketentuan Donasi",
   description:
     "Ketentuan penggunaan layanan donasi Yayasan Ruang Sejahtera.",
+  alternates: {
+    canonical: "/ketentuan-donasi",
+  },
 };
 
 export default function KetentuanDonasiPage() {

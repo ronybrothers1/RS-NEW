@@ -12,15 +12,11 @@ export const metadata: Metadata = {
   },
   description:
     'Membangun Harapan, Mewujudkan Kesejahteraan melalui program sosial, pendidikan, dan kemanusiaan.',
-  alternates: {
-    canonical: '/',
-  },
   openGraph: {
     title: 'Yayasan Ruang Sejahtera',
     description:
       'Membangun Harapan, Mewujudkan Kesejahteraan melalui program sosial, pendidikan, dan kemanusiaan.',
     type: 'website',
-    url: siteUrl,
     siteName: 'Yayasan Ruang Sejahtera',
     locale: 'id_ID',
   },

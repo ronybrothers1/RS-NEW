@@ -1,10 +1,17 @@
 export const revalidate = 60;
 
+import type { Metadata } from "next";
 import { db } from "@/src/db";
 import { programs } from "@/src/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { HeartHandshake, BookOpen, Stethoscope, Leaf, Users, Activity, FileText, ArrowRight } from "lucide-react";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: "/program",
+  },
+};
 
 const iconMap: Record<string, React.ElementType> = {
   'BookOpen': BookOpen,

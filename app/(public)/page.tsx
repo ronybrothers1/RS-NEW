@@ -2,6 +2,7 @@
 // queries the database, which is not reachable from the build machine.
 export const dynamic = 'force-dynamic';
 
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -23,6 +24,12 @@ import { financialTransactions, programs, articles } from "@/src/db/schema";
 import { sql, eq } from "drizzle-orm";
 import { formatCurrency } from "@/lib/utils";
 import { getFinanceOpeningBalance } from "@/lib/finance-opening-balance";
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: "/",
+  },
+};
 
 const iconMap: Record<string, React.ElementType> = {
   'BookOpen': BookOpen,

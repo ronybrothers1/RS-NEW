@@ -12,6 +12,7 @@ import {
   isNull,
 } from "drizzle-orm";
 import Link from "next/link";
+import type { Metadata } from "next";
 import {
   notFound,
 } from "next/navigation";
@@ -31,14 +32,27 @@ import {
 export const dynamic =
   "force-dynamic";
 
+type Props = {
+  params: Promise<{
+    slug: string;
+  }>;
+};
+
+export async function generateMetadata({
+  params,
+}: Props): Promise<Metadata> {
+  const { slug } = await params;
+
+  return {
+    alternates: {
+      canonical: `/bantuan/${slug}`,
+    },
+  };
+}
+
 export default async function CampaignDetailPage({
   params,
-}: {
-  params:
-    Promise<{
-      slug: string;
-    }>;
-}) {
+}: Props) {
   const {
     slug,
   } = await params;

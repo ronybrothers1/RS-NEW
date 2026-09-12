@@ -39,6 +39,9 @@ export async function generateMetadata(
   if (!activity) {
     return {
       title: "Kegiatan Tidak Ditemukan",
+      alternates: {
+        canonical: `/kegiatan/${slug}`,
+      },
       robots: {
         index: false,
         follow: false,
@@ -56,6 +59,9 @@ export async function generateMetadata(
   return {
     title: `${activity.title} | Ruang Sejahtera`,
     description,
+    alternates: {
+      canonical: `/kegiatan/${slug}`,
+    },
   };
 }
 

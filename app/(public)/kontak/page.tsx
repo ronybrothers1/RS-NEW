@@ -1,8 +1,15 @@
 import { Mail, MapPin, Phone, MessageCircle } from "lucide-react";
+import type { Metadata } from "next";
 import { db } from "@/src/db";
 import { settings } from "@/src/db/schema";
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: "/kontak",
+  },
+};
 
 function normalizeWhatsappNumber(value: string) {
   const firstNumber = value.split(/[\n,;/]/)[0] || "";

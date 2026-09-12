@@ -19,6 +19,9 @@ export const metadata: Metadata = {
   title: "Kegiatan",
   description:
     "Dokumentasi kegiatan dan penyaluran program Yayasan Ruang Sejahtera untuk masyarakat.",
+  alternates: {
+    canonical: "/kegiatan",
+  },
 };
 
 export default async function PublicKegiatanPage() {

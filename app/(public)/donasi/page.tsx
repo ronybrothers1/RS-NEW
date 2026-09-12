@@ -1,4 +1,5 @@
 import { asc, eq } from "drizzle-orm";
+import type { Metadata } from "next";
 
 import { db } from "@/src/db";
 import {
@@ -10,6 +11,12 @@ import DonasiClientForm from "./components/DonasiClientForm";
 import DonationStatusChecker from "./components/DonationStatusChecker";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: "/donasi",
+  },
+};
 
 export default async function DonasiPage() {
   const [

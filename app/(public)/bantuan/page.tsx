@@ -16,6 +16,7 @@ import {
   isNull,
 } from "drizzle-orm";
 import Link from "next/link";
+import type { Metadata } from "next";
 
 import { auth } from "@/auth";
 import {
@@ -34,11 +35,14 @@ import {
 export const dynamic =
   "force-dynamic";
 
-export const metadata = {
+export const metadata: Metadata = {
   title:
     "Bantu Mereka",
   description:
     "Kampanye bantuan yang telah melalui proses verifikasi Yayasan Ruang Sejahtera.",
+  alternates: {
+    canonical: "/bantuan",
+  },
 };
 
 export default async function AssistanceCampaignsPage() {

@@ -1,4 +1,5 @@
 import { db } from "@/src/db";
+import type { Metadata } from "next";
 import { getFinanceOpeningBalance } from "@/lib/finance-opening-balance";
 import { financialTransactions, programs } from "@/src/db/schema";
 import { and, desc, eq, gte, isNull, lt, sql } from "drizzle-orm";
@@ -7,6 +8,12 @@ import { ArrowDownRight, ArrowUpRight, CheckCircle2, TrendingUp, Wallet, ArrowRi
 import Link from "next/link";
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: "/transparansi",
+  },
+};
 
 function getJakartaToday() {
   const parts = new Intl.DateTimeFormat("en-CA", {

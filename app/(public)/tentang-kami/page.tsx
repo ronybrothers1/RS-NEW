@@ -1,8 +1,15 @@
 export const revalidate = 60;
 
+import type { Metadata } from "next";
 import { HeartHandshake, ShieldCheck, Target, Users } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: "/tentang-kami",
+  },
+};
 
 export default function TentangKamiPage() {
   return (

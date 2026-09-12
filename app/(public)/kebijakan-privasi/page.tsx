@@ -4,6 +4,9 @@ export const metadata: Metadata = {
   title: "Kebijakan Privasi",
   description:
     "Kebijakan privasi penggunaan website Yayasan Ruang Sejahtera.",
+  alternates: {
+    canonical: "/kebijakan-privasi",
+  },
 };
 
 export default function KebijakanPrivasiPage() {

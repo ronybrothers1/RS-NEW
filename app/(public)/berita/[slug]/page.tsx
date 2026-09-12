@@ -36,6 +36,9 @@ export async function generateMetadata(
   if (!article) {
     return {
       title: "Berita Tidak Ditemukan",
+      alternates: {
+        canonical: `/berita/${slug}`,
+      },
       robots: {
         index: false,
         follow: false,
@@ -47,6 +50,9 @@ export async function generateMetadata(
     title: article.metaTitle || article.title,
     description:
       article.metaDescription || article.excerpt || "",
+    alternates: {
+      canonical: `/berita/${slug}`,
+    },
     openGraph: {
       images: article.imageUrl ? [article.imageUrl] : [],
     },
