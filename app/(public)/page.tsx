@@ -141,8 +141,8 @@ export default async function HomePage() {
         <Image
           src="/images/decor/hero-leaves.webp"
           alt=""
-        width={2152}
-        height={731}
+          width={2152}
+          height={731}
           loading="eager"
           fetchPriority="low"
           sizes="100vw"
