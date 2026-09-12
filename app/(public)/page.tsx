@@ -4,7 +4,20 @@ export const dynamic = 'force-dynamic';
 
 import Image from "next/image";
 import Link from "next/link";
-import { HeartHandshake, ArrowRight, Activity, Users, FileText, CheckCircle2, BookOpen, Stethoscope, Leaf } from "lucide-react";
+import {
+  HeartHandshake,
+  ArrowRight,
+  Activity,
+  Users,
+  FileText,
+  CheckCircle2,
+  BookOpen,
+  Stethoscope,
+  Leaf,
+  WalletCards,
+  BarChart3,
+  ShieldCheck,
+} from "lucide-react";
 import { db } from "@/src/db";
 import { financialTransactions, programs, articles } from "@/src/db/schema";
 import { sql, eq } from "drizzle-orm";
@@ -87,299 +100,196 @@ export default async function HomePage() {
     : null;
 
   const hasRealData = Number(financialStats?.totalIn) > 0 || activePrograms.length > 0;
+  const impactItems = [
+    { label: "Program Sosial", value: activePrograms.length, icon: Users },
+    {
+      label: "Total Pengeluaran",
+      value: `Rp ${(Number(financialStats?.totalOut || 0) / 1000000).toFixed(1)} Jt`,
+      icon: WalletCards,
+    },
+    {
+      label: "Total Penerimaan",
+      value: `Rp ${(Number(financialStats?.totalIn || 0) / 1000000).toFixed(1)} Jt`,
+      icon: BarChart3,
+    },
+    { label: "Laporan Keuangan", value: "Terbuka", icon: FileText },
+  ];
+  const workflow = [
+    { title: "Pengajuan", description: "Menerima informasi dan pengajuan dari masyarakat sekitar.", icon: FileText },
+    { title: "Verifikasi", description: "Tim relawan memverifikasi kondisi lapangan secara langsung.", icon: CheckCircle2 },
+    { title: "Penyaluran", description: "Dana donasi disalurkan tepat kepada penerima manfaat.", icon: HeartHandshake },
+    { title: "Laporan", description: "Seluruh kegiatan dan arus kas dipublikasikan secara real-time.", icon: Activity },
+  ];
 
   return (
     <div className="min-h-screen bg-canvas text-ink">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-brand-950 pb-24 pt-12 sm:pt-14 md:pb-28 md:pt-16 lg:pb-32 lg:pt-20">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-brand-700/45 via-brand-950 to-brand-950"></div>
-        <div className="absolute -right-24 top-20 hidden h-80 w-80 rounded-full bg-brand-400/10 blur-3xl lg:block"></div>
+      <section className="relative isolate overflow-hidden bg-brand-950 text-white">
+        {latestArticle?.imageUrl && (
+          <Image
+            src={latestArticle.imageUrl}
+            alt=""
+            fill
+            priority
+            fetchPriority="high"
+            quality={68}
+            sizes="100vw"
+            className="-z-20 object-cover object-center lg:object-[70%_center]"
+          />
+        )}
+        <div className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgba(2,44,34,0.98)_0%,rgba(2,44,34,0.94)_42%,rgba(2,44,34,0.58)_72%,rgba(2,44,34,0.5)_100%)]" />
+        <div className="absolute inset-0 -z-10 bg-[linear-gradient(0deg,rgba(2,44,34,0.92)_0%,transparent_48%)] lg:bg-[linear-gradient(0deg,rgba(2,44,34,0.72)_0%,transparent_45%)]" />
 
-        <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-8 px-4 sm:gap-10 sm:px-6 lg:grid-cols-[minmax(0,1.08fr)_minmax(340px,0.92fr)] lg:gap-14 lg:px-8">
-          <div className="w-full max-w-2xl">
-            <h1 className="text-[clamp(2.75rem,11vw,4rem)] font-extrabold leading-[1.05] tracking-tight text-white lg:text-[clamp(3.75rem,5vw,4.75rem)]">
-              KEPEDULIAN PERLU SAMPAI
-              <span className="mt-1 block text-citrus-300">
-                KE TEMPAT YANG TEPAT.
-              </span>
+        <div className="mx-auto grid min-h-[590px] max-w-7xl items-center gap-8 px-4 pb-24 pt-10 sm:min-h-[620px] sm:px-6 sm:pb-28 lg:min-h-[560px] lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)] lg:px-8 lg:pb-24 lg:pt-12">
+          <div className="max-w-[660px] self-center">
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-brand-50 backdrop-blur-md">
+              <ShieldCheck className="h-3.5 w-3.5 text-citrus-300" />
+              Yayasan sosial transparan
+            </span>
+            <h1 className="mt-5 text-[clamp(2.65rem,12vw,4.25rem)] font-extrabold leading-[0.98] tracking-[-0.035em] text-white lg:text-[clamp(3.55rem,4.8vw,4.45rem)]">
+              KEPEDULIAN
+              <span className="block">PERLU SAMPAI</span>
+              <span className="mt-1 block text-citrus-300">KE TEMPAT YANG TEPAT.</span>
             </h1>
-
-            <p className="mt-6 max-w-xl text-lg leading-relaxed text-brand-100 sm:text-xl">
+            <p className="mt-5 max-w-xl text-base leading-7 text-brand-50 sm:text-lg">
               Yayasan Ruang Sejahtera adalah jembatan transparan antara niat baik Anda dan masyarakat yang membutuhkan.
             </p>
-
-            <div className="mt-9 flex flex-col gap-3 sm:mt-10 sm:flex-row sm:gap-4">
-              <Link
-                href="/program"
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-citrus-400 px-8 py-3.5 text-base font-semibold text-brand-950 shadow-md transition-all hover:-translate-y-0.5 hover:bg-citrus-300 hover:shadow-lg sm:text-lg"
-              >
-                Lihat Program
-                <ArrowRight className="h-5 w-5" />
+            <div className="mt-7 flex flex-col-reverse gap-3 sm:flex-row">
+              <Link href="/program" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-white/35 bg-brand-950/25 px-7 py-3 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/10 sm:text-base">
+                Lihat Program <ArrowRight className="h-4 w-4" />
               </Link>
-
-              <Link
-                href="/donasi"
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-white/20 bg-white/[0.07] px-8 py-3.5 text-base font-semibold text-white transition-all hover:-translate-y-0.5 hover:border-white/30 hover:bg-white/15 sm:text-lg"
-              >
-                Donasi Sekarang
+              <Link href="/donasi" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-citrus-400 px-7 py-3 text-sm font-bold text-brand-950 shadow-lg shadow-brand-950/20 transition hover:-translate-y-0.5 hover:bg-citrus-300 sm:text-base">
+                <HeartHandshake className="h-4 w-4" /> Donasi Sekarang
               </Link>
             </div>
-
           </div>
 
-          <div className="relative">
-            <div className="absolute -inset-5 hidden rounded-[2.25rem] bg-brand-400/10 blur-2xl lg:block"></div>
-
+          <div className="flex self-end justify-end pb-2 lg:pb-0">
             {latestArticle ? (
-              <Link
-                href={`/berita/${latestArticle.slug}`}
-                aria-label={`Baca berita terbaru: ${latestArticle.title}`}
-                className="group relative block overflow-hidden rounded-2xl border border-white/15 bg-brand-900/90 shadow-xl ring-1 ring-white/5 transition hover:border-brand-300/40 sm:grid sm:grid-cols-[168px_minmax(0,1fr)] lg:block lg:rounded-[2rem] lg:shadow-2xl lg:shadow-black/30"
-              >
-                <div className="relative aspect-[16/9] w-full overflow-hidden bg-brand-900 sm:aspect-auto sm:min-h-[160px] lg:aspect-[16/11] lg:min-h-0">
-                  {latestArticle.imageUrl ? (
-                    <Image
-                      src={latestArticle.imageUrl}
-                      alt={latestArticle.imageAlt?.trim() || latestArticle.title}
-                      fill
-                      priority
-                      fetchPriority="high"
-                      quality={65}
-                      sizes="(max-width: 639px) calc(100vw - 2rem), (max-width: 1023px) 168px, (max-width: 1279px) 42vw, 560px"
-                      className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
-                    />
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-brand-900 via-brand-950 to-brand-950">
-                      <FileText className="h-9 w-9 text-brand-200/70 sm:h-11 sm:w-11 lg:h-16 lg:w-16" />
-                    </div>
-                  )}
-
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent to-brand-950/20 lg:hidden"></div>
-                  <div className="absolute inset-0 hidden bg-gradient-to-t from-brand-950 via-brand-950/10 to-transparent lg:block"></div>
-
-                  <div className="absolute left-5 top-5 hidden items-center rounded-full border border-white/15 bg-brand-950/80 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-brand-100 backdrop-blur-md lg:inline-flex">
-                    Berita Terbaru
-                  </div>
-                </div>
-
-                <div className="relative min-w-0 p-4 sm:p-5 lg:p-6 xl:p-7">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-brand-200 sm:text-[11px] lg:hidden">
-                    Berita Terbaru
-                  </p>
-
-                  {latestArticleDate && (
-                    <p className="mt-1 text-[10px] font-medium text-brand-100 sm:text-xs lg:mt-0 lg:font-semibold lg:uppercase lg:tracking-[0.12em] lg:text-brand-200">
-                      {latestArticleDate}
-                    </p>
-                  )}
-
-                  <h2 className="mt-2 line-clamp-3 text-base font-bold leading-snug text-white transition-colors group-hover:text-citrus-300 sm:text-lg lg:mt-3 lg:text-2xl">
-                    {latestArticle.title}
-                  </h2>
-
-                  {latestArticle.excerpt && (
-                    <p className="mt-3 hidden text-sm leading-6 text-brand-200 lg:line-clamp-2">
-                      {latestArticle.excerpt}
-                    </p>
-                  )}
-
-                  <span className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-citrus-300 transition-colors group-hover:text-citrus-100 sm:text-sm lg:mt-5 lg:gap-2">
-                    <span className="lg:hidden">Baca</span>
-                    <span className="hidden lg:inline">Baca Selengkapnya</span>
-                    <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1 sm:h-4 sm:w-4" />
-                  </span>
-                </div>
+              <Link href={`/berita/${latestArticle.slug}`} aria-label={`Baca berita terbaru: ${latestArticle.title}`} className="group w-full max-w-[500px] rounded-2xl border border-white/15 bg-brand-950/75 p-5 shadow-2xl shadow-black/25 backdrop-blur-md transition hover:border-citrus-300/50 sm:p-6 lg:max-w-[470px]">
+                <span className="inline-flex rounded-full bg-brand-700 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.13em] text-white">Berita Terbaru</span>
+                {latestArticleDate && <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-brand-200">{latestArticleDate}</p>}
+                <h2 className="mt-2 line-clamp-3 text-lg font-bold leading-snug text-white transition-colors group-hover:text-citrus-300 sm:text-xl lg:text-2xl">{latestArticle.title}</h2>
+                {latestArticle.excerpt && <p className="mt-2 line-clamp-2 text-sm leading-6 text-brand-100">{latestArticle.excerpt}</p>}
+                <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-citrus-300">Baca Selengkapnya <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" /></span>
               </Link>
             ) : (
-              <div className="relative flex items-center gap-4 overflow-hidden rounded-2xl border border-white/15 bg-brand-900/80 p-4 shadow-xl ring-1 ring-white/5 lg:block lg:rounded-[2rem] lg:p-8 lg:shadow-2xl">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-400/15 text-brand-200 lg:h-14 lg:w-14 lg:rounded-2xl">
-                  <FileText className="h-6 w-6 lg:h-7 lg:w-7" />
-                </div>
-
-                <div className="min-w-0">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-brand-200 lg:mt-6 lg:text-xs lg:tracking-[0.14em]">
-                    Kabar Ruang Sejahtera
-                  </p>
-
-                  <h2 className="mt-1 text-sm font-semibold leading-5 text-white lg:mt-3 lg:text-2xl lg:font-bold lg:leading-snug">
-                    Berita terbaru akan tampil setelah dipublikasikan.
-                  </h2>
-
-                  <Link
-                    href="/berita"
-                    className="mt-6 hidden items-center gap-2 text-sm font-semibold text-citrus-300 hover:text-citrus-100 lg:inline-flex"
-                  >
-                    Lihat Semua Berita
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </div>
+              <div className="w-full max-w-[470px] rounded-2xl border border-white/15 bg-brand-950/75 p-6 backdrop-blur-md">
+                <p className="text-xs font-bold uppercase tracking-[0.13em] text-brand-200">Kabar Ruang Sejahtera</p>
+                <p className="mt-3 text-xl font-bold">Berita terbaru akan tampil setelah dipublikasikan.</p>
               </div>
             )}
           </div>
         </div>
       </section>
 
-
-      {/* Impact Strip */}
-      <section className="relative z-20 mx-4 -mt-10 max-w-7xl rounded-2xl border border-frame bg-white py-8 text-ink shadow-xl sm:mx-6 lg:mx-auto">
+      <section className="relative z-20 mx-4 -mt-14 max-w-7xl overflow-hidden rounded-2xl border border-frame bg-white shadow-xl sm:mx-6 lg:mx-auto">
         {hasRealData ? (
-          <div className="grid grid-cols-2 gap-8 divide-x divide-frame px-8 text-center md:grid-cols-4">
-            <div>
-              <div className="text-3xl font-bold mb-1">{activePrograms.length}</div>
-              <div className="text-sm text-ink-muted">Program Sosial</div>
-            </div>
-            <div>
-              <div className="text-3xl font-bold mb-1">Rp {((Number(financialStats?.totalOut || 0)) / 1000000).toFixed(1)} Jt</div>
-              <div className="text-sm text-ink-muted">Total Pengeluaran</div>
-            </div>
-            <div>
-              <div className="text-3xl font-bold mb-1">Rp {((Number(financialStats?.totalIn || 0)) / 1000000).toFixed(1)} Jt</div>
-              <div className="text-sm text-ink-muted">Total Penerimaan</div>
-            </div>
-            <div>
-              <div className="text-3xl font-bold mb-1">Terbuka</div>
-              <div className="text-sm text-ink-muted">Laporan Keuangan</div>
-            </div>
+          <div className="grid grid-cols-2 md:grid-cols-4">
+            {impactItems.map((item, index) => {
+              const Icon = item.icon;
+              return (
+                <div key={item.label} className={`flex items-center gap-3 px-4 py-5 sm:px-6 ${index % 2 ? "border-l border-frame" : ""} ${index > 1 ? "border-t border-frame md:border-t-0" : ""} ${index > 0 ? "md:border-l md:border-frame" : ""}`}>
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-700"><Icon className="h-5 w-5" /></div>
+                  <div className="min-w-0">
+                    <div className="truncate text-base font-extrabold tracking-tight text-slate-950 sm:text-xl">{item.value}</div>
+                    <div className="mt-0.5 text-[11px] leading-tight text-ink-muted sm:text-xs">{item.label}</div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         ) : (
-          <div className="px-8 text-center py-2">
-            <p className="font-medium text-brand-800">Data dampak akan diperbarui setelah laporan kegiatan pertama terverifikasi.</p>
-          </div>
+          <div className="px-8 py-6 text-center"><p className="font-medium text-brand-800">Data dampak akan diperbarui setelah laporan kegiatan pertama terverifikasi.</p></div>
         )}
       </section>
 
-      {/* Program Section (Lighter Design) */}
-      <section className="bg-canvas py-12 sm:py-16 md:py-[72px]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-7 sm:mb-10 md:mb-12">
-            <h2 className="text-3xl font-bold text-slate-900">Program Utama Kami</h2>
-            <p className="mt-4 text-slate-600">Salurkan donasi Anda melalui program-program yang tepat sasaran dan terverifikasi.</p>
+      <section className="bg-canvas py-14 sm:py-16">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 className="text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl">Program Utama Kami</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">Salurkan donasi Anda melalui program-program yang tepat sasaran dan terverifikasi.</p>
+            </div>
+            <Link href="/program" className="inline-flex items-center gap-2 text-sm font-bold text-brand-800 hover:text-brand-950">Lihat Semua Program <ArrowRight className="h-4 w-4" /></Link>
           </div>
-          
           {activePrograms.length > 0 ? (
-            <div className="grid grid-cols-1 gap-3 sm:gap-8 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-x-6 gap-y-3 md:grid-cols-2 lg:grid-cols-3">
               {activePrograms.map((program: any) => {
                 const IconComponent = iconMap[program.icon] || HeartHandshake;
                 return (
-                  <Link href={`/donasi?program=${program.id}`} key={program.id} className="group flex items-start gap-4 rounded-2xl p-3 transition-colors hover:bg-brand-50 sm:gap-5 sm:p-6">
-                    <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-brand-50 text-brand-700 shadow-sm transition-colors group-hover:bg-brand-700 group-hover:text-white">
-                      <IconComponent className="h-8 w-8" />
-                    </div>
-                    <div>
-                      <h3 className="mb-1 text-lg font-bold text-slate-900 transition-colors group-hover:text-brand-800">{program.name}</h3>
-                      <p className="text-slate-500 text-sm line-clamp-2 leading-relaxed">
-                        {program.description}
-                      </p>
+                  <Link href={`/donasi?program=${program.id}`} key={program.id} className="group flex min-h-[112px] items-start gap-4 rounded-2xl border border-transparent p-4 transition hover:border-brand-100 hover:bg-white hover:shadow-sm">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-700 ring-1 ring-inset ring-brand-100 transition group-hover:bg-brand-700 group-hover:text-white"><IconComponent className="h-6 w-6" /></div>
+                    <div className="min-w-0 pt-0.5">
+                      <h3 className="text-base font-bold text-slate-950 transition group-hover:text-brand-800">{program.name}</h3>
+                      <p className="mt-1 line-clamp-2 text-sm leading-5 text-slate-500">{program.description}</p>
                     </div>
                   </Link>
                 );
               })}
             </div>
           ) : (
-            <div className="text-center text-slate-500 py-12 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-              <HeartHandshake className="h-12 w-12 mx-auto mb-3 text-slate-300" />
-              <p>Program utama sedang dalam tahap penyusunan oleh pengurus yayasan.</p>
-            </div>
+            <div className="rounded-2xl border border-dashed border-frame bg-white py-10 text-center text-slate-500"><HeartHandshake className="mx-auto mb-3 h-10 w-10 text-brand-200" /><p>Program utama sedang dalam tahap penyusunan oleh pengurus yayasan.</p></div>
           )}
         </div>
       </section>
 
-      {/* Workflow Section */}
-      <section className="bg-brand-50/60 pb-10 pt-16 sm:py-16 md:py-[72px]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-10 md:mb-12">
-            <h2 className="text-3xl font-bold text-slate-900">Cara Bantuan Bekerja</h2>
-            <p className="mt-4 text-slate-600">Dari niat baik hingga menjadi manfaat nyata yang terukur.</p>
+      <section className="border-y border-frame bg-surface-muted py-12 sm:py-14">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-9 text-center">
+            <h2 className="text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl">Cara Bantuan Bekerja</h2>
+            <p className="mt-2 text-sm text-slate-600">Dari niat baik hingga menjadi manfaat nyata yang terukur.</p>
           </div>
-          
-          <div className="grid md:grid-cols-4 gap-8 relative">
-            <div className="hidden md:block absolute top-12 left-1/8 right-1/8 h-0.5 bg-slate-200 z-0"></div>
-            
-            <div className="relative z-10 text-center">
-              <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full border-4 border-brand-50 bg-white text-brand-700 shadow-sm">
-                <FileText className="h-10 w-10" />
-              </div>
-              <h3 className="font-bold text-slate-900 text-lg mb-2">1. Pengajuan</h3>
-              <p className="text-sm text-slate-500">Menerima informasi dan pengajuan dari masyarakat sekitar.</p>
-            </div>
-            
-            <div className="relative z-10 text-center">
-              <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full border-4 border-brand-50 bg-white text-brand-700 shadow-sm">
-                <CheckCircle2 className="h-10 w-10" />
-              </div>
-              <h3 className="font-bold text-slate-900 text-lg mb-2">2. Verifikasi</h3>
-              <p className="text-sm text-slate-500">Tim relawan memverifikasi kondisi lapangan secara langsung.</p>
-            </div>
-            
-            <div className="relative z-10 text-center">
-              <div className="w-24 h-24 mx-auto bg-white border-4 border-slate-50 rounded-full flex items-center justify-center shadow-sm text-amber-500 mb-6">
-                <HeartHandshake className="h-10 w-10" />
-              </div>
-              <h3 className="font-bold text-slate-900 text-lg mb-2">3. Penyaluran</h3>
-              <p className="text-sm text-slate-500">Dana donasi disalurkan tepat kepada penerima manfaat.</p>
-            </div>
-            
-            <div className="relative z-10 text-center">
-              <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full border-4 border-brand-50 bg-white text-brand-700 shadow-sm">
-                <Activity className="h-10 w-10" />
-              </div>
-              <h3 className="font-bold text-slate-900 text-lg mb-2">4. Laporan</h3>
-              <p className="text-sm text-slate-500">Seluruh kegiatan dan arus kas dipublikasikan secara real-time.</p>
-            </div>
+          <div className="relative grid gap-7 md:grid-cols-4 md:gap-5">
+            <div className="absolute left-[12.5%] right-[12.5%] top-6 hidden h-px bg-brand-200 md:block" />
+            {workflow.map((step, index) => {
+              const Icon = step.icon;
+              return (
+                <div key={step.title} className="relative z-10 grid grid-cols-[48px_minmax(0,1fr)] items-start gap-4 md:block md:text-center">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full border-4 border-surface-muted bg-white text-brand-700 shadow-sm md:mx-auto"><Icon className="h-5 w-5" /></div>
+                  <div className="md:mt-4">
+                    <h3 className="text-sm font-extrabold text-slate-950">{index + 1}. {step.title}</h3>
+                    <p className="mt-1 text-xs leading-5 text-slate-500">{step.description}</p>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* Transparency Section */}
-      <section className="relative overflow-hidden bg-brand-900 py-16 text-white md:py-[72px]">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-brand-500/20 via-transparent to-transparent"></div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            
-            <div>
-              <h2 className="text-3xl md:text-4xl font-bold mb-6">Transparansi Adalah Janji Kami</h2>
-              <p className="mb-8 text-lg leading-relaxed text-brand-100">
-                Kami percaya bahwa setiap rupiah yang dipercayakan kepada yayasan adalah amanah. Laporan penerimaan, pengeluaran, dan saldo kas disajikan dari transaksi yang tercatat di sistem dan dapat diakses oleh masyarakat.
-              </p>
-              <ul className="space-y-4 mb-8">
-                <li className="flex items-center gap-3 text-brand-100">
-                  <CheckCircle2 className="h-6 w-6 text-citrus-300" /> Penerimaan dan pengeluaran tercatat pada ledger keuangan
-                </li>
-                <li className="flex items-center gap-3 text-brand-100">
-                  <CheckCircle2 className="h-6 w-6 text-citrus-300" /> Transaksi terhubung ke program atau kampanye bila relevan
-                </li>
-                <li className="flex items-center gap-3 text-brand-100">
-                  <CheckCircle2 className="h-6 w-6 text-citrus-300" /> Riwayat transaksi terbaru dapat dilihat oleh masyarakat
-                </li>
-              </ul>
-              <Link href="/transparansi" className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-full font-medium transition-colors border border-white/10">
-                Buka Laporan Keuangan
-              </Link>
+      <section className="relative isolate overflow-hidden bg-brand-950 py-14 text-white sm:py-16">
+        {latestArticle?.imageUrl && <Image src={latestArticle.imageUrl} alt="" fill quality={55} sizes="100vw" className="-z-20 object-cover opacity-25 blur-[1px]" />}
+        <div className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgba(2,44,34,0.98)_0%,rgba(2,44,34,0.9)_58%,rgba(2,44,34,0.78)_100%)]" />
+        <div className="mx-auto grid max-w-7xl items-center gap-9 px-4 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:px-8">
+          <div>
+            <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">Transparansi Adalah Janji Kami</h2>
+            <p className="mt-4 max-w-2xl text-sm leading-6 text-brand-100 sm:text-base">Kami percaya bahwa setiap rupiah yang dipercayakan kepada yayasan adalah amanah. Laporan penerimaan, pengeluaran, dan saldo kas dapat diakses oleh masyarakat.</p>
+            <ul className="mt-5 space-y-2.5 text-sm text-brand-50">
+              <li className="flex gap-2.5"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-citrus-300" /> Penerimaan dan pengeluaran tercatat pada ledger keuangan</li>
+              <li className="flex gap-2.5"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-citrus-300" /> Transaksi terhubung ke program atau kampanye bila relevan</li>
+              <li className="flex gap-2.5"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-citrus-300" /> Riwayat transaksi terbaru dapat dilihat oleh masyarakat</li>
+            </ul>
+            <Link href="/transparansi" className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-full bg-citrus-400 px-5 py-2.5 text-sm font-bold text-brand-950 transition hover:bg-citrus-300">Buka Laporan Keuangan <ArrowRight className="h-4 w-4" /></Link>
+          </div>
+          <div className="overflow-hidden rounded-2xl border border-white/20 bg-brand-900/65 p-3 shadow-2xl backdrop-blur-md sm:p-4">
+            <div className="grid gap-2.5">
+              {[
+                { label: "Total Penerimaan", value: formatCurrency(Number(financialStats?.totalIn || 0)), icon: WalletCards, color: "text-emerald-300" },
+                { label: "Total Pengeluaran", value: formatCurrency(Number(financialStats?.totalOut || 0)), icon: BarChart3, color: "text-citrus-300" },
+                { label: "Saldo Kas Saat Ini", value: formatCurrency(saldo), icon: FileText, color: "text-white" },
+              ].map((item) => {
+                const Icon = item.icon;
+                return (
+                  <div key={item.label} className="flex items-center gap-4 rounded-xl border border-white/10 bg-white/[0.06] px-4 py-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-700/80 text-brand-50"><Icon className="h-5 w-5" /></div>
+                    <div><div className="text-xs font-medium text-brand-200">{item.label}</div><div className={`mt-0.5 text-xl font-extrabold tracking-tight sm:text-2xl ${item.color}`}>{item.value}</div></div>
+                  </div>
+                );
+              })}
             </div>
-            
-            <div className="rounded-3xl border border-brand-700 bg-brand-800 p-8 shadow-2xl">
-              <div className="space-y-6">
-                <div>
-                  <div className="mb-1 text-sm font-medium text-brand-200">Total Penerimaan</div>
-                  <div className="text-3xl font-bold text-emerald-400">{formatCurrency(Number(financialStats?.totalIn || 0))}</div>
-                </div>
-                <div className="h-px bg-brand-700"></div>
-                <div>
-                  <div className="mb-1 text-sm font-medium text-brand-200">Total Pengeluaran</div>
-                  <div className="text-3xl font-bold text-amber-400">{formatCurrency(Number(financialStats?.totalOut || 0))}</div>
-                </div>
-                <div className="h-px bg-brand-700"></div>
-                <div>
-                  <div className="mb-1 text-sm font-medium text-brand-200">Saldo Kas Saat Ini</div>
-                  <div className="text-3xl font-bold text-white">{formatCurrency(saldo)}</div>
-                </div>
-              </div>
-            </div>
-            
           </div>
         </div>
       </section>
-
     </div>
   );
 }

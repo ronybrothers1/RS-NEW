@@ -59,7 +59,7 @@ export default async function AdminLayout({
         <main
           id="admin-main"
           tabIndex={-1}
-          className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-4 pb-8 pt-20 focus:outline-none md:p-6 lg:p-8"
+          className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto bg-[#f8faf9] px-4 pb-8 pt-20 focus:outline-none md:p-5 lg:p-6"
         >
           <div className="mx-auto w-full max-w-[1600px]">
             {children}

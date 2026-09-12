@@ -498,7 +498,7 @@ export default async function DashboardPage() {
   ];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <section className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <div className="mb-2 inline-flex items-center rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-800 ring-1 ring-inset ring-brand-100">
@@ -526,7 +526,7 @@ export default async function DashboardPage() {
         className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
         aria-label="Ringkasan utama"
       >
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
           <div className="flex items-center justify-between gap-4">
             <p className="text-sm font-medium text-slate-500">
               Saldo Saat Ini
@@ -537,7 +537,7 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          <p className="mt-4 text-2xl font-bold tracking-tight text-slate-950">
+          <p className="mt-3 text-2xl font-bold tracking-tight text-slate-950">
             {formatCurrency(saldo)}
           </p>
 
@@ -547,7 +547,7 @@ export default async function DashboardPage() {
           </p>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
           <div className="flex items-center justify-between gap-4">
             <p className="text-sm font-medium text-slate-500">
               Total Uang Masuk
@@ -558,7 +558,7 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          <p className="mt-4 text-2xl font-bold tracking-tight text-slate-950">
+          <p className="mt-3 text-2xl font-bold tracking-tight text-slate-950">
             {formatCurrency(totalIn)}
           </p>
 
@@ -571,7 +571,7 @@ export default async function DashboardPage() {
           </Link>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
           <div className="flex items-center justify-between gap-4">
             <p className="text-sm font-medium text-slate-500">
               Total Uang Keluar
@@ -582,7 +582,7 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          <p className="mt-4 text-2xl font-bold tracking-tight text-slate-950">
+          <p className="mt-3 text-2xl font-bold tracking-tight text-slate-950">
             {formatCurrency(totalOut)}
           </p>
 
@@ -596,7 +596,7 @@ export default async function DashboardPage() {
         </div>
 
         <div
-          className={`rounded-2xl border p-5 shadow-sm ${
+          className={`rounded-xl border p-4 shadow-sm ${
             pendingDonationCount > 0
               ? "border-amber-200 bg-amber-50/50"
               : "border-slate-200 bg-white"
@@ -612,7 +612,7 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          <p className="mt-4 text-2xl font-bold tracking-tight text-slate-950">
+          <p className="mt-3 text-2xl font-bold tracking-tight text-slate-950">
             {pendingDonationCount}
           </p>
 
@@ -684,7 +684,7 @@ export default async function DashboardPage() {
       >
         <Link
           href="/admin/program"
-          className="rounded-2xl border border-frame bg-white p-5 shadow-sm transition hover:border-brand-200 hover:shadow-md"
+            className="rounded-xl border border-frame bg-white p-4 shadow-sm transition hover:border-brand-200 hover:shadow-md"
         >
           <div className="flex items-start justify-between">
             <div>
@@ -725,7 +725,7 @@ export default async function DashboardPage() {
 
         <Link
           href="/admin/kegiatan"
-          className="rounded-2xl border border-frame bg-white p-5 shadow-sm transition hover:border-brand-200 hover:shadow-md"
+          className="rounded-xl border border-frame bg-white p-4 shadow-sm transition hover:border-brand-200 hover:shadow-md"
         >
           <div className="flex items-start justify-between">
             <div>
@@ -781,7 +781,7 @@ export default async function DashboardPage() {
 
         <Link
           href="/admin/berita"
-          className="rounded-2xl border border-frame bg-white p-5 shadow-sm transition hover:border-brand-200 hover:shadow-md"
+          className="rounded-xl border border-frame bg-white p-4 shadow-sm transition hover:border-brand-200 hover:shadow-md"
         >
           <div className="flex items-start justify-between">
             <div>
@@ -848,7 +848,7 @@ export default async function DashboardPage() {
 
         <Link
           href="/admin/donasi"
-          className="rounded-2xl border border-frame bg-white p-5 shadow-sm transition hover:border-brand-200 hover:shadow-md"
+          className="rounded-xl border border-frame bg-white p-4 shadow-sm transition hover:border-brand-200 hover:shadow-md"
         >
           <div className="flex items-start justify-between">
             <div>
@@ -896,7 +896,7 @@ export default async function DashboardPage() {
       </section>
 
       <section className="grid gap-5 xl:grid-cols-3">
-        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
           <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
             <div>
               <h2 className="text-sm font-bold text-slate-900">
@@ -967,7 +967,7 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
           <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
             <div>
               <h2 className="text-sm font-bold text-slate-900">
@@ -1032,7 +1032,7 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
           <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
             <div>
               <h2 className="text-sm font-bold text-slate-900">

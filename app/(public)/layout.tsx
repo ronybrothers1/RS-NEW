@@ -16,7 +16,7 @@ export default function PublicLayout({
     <div className="flex min-h-screen flex-col bg-canvas">
       <a
         href="#main-content"
-        className="sr-only fixed left-4 top-4 z-[100] rounded-lg bg-white px-4 py-2 text-sm font-semibold text-brand-950 shadow-lg ring-1 ring-brand-200 focus:not-sr-only"
+        className="sr-only text-sm font-semibold text-brand-950 focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:shadow-lg focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-brand-600 focus:ring-1 focus:ring-brand-200"
       >
         Lewati ke konten utama
       </a>

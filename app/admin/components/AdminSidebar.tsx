@@ -161,7 +161,7 @@ export default function AdminSidebar({ role }: AdminSidebarProps) {
         href={item.href}
         aria-current={isActive ? "page" : undefined}
         className={clsx(
-          "group flex min-h-10 w-full items-center rounded-lg px-3 text-sm font-medium transition-colors",
+          "group flex min-h-9 w-full items-center rounded-lg px-3 text-[13px] font-medium transition-colors",
           isActive
             ? "bg-brand-700 text-white ring-1 ring-inset ring-brand-500"
             : "text-brand-100 hover:bg-brand-900 hover:text-white",
@@ -223,7 +223,7 @@ export default function AdminSidebar({ role }: AdminSidebarProps) {
       <aside
         id="admin-navigation"
         className={clsx(
-          "fixed inset-y-0 left-0 z-50 flex w-72 shrink-0 flex-col border-r border-brand-900 bg-brand-950 text-brand-100 shadow-xl transition-transform duration-200 ease-out md:static md:z-auto md:h-screen md:w-64 md:translate-x-0 md:shadow-none",
+          "fixed inset-y-0 left-0 z-50 flex w-72 shrink-0 flex-col border-r border-brand-900 bg-brand-950 text-brand-100 shadow-xl transition-transform duration-200 ease-out md:static md:z-auto md:h-screen md:w-60 md:translate-x-0 md:shadow-none",
           isMobileOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
@@ -238,8 +238,8 @@ export default function AdminSidebar({ role }: AdminSidebarProps) {
               alt="Ruang Sejahtera"
               width={1100}
               height={500}
-              sizes="205px"
-              className="h-12 w-auto max-w-[205px] object-contain"
+              sizes="160px"
+              className="h-9 w-auto max-w-[160px] object-contain"
             />
           </Link>
           <button
@@ -252,10 +252,10 @@ export default function AdminSidebar({ role }: AdminSidebarProps) {
           </button>
         </div>
 
-        <div className="border-b border-brand-900 px-4 py-4">
-          <div className="flex items-center gap-3 rounded-xl bg-brand-900 px-3 py-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-800 shadow-sm ring-1 ring-brand-700">
-              <CircleDollarSign className="h-5 w-5" />
+        <div className="border-b border-brand-900 px-3 py-3">
+          <div className="flex items-center gap-3 rounded-xl border border-white/5 bg-brand-900/80 px-3 py-2.5">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-800 shadow-sm ring-1 ring-brand-700">
+              <CircleDollarSign className="h-4 w-4" />
             </div>
             <div className="min-w-0">
               <p className="text-xs font-semibold uppercase tracking-wide text-brand-300">Mode kerja</p>
@@ -266,7 +266,7 @@ export default function AdminSidebar({ role }: AdminSidebarProps) {
           </div>
         </div>
 
-        <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label="Navigasi admin">
+        <nav className="flex-1 overflow-y-auto px-3 py-3" aria-label="Navigasi admin">
           <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-brand-300">
             Operasional
           </p>
@@ -287,7 +287,7 @@ export default function AdminSidebar({ role }: AdminSidebarProps) {
                     type="button"
                     onClick={() => item.id && toggleMenu(item.id)}
                     className={clsx(
-                      "flex min-h-10 w-full items-center justify-between rounded-lg px-3 text-sm font-medium transition-colors",
+                      "flex min-h-9 w-full items-center justify-between rounded-lg px-3 text-[13px] font-medium transition-colors",
                       active
                         ? "bg-brand-700 text-white"
                         : "text-brand-100 hover:bg-brand-900 hover:text-white",
