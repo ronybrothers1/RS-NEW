@@ -242,7 +242,7 @@ export default function DonasiClientForm({
         {state.reference && (
           <div className="mx-auto mt-5 max-w-lg rounded-2xl border border-slate-200 bg-slate-50 p-5 text-left">
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-              Nomor Referensi Donasi
+              Nomor Registrasi Donasi
             </p>
 
             <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -265,7 +265,7 @@ export default function DonasiClientForm({
             </div>
 
             <p className="mt-3 text-xs leading-5 text-slate-500">
-              Simpan nomor ini. Anda dapat
+              Simpan nomor registrasi ini. Anda dapat
               menggunakannya untuk mengecek
               hasil verifikasi tanpa harus
               membuat akun.

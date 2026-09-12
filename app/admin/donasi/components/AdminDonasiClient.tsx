@@ -3,6 +3,7 @@
 
 import {
   Check,
+  Copy,
   Eye,
   FileImage,
   Filter,
@@ -45,6 +46,15 @@ type DonationItem = {
 
 type DonationDetail = DonationItem & {
   proofImage: string | null;
+  reviewNote:
+    | string
+    | null;
+  reviewedAt:
+    | string
+    | null;
+  reviewerName:
+    | string
+    | null;
 };
 
 type ConfirmAction =
@@ -94,6 +104,12 @@ function formatDateTime(
       minute: "2-digit",
     },
   );
+}
+
+function formatDonationRegistration(
+  donationId: string,
+) {
+  return `RS-DON-${donationId.toUpperCase()}`;
 }
 
 function getSafeProofImage(
@@ -183,6 +199,11 @@ export default function AdminDonasiClient({
   ] = useState<string | null>(
     null,
   );
+
+  const [
+    reviewNote,
+    setReviewNote,
+  ] = useState("");
 
   const summary = useMemo(() => {
     return donations.reduce(
@@ -299,6 +320,9 @@ export default function AdminDonasiClient({
           }
 
           const haystack = [
+            formatDonationRegistration(
+              donation.id,
+            ),
             donation.donorName,
             donation.programName,
             donation.paymentMethod,
@@ -327,6 +351,7 @@ export default function AdminDonasiClient({
     setDetailError(null);
     setActionError(null);
     setConfirmAction(null);
+    setReviewNote("");
     setIsLoadingDetail(true);
 
     const result =
@@ -361,6 +386,7 @@ export default function AdminDonasiClient({
     setDetailError(null);
     setConfirmAction(null);
     setActionError(null);
+    setReviewNote("");
   }
 
   async function processDonation() {
@@ -378,9 +404,11 @@ export default function AdminDonasiClient({
       confirmAction === "VERIFY"
         ? await verifyDonation(
             detail.id,
+            reviewNote,
           )
         : await rejectDonation(
             detail.id,
+            reviewNote,
           );
 
     setIsProcessing(false);
@@ -504,7 +532,7 @@ export default function AdminDonasiClient({
                     event.target.value,
                   )
                 }
-                placeholder="Cari donatur, program, bank, atau nominal..."
+                placeholder="Cari nomor registrasi, donatur, program, bank, atau nominal..."
                 className="w-full rounded-xl border border-slate-300 py-2.5 pl-10 pr-4 text-sm text-slate-900 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
               />
             </div>
@@ -572,6 +600,9 @@ export default function AdminDonasiClient({
                     Tanggal
                   </th>
                   <th className="px-5 py-4">
+                    No. Registrasi
+                  </th>
+                  <th className="px-5 py-4">
                     Donatur
                   </th>
                   <th className="px-5 py-4">
@@ -597,7 +628,7 @@ export default function AdminDonasiClient({
                 0 ? (
                   <tr>
                     <td
-                      colSpan={7}
+                      colSpan={8}
                       className="px-6 py-12 text-center text-slate-500"
                     >
                       Tidak ada donasi
@@ -617,6 +648,14 @@ export default function AdminDonasiClient({
                           {formatDateTime(
                             donation.createdAt,
                           )}
+                        </td>
+
+                        <td className="px-5 py-4">
+                          <code className="block max-w-[180px] truncate text-xs font-semibold text-slate-600">
+                            {formatDonationRegistration(
+                              donation.id,
+                            )}
+                          </code>
                         </td>
 
                         <td className="px-5 py-4">
@@ -770,6 +809,40 @@ export default function AdminDonasiClient({
             <div className="grid gap-6 p-6 md:grid-cols-[minmax(0,1fr)_minmax(280px,0.9fr)]">
               <div>
                 <dl className="grid gap-5 sm:grid-cols-2">
+                  <div className="sm:col-span-2">
+                    <dt className="text-xs font-medium uppercase text-slate-400">
+                      Nomor Registrasi Donasi
+                    </dt>
+
+                    <dd className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
+                      <code className="break-all rounded-lg bg-slate-100 px-3 py-2 text-xs font-bold text-slate-800">
+                        {formatDonationRegistration(
+                          detail.id,
+                        )}
+                      </code>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          navigator.clipboard
+                            .writeText(
+                              formatDonationRegistration(
+                                detail.id,
+                              ),
+                            )
+                            .catch(
+                              () =>
+                                undefined,
+                            )
+                        }
+                        className="inline-flex w-fit items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                      >
+                        <Copy className="mr-1.5 h-3.5 w-3.5" />
+                        Salin
+                      </button>
+                    </dd>
+                  </div>
+
                   <div>
                     <dt className="text-xs font-medium uppercase text-slate-400">
                       Donatur
@@ -847,6 +920,41 @@ export default function AdminDonasiClient({
                     </dd>
                   </div>
 
+                  {detail.status !==
+                    "PENDING" && (
+                    <div className="sm:col-span-2">
+                      <dt className="text-xs font-medium uppercase text-slate-400">
+                        Keputusan Verifikasi
+                      </dt>
+
+                      <dd className="mt-2 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-700">
+                        <div>
+                          <span className="font-semibold">
+                            Diproses:
+                          </span>{" "}
+                          {detail.reviewedAt
+                            ? formatDateTime(
+                                detail.reviewedAt,
+                              )
+                            : "Data lama"}
+                        </div>
+
+                        <div className="mt-1">
+                          <span className="font-semibold">
+                            Oleh:
+                          </span>{" "}
+                          {detail.reviewerName ||
+                            "Tidak tercatat"}
+                        </div>
+
+                        <div className="mt-2 border-t border-slate-200 pt-2">
+                          {detail.reviewNote ||
+                            "Data keputusan lama belum memiliki catatan pengurus."}
+                        </div>
+                      </dd>
+                    </div>
+                  )}
+
                   {detail.status ===
                     "SUCCESS" && (
                     <div className="sm:col-span-2">
@@ -914,11 +1022,12 @@ export default function AdminDonasiClient({
                   <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
                     <button
                       type="button"
-                      onClick={() =>
+                      onClick={() => {
+                        setReviewNote("");
                         setConfirmAction(
                           "REJECT",
-                        )
-                      }
+                        );
+                      }}
                       className="inline-flex items-center justify-center rounded-xl border border-rose-200 bg-white px-5 py-2.5 text-sm font-semibold text-rose-700 hover:bg-rose-50"
                     >
                       <X className="mr-2 h-4 w-4" />
@@ -927,11 +1036,12 @@ export default function AdminDonasiClient({
 
                     <button
                       type="button"
-                      onClick={() =>
+                      onClick={() => {
+                        setReviewNote("");
                         setConfirmAction(
                           "VERIFY",
-                        )
-                      }
+                        );
+                      }}
                       className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
                     >
                       <Check className="mr-2 h-4 w-4" />
@@ -959,6 +1069,39 @@ export default function AdminDonasiClient({
                         : "Donasi akan ditandai sebagai Ditolak dan tidak memengaruhi saldo keuangan."}
                     </p>
 
+                    <label
+                      htmlFor="donation-review-note"
+                      className="mt-4 block text-sm font-semibold text-slate-800"
+                    >
+                      {confirmAction ===
+                      "REJECT"
+                        ? "Alasan penolakan (wajib)"
+                        : "Catatan verifikasi (opsional)"}
+                    </label>
+
+                    <textarea
+                      id="donation-review-note"
+                      value={reviewNote}
+                      onChange={(event) =>
+                        setReviewNote(
+                          event.target.value,
+                        )
+                      }
+                      rows={4}
+                      maxLength={500}
+                      placeholder={
+                        confirmAction ===
+                        "REJECT"
+                          ? "Jelaskan alasan donasi ditolak, minimal 10 karakter."
+                          : "Tambahkan catatan jika diperlukan."
+                      }
+                      className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-800 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
+                    />
+
+                    <div className="mt-1 text-right text-xs text-slate-500">
+                      {reviewNote.length}/500
+                    </div>
+
                     <div className="mt-4 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
                       <button
                         type="button"
@@ -978,7 +1121,13 @@ export default function AdminDonasiClient({
                       <button
                         type="button"
                         disabled={
-                          isProcessing
+                          isProcessing ||
+                          (confirmAction ===
+                            "REJECT" &&
+                            reviewNote
+                              .trim()
+                              .length <
+                              10)
                         }
                         onClick={
                           processDonation

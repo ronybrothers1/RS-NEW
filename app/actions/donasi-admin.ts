@@ -38,6 +38,7 @@ async function getAdminSession() {
 function revalidateDonationPages() {
   revalidatePath("/admin/donasi");
   revalidatePath("/admin/dashboard");
+  revalidatePath("/donasi");
 }
 
 function revalidateVerifiedDonationPages() {
@@ -59,6 +60,7 @@ function revalidateVerifiedDonationPages() {
 
 export async function verifyDonation(
   donationId: string,
+  reviewNote = "",
 ) {
   const session =
     await getAdminSession();
@@ -77,6 +79,24 @@ export async function verifyDonation(
         "ID donasi tidak valid.",
     };
   }
+
+  const normalizedReviewNote =
+    reviewNote.trim();
+
+  if (
+    normalizedReviewNote.length >
+    500
+  ) {
+    return {
+      success: false,
+      error:
+        "Catatan verifikasi maksimal 500 karakter.",
+    };
+  }
+
+  const finalReviewNote =
+    normalizedReviewNote ||
+    "Bukti transfer telah diverifikasi oleh pengurus.";
 
   try {
     const result =
@@ -212,6 +232,12 @@ export async function verifyDonation(
               .update(donations)
               .set({
                 status: "SUCCESS",
+                reviewNote:
+                  finalReviewNote,
+                reviewedAt:
+                  new Date(),
+                reviewedBy:
+                  session.userId,
               })
               .where(
                 and(
@@ -310,6 +336,7 @@ export async function verifyDonation(
 
 export async function rejectDonation(
   donationId: string,
+  reviewNote: string,
 ) {
   const session =
     await getAdminSession();
@@ -326,6 +353,31 @@ export async function rejectDonation(
       success: false,
       error:
         "ID donasi tidak valid.",
+    };
+  }
+
+  const normalizedReviewNote =
+    reviewNote.trim();
+
+  if (
+    normalizedReviewNote.length <
+    10
+  ) {
+    return {
+      success: false,
+      error:
+        "Alasan penolakan wajib diisi minimal 10 karakter.",
+    };
+  }
+
+  if (
+    normalizedReviewNote.length >
+    500
+  ) {
+    return {
+      success: false,
+      error:
+        "Alasan penolakan maksimal 500 karakter.",
     };
   }
 
@@ -369,6 +421,12 @@ export async function rejectDonation(
               .update(donations)
               .set({
                 status: "FAILED",
+                reviewNote:
+                  normalizedReviewNote,
+                reviewedAt:
+                  new Date(),
+                reviewedBy:
+                  session.userId,
               })
               .where(
                 and(

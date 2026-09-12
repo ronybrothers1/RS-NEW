@@ -625,6 +625,10 @@ export async function checkDonationStatus(
             donations.amount,
           status:
             donations.status,
+          reviewNote:
+            donations.reviewNote,
+          reviewedAt:
+            donations.reviewedAt,
           createdAt:
             donations.createdAt,
           programName:
@@ -669,6 +673,12 @@ export async function checkDonationStatus(
           donation.amount,
         programName:
           donation.programName,
+        reviewNote:
+          donation.reviewNote,
+        reviewedAt:
+          donation.reviewedAt
+            ?.toISOString() ||
+          null,
         createdAt:
           donation.createdAt.toISOString(),
       },

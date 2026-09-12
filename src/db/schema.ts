@@ -248,6 +248,14 @@ export const donations = pgTable('donations', {
   status: donationStatusEnum('status').default('PENDING').notNull(),
   paymentMethod: text('payment_method'),
   proofImage: text('proof_image'),
+
+  reviewNote: text('review_note'),
+
+  reviewedBy: uuid('reviewed_by')
+    .references(() => users.id, { onDelete: 'set null' }),
+
+  reviewedAt: timestamp('reviewed_at'),
+
   isAnonymous: boolean('is_anonymous').default(false).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });

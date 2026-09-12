@@ -182,9 +182,77 @@ export async function validatePrivateDonationProof(
   }
 }
 
+function getLegacyDataDonationProof(
+  value: string,
+) {
+  const match =
+    /^data:image\/(jpeg|jpg|png|webp);base64,([a-z0-9+/=\r\n]+)$/i.exec(
+      value,
+    );
+
+  if (!match) {
+    return null;
+  }
+
+  const subtype =
+    match[1].toLowerCase();
+
+  const contentType =
+    subtype === "jpg"
+      ? "image/jpeg"
+      : `image/${subtype}`;
+
+  try {
+    const buffer =
+      Buffer.from(
+        match[2].replace(
+          /\s+/g,
+          "",
+        ),
+        "base64",
+      );
+
+    if (
+      buffer.length === 0 ||
+      buffer.length >
+        DONATION_PROOF_MAX_SIZE
+    ) {
+      return null;
+    }
+
+    const bytes =
+      Uint8Array.from(
+        buffer,
+      );
+
+    return {
+      stream:
+        new Blob(
+          [bytes],
+          {
+            type:
+              contentType,
+          },
+        ).stream(),
+      contentType,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export async function getDonationProofForStaff(
   value: string,
 ) {
+  const legacyDataProof =
+    getLegacyDataDonationProof(
+      value,
+    );
+
+  if (legacyDataProof) {
+    return legacyDataProof;
+  }
+
   if (
     isPrivateDonationProofUrl(
       value,

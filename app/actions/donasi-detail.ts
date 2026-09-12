@@ -8,6 +8,7 @@ import {
   donations,
   financialTransactions,
   programs,
+  users,
 } from "@/src/db/schema";
 import { eq } from "drizzle-orm";
 
@@ -57,6 +58,12 @@ export async function getDonationDetail(
           donations.paymentMethod,
         proofImage:
           donations.proofImage,
+        reviewNote:
+          donations.reviewNote,
+        reviewedAt:
+          donations.reviewedAt,
+        reviewerName:
+          users.name,
         isAnonymous:
           donations.isAnonymous,
         createdAt:
@@ -77,6 +84,13 @@ export async function getDonationDetail(
         eq(
           financialTransactions.donationId,
           donations.id,
+        ),
+      )
+      .leftJoin(
+        users,
+        eq(
+          donations.reviewedBy,
+          users.id,
         ),
       )
       .where(
@@ -107,6 +121,10 @@ export async function getDonationDetail(
             : null,
         createdAt:
           donation.createdAt.toISOString(),
+        reviewedAt:
+          donation.reviewedAt
+            ?.toISOString() ||
+          null,
       },
     };
   } catch (error) {

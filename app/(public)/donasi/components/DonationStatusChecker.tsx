@@ -27,6 +27,12 @@ type StatusData = {
     | string
     | null;
   createdAt: string;
+  reviewedAt:
+    | string
+    | null;
+  reviewNote:
+    | string
+    | null;
 };
 
 type StatusState = {
@@ -163,7 +169,7 @@ export default function DonationStatusChecker() {
         </h2>
 
         <p className="mt-3 text-sm leading-7 text-slate-600">
-          Masukkan nomor referensi yang
+          Masukkan nomor registrasi yang
           diberikan setelah formulir
           donasi berhasil dikirim.
           Pemeriksaan ini tidak
@@ -179,7 +185,7 @@ export default function DonationStatusChecker() {
           htmlFor="donation-reference"
           className="text-sm font-semibold text-slate-800"
         >
-          Nomor Referensi Donasi
+          Nomor Registrasi Donasi
         </label>
 
         <div className="mt-2 flex flex-col gap-3 sm:flex-row">
@@ -237,7 +243,7 @@ export default function DonationStatusChecker() {
             <dl className="mt-5 grid gap-4 border-t border-slate-100 pt-5 sm:grid-cols-2">
               <div className="sm:col-span-2">
                 <dt className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                  Nomor Referensi
+                  Nomor Registrasi
                 </dt>
                 <dd className="mt-1 break-all text-sm font-bold text-slate-900">
                   {
@@ -272,7 +278,7 @@ export default function DonationStatusChecker() {
                 </dd>
               </div>
 
-              <div className="sm:col-span-2">
+              <div>
                 <dt className="text-xs font-semibold uppercase tracking-wide text-slate-400">
                   Formulir Dikirim
                 </dt>
@@ -283,6 +289,36 @@ export default function DonationStatusChecker() {
                   )}
                 </dd>
               </div>
+
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                  Diproses
+                </dt>
+                <dd className="mt-1 text-sm text-slate-700">
+                  {state.data
+                    .reviewedAt
+                    ? formatDateTime(
+                        state.data
+                          .reviewedAt,
+                      )
+                    : "Belum diproses"}
+                </dd>
+              </div>
+
+              {state.data.status !==
+                "PENDING" && (
+                <div className="sm:col-span-2">
+                  <dt className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                    Catatan Pengurus
+                  </dt>
+
+                  <dd className="mt-2 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-700">
+                    {state.data
+                      .reviewNote ||
+                      "Data keputusan lama belum memiliki catatan pengurus."}
+                  </dd>
+                </div>
+              )}
             </dl>
           </div>
         )}
