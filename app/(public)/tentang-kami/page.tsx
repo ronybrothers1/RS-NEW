@@ -1,6 +1,7 @@
 export const revalidate = 60;
 
 import { HeartHandshake, ShieldCheck, Target, Users } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 export default function TentangKamiPage() {
@@ -42,8 +43,15 @@ export default function TentangKamiPage() {
               </ul>
             </div>
           </div>
-          <div className="bg-slate-200 rounded-3xl overflow-hidden aspect-[4/3]">
-            <img src="https://images.unsplash.com/photo-1593113646773-028c64a8f1b8?auto=format&fit=crop&w=800&q=80" alt="Tentang Kami" className="w-full h-full object-cover" />
+          <div className="relative aspect-[3/2] overflow-hidden rounded-3xl bg-slate-200">
+            <Image
+              src="/images/tentang-kami/tim-ruang-sejahtera.jpg"
+              alt="Tim Yayasan Ruang Sejahtera"
+              fill
+              priority
+              sizes="(max-width: 767px) calc(100vw - 2rem), 50vw"
+              className="object-cover"
+            />
           </div>
         </div>
 
