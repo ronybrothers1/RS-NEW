@@ -1,5 +1,6 @@
 import { 
   pgTable, 
+  index,
   uuid, 
   text, 
   timestamp, 
@@ -9,6 +10,7 @@ import {
   json,
   pgEnum
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 export const roleEnum = pgEnum('role', ['ADMIN', 'OPERATOR', 'USER']);
 export const trxTypeEnum = pgEnum('trx_type', ['IN', 'OUT']);
@@ -199,7 +201,15 @@ export const financialTransactions = pgTable('financial_transactions', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
   deletedAt: timestamp('deleted_at'),
-});
+}, (table) => [
+  index('financial_transactions_active_date_created_idx')
+    .on(
+      table.date.desc(),
+      table.createdAt.desc(),
+      table.id.desc(),
+    )
+    .where(sql`${table.deletedAt} IS NULL`),
+]);
 
 export const activities = pgTable('activities', {
   id: uuid('id').defaultRandom().primaryKey(),

@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import {
   ArrowDownRight,
   ArrowUpRight,
+  ChevronLeft,
+  ChevronRight,
   Eye,
   FilePenLine,
   Plus,
@@ -15,7 +17,8 @@ import {
 } from "lucide-react";
 import {
   type FormEvent,
-  useMemo,
+  useEffect,
+  useRef,
   useState,
   useTransition,
 } from "react";
@@ -27,6 +30,9 @@ import {
 import { formatCurrency } from "@/lib/utils";
 
 type TransactionType = "IN" | "OUT";
+type TransactionTypeFilter =
+  | "ALL"
+  | TransactionType;
 type ProgramStatus = "ACTIVE" | "INACTIVE";
 
 type TransactionItem = {
@@ -51,6 +57,71 @@ type ProgramOption = {
   name: string;
   status: ProgramStatus;
 };
+
+type TransactionHistoryFilters = {
+  query: string;
+  type: TransactionTypeFilter;
+  program: string;
+};
+
+type TransactionHistoryPagination = {
+  currentPage: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
+};
+
+const HISTORY_PATH =
+  "/admin/keuangan/riwayat";
+const MAX_QUERY_LENGTH = 120;
+
+function buildHistoryHref(
+  filters: TransactionHistoryFilters,
+  page = 1,
+) {
+  const params = new URLSearchParams();
+
+  if (filters.query) {
+    params.set("q", filters.query);
+  }
+
+  if (filters.type !== "ALL") {
+    params.set("type", filters.type);
+  }
+
+  if (filters.program !== "ALL") {
+    params.set("program", filters.program);
+  }
+
+  if (page > 1) {
+    params.set("page", String(page));
+  }
+
+  const queryString = params.toString();
+
+  return queryString
+    ? `${HISTORY_PATH}?${queryString}`
+    : HISTORY_PATH;
+}
+
+function getVisiblePageNumbers(
+  currentPage: number,
+  totalPages: number,
+) {
+  const pages = new Set([
+    1,
+    totalPages,
+    currentPage - 1,
+    currentPage,
+    currentPage + 1,
+  ]);
+
+  return [...pages]
+    .filter(
+      (page) => page >= 1 && page <= totalPages,
+    )
+    .sort((left, right) => left - right);
+}
 
 function formatAmountInput(value: string) {
   const digits = value.replace(/\D/g, "");
@@ -104,18 +175,22 @@ export default function RiwayatTransaksiClient({
   transactions,
   programs,
   canDelete,
+  filters,
+  pagination,
 }: {
   transactions: TransactionItem[];
   programs: ProgramOption[];
   canDelete: boolean;
+  filters: TransactionHistoryFilters;
+  pagination: TransactionHistoryPagination;
 }) {
   const router = useRouter();
 
-  const [query, setQuery] = useState("");
-  const [typeFilter, setTypeFilter] =
-    useState("ALL");
-  const [programFilter, setProgramFilter] =
-    useState("ALL");
+  const [query, setQuery] = useState(
+    filters.query,
+  );
+  const queryTimeoutRef =
+    useRef<number | null>(null);
 
   const [detailItem, setDetailItem] =
     useState<TransactionItem | null>(null);
@@ -146,62 +221,70 @@ export default function RiwayatTransaksiClient({
     startDelete,
   ] = useTransition();
 
-  const filteredTransactions = useMemo(
-    () => {
-      const needle =
-        query.trim().toLowerCase();
+  const [
+    isNavigating,
+    startNavigation,
+  ] = useTransition();
 
-      return transactions.filter(
-        (transaction) => {
-          if (
-            typeFilter !== "ALL" &&
-            transaction.type !== typeFilter
-          ) {
-            return false;
-          }
+  useEffect(() => {
+    const normalizedQuery = query
+      .trim()
+      .slice(0, MAX_QUERY_LENGTH);
 
-          if (
-            programFilter === "NONE" &&
-            transaction.programId
-          ) {
-            return false;
-          }
+    if (normalizedQuery === filters.query) {
+      return;
+    }
 
-          if (
-            programFilter !== "ALL" &&
-            programFilter !== "NONE" &&
-            transaction.programId !==
-              programFilter
-          ) {
-            return false;
-          }
+    queryTimeoutRef.current = window.setTimeout(
+      () => {
+        queryTimeoutRef.current = null;
+        startNavigation(() => {
+          router.replace(
+            buildHistoryHref({
+              query: normalizedQuery,
+              type: filters.type,
+              program: filters.program,
+            }),
+            { scroll: false },
+          );
+        });
+      },
+      400,
+    );
 
-          if (!needle) {
-            return true;
-          }
+    return () => {
+      if (queryTimeoutRef.current !== null) {
+        window.clearTimeout(
+          queryTimeoutRef.current,
+        );
+        queryTimeoutRef.current = null;
+      }
+    };
+  }, [
+    filters.program,
+    filters.query,
+    filters.type,
+    query,
+    router,
+  ]);
 
-          const haystack = [
-            transaction.description,
-            transaction.donorName,
-            transaction.programName ??
-              (transaction.programId ? "" : "Umum"),
-            transaction.userName,
-          ]
-            .filter(Boolean)
-            .join(" ")
-            .toLowerCase();
-
-          return haystack.includes(needle);
-        },
+  function replaceFilters(
+    nextFilters: TransactionHistoryFilters,
+  ) {
+    if (queryTimeoutRef.current !== null) {
+      window.clearTimeout(
+        queryTimeoutRef.current,
       );
-    },
-    [
-      transactions,
-      query,
-      typeFilter,
-      programFilter,
-    ],
-  );
+      queryTimeoutRef.current = null;
+    }
+
+    startNavigation(() => {
+      router.replace(
+        buildHistoryHref(nextFilters),
+        { scroll: false },
+      );
+    });
+  }
 
   function openEdit(
     transaction: TransactionItem,
@@ -276,9 +359,44 @@ export default function RiwayatTransaksiClient({
       }
 
       setDeleteItem(null);
+
+      if (
+        transactions.length === 1 &&
+        pagination.currentPage > 1
+      ) {
+        router.replace(
+          buildHistoryHref(
+            filters,
+            pagination.currentPage - 1,
+          ),
+          { scroll: false },
+        );
+        return;
+      }
+
       router.refresh();
     });
   }
+
+  const firstVisibleItem =
+    pagination.totalItems === 0
+      ? 0
+      : (pagination.currentPage - 1) *
+          pagination.pageSize +
+        1;
+  const lastVisibleItem = Math.min(
+    pagination.currentPage * pagination.pageSize,
+    pagination.totalItems,
+  );
+  const visiblePageNumbers =
+    getVisiblePageNumbers(
+      pagination.currentPage,
+      pagination.totalPages,
+    );
+  const hasActiveFilters =
+    Boolean(filters.query) ||
+    filters.type !== "ALL" ||
+    filters.program !== "ALL";
 
   return (
     <>
@@ -315,13 +433,18 @@ export default function RiwayatTransaksiClient({
           </div>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div
+          className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+          aria-busy={isNavigating}
+        >
           <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_180px_240px]">
             <div className="relative">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
 
               <input
                 type="search"
+                aria-label="Cari riwayat transaksi"
+                maxLength={MAX_QUERY_LENGTH}
                 value={query}
                 onChange={(event) =>
                   setQuery(event.target.value)
@@ -332,12 +455,18 @@ export default function RiwayatTransaksiClient({
             </div>
 
             <select
-              value={typeFilter}
-              onChange={(event) =>
-                setTypeFilter(
-                  event.target.value,
-                )
-              }
+              value={filters.type}
+              onChange={(event) => {
+                replaceFilters({
+                  query: query
+                    .trim()
+                    .slice(0, MAX_QUERY_LENGTH),
+                  type: event.target
+                    .value as TransactionTypeFilter,
+                  program: filters.program,
+                });
+              }}
+              aria-label="Filter jenis transaksi"
               className="rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
             >
               <option value="ALL">
@@ -352,12 +481,17 @@ export default function RiwayatTransaksiClient({
             </select>
 
             <select
-              value={programFilter}
-              onChange={(event) =>
-                setProgramFilter(
-                  event.target.value,
-                )
-              }
+              value={filters.program}
+              onChange={(event) => {
+                replaceFilters({
+                  query: query
+                    .trim()
+                    .slice(0, MAX_QUERY_LENGTH),
+                  type: filters.type,
+                  program: event.target.value,
+                });
+              }}
+              aria-label="Filter program transaksi"
               className="rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
             >
               <option value="ALL">
@@ -382,6 +516,15 @@ export default function RiwayatTransaksiClient({
               </option>
             </select>
           </div>
+
+          <p
+            className="mt-2 min-h-5 text-xs text-slate-500"
+            aria-live="polite"
+          >
+            {isNavigating
+              ? "Memuat transaksi..."
+              : "Pencarian mencakup seluruh riwayat transaksi."}
+          </p>
         </div>
 
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -414,8 +557,7 @@ export default function RiwayatTransaksiClient({
               </thead>
 
               <tbody className="divide-y divide-slate-100">
-                {filteredTransactions.length ===
-                0 ? (
+                {transactions.length === 0 ? (
                   <tr>
                     <td
                       colSpan={7}
@@ -427,7 +569,7 @@ export default function RiwayatTransaksiClient({
                     </td>
                   </tr>
                 ) : (
-                  filteredTransactions.map(
+                  transactions.map(
                     (transaction) => {
                       const websiteDonation =
                         isWebsiteDonation(
@@ -595,28 +737,134 @@ export default function RiwayatTransaksiClient({
             </table>
           </div>
 
-          <div className="flex flex-col gap-2 border-t border-slate-200 bg-slate-50 px-5 py-4 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
-            <span>
-              Menampilkan{" "}
-              {filteredTransactions.length}{" "}
-              dari {transactions.length}{" "}
-              transaksi aktif
-            </span>
+          <div className="space-y-4 border-t border-slate-200 bg-slate-50 px-5 py-4 text-sm text-slate-500">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <span>
+                Menampilkan {firstVisibleItem}-
+                {lastVisibleItem} dari{" "}
+                {pagination.totalItems} transaksi
+                aktif
+              </span>
 
-            {(query ||
-              typeFilter !== "ALL" ||
-              programFilter !== "ALL") && (
-              <button
-                type="button"
-                onClick={() => {
-                  setQuery("");
-                  setTypeFilter("ALL");
-                  setProgramFilter("ALL");
-                }}
-                className="font-medium text-teal-700 hover:text-teal-800"
+              {hasActiveFilters && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setQuery("");
+                    replaceFilters({
+                      query: "",
+                      type: "ALL",
+                      program: "ALL",
+                    });
+                  }}
+                  className="font-medium text-teal-700 hover:text-teal-800"
+                >
+                  Reset filter
+                </button>
+              )}
+            </div>
+
+            {pagination.totalPages > 1 && (
+              <nav
+                className="flex flex-wrap items-center justify-center gap-1"
+                aria-label="Navigasi halaman riwayat transaksi"
               >
-                Reset filter
-              </button>
+                {pagination.currentPage > 1 ? (
+                  <Link
+                    href={buildHistoryHref(
+                      filters,
+                      pagination.currentPage - 1,
+                    )}
+                    scroll={false}
+                    prefetch={false}
+                    className="inline-flex h-9 items-center rounded-lg border border-slate-200 bg-white px-3 font-medium text-slate-700 transition hover:border-teal-300 hover:text-teal-700"
+                  >
+                    <ChevronLeft className="mr-1 h-4 w-4" />
+                    Sebelumnya
+                  </Link>
+                ) : (
+                  <span
+                    className="inline-flex h-9 cursor-not-allowed items-center rounded-lg border border-slate-200 bg-slate-100 px-3 text-slate-400"
+                    aria-disabled="true"
+                  >
+                    <ChevronLeft className="mr-1 h-4 w-4" />
+                    Sebelumnya
+                  </span>
+                )}
+
+                {visiblePageNumbers.map(
+                  (pageNumber, index) => {
+                    const previousPage =
+                      visiblePageNumbers[index - 1];
+                    const hasGap =
+                      previousPage !== undefined &&
+                      pageNumber - previousPage > 1;
+
+                    return (
+                      <span
+                        key={pageNumber}
+                        className="contents"
+                      >
+                        {hasGap && (
+                          <span
+                            className="inline-flex h-9 w-9 items-center justify-center text-slate-400"
+                            aria-hidden="true"
+                          >
+                            …
+                          </span>
+                        )}
+
+                        {pageNumber ===
+                        pagination.currentPage ? (
+                          <span
+                            className="inline-flex h-9 min-w-9 items-center justify-center rounded-lg bg-teal-600 px-3 font-semibold text-white"
+                            aria-current="page"
+                          >
+                            {pageNumber}
+                          </span>
+                        ) : (
+                          <Link
+                            href={buildHistoryHref(
+                              filters,
+                              pageNumber,
+                            )}
+                            scroll={false}
+                            prefetch={false}
+                            className="inline-flex h-9 min-w-9 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 font-medium text-slate-700 transition hover:border-teal-300 hover:text-teal-700"
+                            aria-label={`Buka halaman ${pageNumber}`}
+                          >
+                            {pageNumber}
+                          </Link>
+                        )}
+                      </span>
+                    );
+                  },
+                )}
+
+                {pagination.currentPage <
+                pagination.totalPages ? (
+                  <Link
+                    href={buildHistoryHref(
+                      filters,
+                      pagination.currentPage + 1,
+                    )}
+                    scroll={false}
+                    prefetch={false}
+                    className="inline-flex h-9 items-center rounded-lg border border-slate-200 bg-white px-3 font-medium text-slate-700 transition hover:border-teal-300 hover:text-teal-700"
+                  >
+                    Berikutnya
+                    <ChevronRight className="ml-1 h-4 w-4" />
+                  </Link>
+                ) : (
+                  <span
+                    className="inline-flex h-9 cursor-not-allowed items-center rounded-lg border border-slate-200 bg-slate-100 px-3 text-slate-400"
+                    aria-disabled="true"
+                  >
+                    Berikutnya
+                    <ChevronRight className="ml-1 h-4 w-4" />
+                  </span>
+                )}
+              </nav>
             )}
           </div>
         </div>
