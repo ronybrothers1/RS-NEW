@@ -1,9 +1,6 @@
 "use server";
 
 import {
-  del,
-} from "@vercel/blob";
-import {
   and,
   eq,
 } from "drizzle-orm";
@@ -25,6 +22,9 @@ import {
   isAllowedAssistanceUserPath,
   isPrivateAssistanceBlobUrl,
 } from "@/lib/assistance-media";
+import {
+  createVercelBlobStorage,
+} from "@/lib/storage/providers/vercel-blob";
 import {
   db,
 } from "@/src/db";
@@ -1094,16 +1094,19 @@ export async function updateAssistanceApplication(
       getAssistanceBlobToken();
 
     if (token) {
+      const storage =
+        createVercelBlobStorage({
+          access: "private",
+          token,
+        });
+
       for (
         const photo of
           removed
       ) {
         try {
-          await del(
+          await storage.delete(
             photo.imageUrl,
-            {
-              token,
-            },
           );
         } catch (
           error

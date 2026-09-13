@@ -1,7 +1,4 @@
 import {
-  get,
-} from "@vercel/blob";
-import {
   eq,
 } from "drizzle-orm";
 
@@ -11,6 +8,9 @@ import {
 import {
   getAssistanceBlobToken,
 } from "@/lib/assistance-media";
+import {
+  createVercelBlobStorage,
+} from "@/lib/storage/providers/vercel-blob";
 import {
   db,
 } from "@/src/db";
@@ -135,14 +135,15 @@ export async function GET(
   }
 
   try {
+    const storage =
+      createVercelBlobStorage({
+        access: "private",
+        token,
+      });
+
     const result =
-      await get(
+      await storage.read(
         photo.imageUrl,
-        {
-          access:
-            "private",
-          token,
-        },
       );
 
     if (!result) {
@@ -163,9 +164,7 @@ export async function GET(
       {
         headers: {
           "Content-Type":
-            result.blob
-              .contentType ||
-            "application/octet-stream",
+            result.contentType,
           "Cache-Control":
             "private, no-store",
           "X-Content-Type-Options":

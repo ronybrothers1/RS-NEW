@@ -1,7 +1,4 @@
 import {
-  del,
-} from "@vercel/blob";
-import {
   handleUpload,
   type HandleUploadBody,
 } from "@vercel/blob/client";
@@ -15,6 +12,9 @@ import {
 import {
   rateLimit,
 } from "@/lib/rate-limit";
+import {
+  createVercelBlobStorage,
+} from "@/lib/storage/providers/vercel-blob";
 import {
   ASSISTANCE_MEDIA_MAX_SIZE,
   ASSISTANCE_MEDIA_TYPES,
@@ -236,11 +236,14 @@ export async function DELETE(
       );
     }
 
-    await del(
-      pathname,
-      {
+    const storage =
+      createVercelBlobStorage({
+        access: "private",
         token,
-      },
+      });
+
+    await storage.delete(
+      pathname,
     );
 
     return NextResponse.json(
