@@ -1,6 +1,7 @@
 "use server";
 
 import { auth } from "@/auth";
+import { del } from "@vercel/blob";
 import { db } from "@/src/db";
 import { articles, auditLogs } from "@/src/db/schema";
 import { and, eq, ne } from "drizzle-orm";
@@ -45,6 +46,44 @@ function cleanOptional(value: FormDataEntryValue | null) {
 
   const cleaned = value.trim();
   return cleaned.length > 0 ? cleaned : null;
+}
+
+
+function isManagedNewsBlobUrl(value: string | null): value is string {
+  if (!value) return false;
+
+  try {
+    const url = new URL(value);
+
+    return (
+      url.protocol === "https:" &&
+      url.hostname.endsWith(".blob.vercel-storage.com") &&
+      url.pathname.startsWith("/media/berita/")
+    );
+  } catch {
+    return false;
+  }
+}
+
+async function deleteUnusedNewsBlob(value: string | null) {
+  if (!isManagedNewsBlobUrl(value)) return;
+
+  try {
+    const [reference] = await db
+      .select({ id: articles.id })
+      .from(articles)
+      .where(eq(articles.imageUrl, value))
+      .limit(1);
+
+    if (reference) return;
+
+    await del(value);
+  } catch (error) {
+    console.error(
+      "Gagal membersihkan Blob gambar berita yang tidak lagi digunakan.",
+      error,
+    );
+  }
 }
 
 function parseScheduledAt(value: FormDataEntryValue | null) {
@@ -441,6 +480,10 @@ export async function updateBerita(
       newData: updatedArticle,
     });
 
+    if (oldArticle.imageUrl !== updatedArticle.imageUrl) {
+      await deleteUnusedNewsBlob(oldArticle.imageUrl);
+    }
+
     revalidatePath("/admin/berita");
     revalidatePath("/admin/dashboard");
     revalidatePath(`/admin/berita/${id}/edit`);
@@ -575,6 +618,8 @@ export async function deleteBerita(
       recordId: id,
       oldData: oldArticle,
     });
+
+    await deleteUnusedNewsBlob(oldArticle.imageUrl);
 
     revalidatePath("/admin/berita");
     revalidatePath("/admin/dashboard");
