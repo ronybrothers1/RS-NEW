@@ -87,8 +87,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         .select({
           slug:
             activities.slug,
-          createdAt:
-            activities.createdAt,
+          updatedAt:
+            activities.updatedAt,
         })
         .from(activities)
         .where(
@@ -104,8 +104,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           url:
             `${baseUrl}/kegiatan/${activity.slug}`,
           lastModified:
-            activity.createdAt ||
-            new Date(),
+            activity.updatedAt,
           changeFrequency:
             "weekly" as const,
           priority: 0.8,
@@ -160,8 +159,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return [
     {
       url: baseUrl,
-      lastModified:
-        new Date(),
+
       changeFrequency:
         "daily",
       priority: 1,
@@ -169,8 +167,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     {
       url:
         `${baseUrl}/tentang-kami`,
-      lastModified:
-        new Date(),
+
       changeFrequency:
         "monthly",
       priority: 0.8,
@@ -178,8 +175,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     {
       url:
         `${baseUrl}/program`,
-      lastModified:
-        new Date(),
+
       changeFrequency:
         "monthly",
       priority: 0.8,
@@ -187,8 +183,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     {
       url:
         `${baseUrl}/berita`,
-      lastModified:
-        new Date(),
+
       changeFrequency:
         "daily",
       priority: 0.9,
@@ -196,8 +191,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     {
       url:
         `${baseUrl}/kegiatan`,
-      lastModified:
-        new Date(),
+
       changeFrequency:
         "daily",
       priority: 0.9,
@@ -205,8 +199,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     {
       url:
         `${baseUrl}/bantuan`,
-      lastModified:
-        new Date(),
+
       changeFrequency:
         "daily",
       priority: 0.95,
@@ -214,8 +207,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     {
       url:
         `${baseUrl}/donasi`,
-      lastModified:
-        new Date(),
+
       changeFrequency:
         "monthly",
       priority: 0.9,
@@ -223,8 +215,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     {
       url:
         `${baseUrl}/transparansi`,
-      lastModified:
-        new Date(),
+
       changeFrequency:
         "weekly",
       priority: 0.8,
@@ -232,8 +223,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     {
       url:
         `${baseUrl}/kontak`,
-      lastModified:
-        new Date(),
+
       changeFrequency:
         "yearly",
       priority: 0.6,
@@ -241,8 +231,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     {
       url:
         `${baseUrl}/kebijakan-privasi`,
-      lastModified:
-        new Date(),
+
       changeFrequency:
         "yearly",
       priority: 0.3,
@@ -250,8 +239,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     {
       url:
         `${baseUrl}/ketentuan-donasi`,
-      lastModified:
-        new Date(),
+
       changeFrequency:
         "yearly",
       priority: 0.3,
