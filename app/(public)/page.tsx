@@ -132,45 +132,62 @@ export default async function HomePage() {
   return (
     <div className="min-h-screen bg-canvas text-ink">
       <section className="relative isolate overflow-hidden bg-brand-950 text-white">
-        {latestArticle?.imageUrl && (
-          <Image
-            src={latestArticle.imageUrl}
-            alt=""
-            fill
-            priority
-            fetchPriority="high"
-            quality={60}
+        <picture
+          aria-hidden="true"
+          className="absolute inset-0 -z-20 hidden lg:block"
+        >
+          <source
+            media="(min-width: 1024px)"
+            srcSet="/images/hero/home-hero-house-1024.webp 1024w, /images/hero/home-hero-house-1366.webp 1366w, /images/hero/home-hero-house-1600.webp 1600w"
             sizes="100vw"
-            className="-z-20 object-cover object-center lg:object-[70%_center]"
+            type="image/webp"
           />
-        )}
-        <div className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgba(2,44,34,0.98)_0%,rgba(2,44,34,0.94)_42%,rgba(2,44,34,0.58)_72%,rgba(2,44,34,0.5)_100%)]" />
-        <div className="absolute inset-0 -z-10 bg-[linear-gradient(0deg,rgba(2,44,34,0.92)_0%,transparent_48%)] lg:bg-[linear-gradient(0deg,rgba(2,44,34,0.72)_0%,transparent_45%)]" />
+          <img
+            src="data:image/gif;base64,R0lGODlhAQABAAAAACw="
+            alt=""
+            width="1600"
+            height="900"
+            loading="eager"
+            decoding="async"
+            fetchPriority="high"
+            className="h-full w-full object-cover object-center"
+          />
+        </picture>
+
+        <div className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgba(2,44,34,0.99)_0%,rgba(2,44,34,0.94)_38%,rgba(2,44,34,0.55)_64%,rgba(2,44,34,0.14)_100%)] lg:block" />
+        <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_right,rgba(5,150,105,0.20),transparent_46%)] lg:hidden" />
+        <div className="absolute inset-0 -z-10 bg-[linear-gradient(0deg,rgba(2,44,34,0.97)_0%,rgba(2,44,34,0.78)_48%,rgba(2,44,34,0.52)_100%)] lg:bg-[linear-gradient(0deg,rgba(2,44,34,0.72)_0%,transparent_46%)]" />
+
         <Image
           src="/images/decor/hero-leaves.webp"
           alt=""
           width={2152}
           height={731}
-          loading="eager"
-          fetchPriority="high"
           sizes="100vw"
           className="pointer-events-none absolute inset-x-0 top-0 z-0 h-auto w-full select-none opacity-70 sm:opacity-80"
         />
 
-        <div className="relative z-10 mx-auto grid min-h-[590px] max-w-7xl items-center gap-8 px-4 pb-24 pt-10 sm:min-h-[620px] sm:px-6 sm:pb-28 lg:min-h-[560px] lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)] lg:px-8 lg:pb-24 lg:pt-12">
-          <div className="max-w-[660px] self-center">
+        <div className="relative z-10 mx-auto flex min-h-[500px] max-w-7xl items-center px-4 py-12 sm:min-h-[540px] sm:px-6 sm:py-14 lg:min-h-[560px] lg:px-8 lg:py-12">
+          <div className="max-w-[660px]">
             <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-brand-50 backdrop-blur-md">
               <ShieldCheck className="h-3.5 w-3.5 text-citrus-300" />
               Yayasan sosial transparan
             </span>
+
             <h1 className="mt-5 text-[clamp(2.65rem,12vw,4.25rem)] font-extrabold leading-[0.98] tracking-[-0.035em] text-white lg:text-[clamp(3.55rem,4.8vw,4.45rem)]">
               KEPEDULIAN
               <span className="block">PERLU SAMPAI</span>
               <span className="mt-1 block text-citrus-300">KE TEMPAT YANG TEPAT.</span>
             </h1>
+
             <p className="mt-5 max-w-xl text-base leading-7 text-brand-50 sm:text-lg">
               Yayasan Ruang Sejahtera adalah jembatan transparan antara niat baik Anda dan masyarakat yang membutuhkan.
             </p>
+
+            <span className="sr-only">
+              Rumah Lebih Layak Harapan Lebih Dekat
+            </span>
+
             <div className="mt-7 flex flex-col-reverse gap-3 sm:flex-row">
               <Link href="/program" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-white/35 bg-brand-950/25 px-7 py-3 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/10 sm:text-base">
                 Lihat Program <ArrowRight className="h-4 w-4" />
@@ -180,46 +197,116 @@ export default async function HomePage() {
               </Link>
             </div>
           </div>
-
-          <div className="flex self-end justify-end pb-2 lg:pb-0">
-            {latestArticle ? (
-              <Link href={`/berita/${latestArticle.slug}`} aria-label={`Baca berita terbaru: ${latestArticle.title}`} className="group w-full max-w-[500px] rounded-2xl border border-white/15 bg-brand-950/75 p-5 shadow-2xl shadow-black/25 backdrop-blur-md transition hover:border-citrus-300/50 sm:p-6 lg:max-w-[470px]">
-                <span className="inline-flex rounded-full bg-brand-700 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.13em] text-white">Berita Terbaru</span>
-                {latestArticleDate && <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-brand-200">{latestArticleDate}</p>}
-                <h2 className="mt-2 line-clamp-3 text-lg font-bold leading-snug text-white transition-colors group-hover:text-citrus-300 sm:text-xl lg:text-2xl">{latestArticle.title}</h2>
-                {latestArticle.excerpt && <p className="mt-2 line-clamp-2 text-sm leading-6 text-brand-100">{latestArticle.excerpt}</p>}
-                <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-citrus-300">Baca Selengkapnya <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" /></span>
-              </Link>
-            ) : (
-              <div className="w-full max-w-[470px] rounded-2xl border border-white/15 bg-brand-950/75 p-6 backdrop-blur-md">
-                <p className="text-xs font-bold uppercase tracking-[0.13em] text-brand-200">Kabar Ruang Sejahtera</p>
-                <p className="mt-3 text-xl font-bold">Berita terbaru akan tampil setelah dipublikasikan.</p>
-              </div>
-            )}
-          </div>
         </div>
       </section>
 
-      <section className="relative z-20 mx-4 -mt-14 max-w-7xl overflow-hidden rounded-2xl border border-frame bg-white shadow-xl sm:mx-6 lg:mx-auto">
-        {hasRealData ? (
-          <div className="grid grid-cols-2 md:grid-cols-4">
-            {impactItems.map((item, index) => {
-              const Icon = item.icon;
-              return (
-                <div key={item.label} className={`flex items-center gap-3 px-4 py-5 sm:px-6 ${index % 2 ? "border-l border-frame" : ""} ${index > 1 ? "border-t border-frame md:border-t-0" : ""} ${index > 0 ? "md:border-l md:border-frame" : ""}`}>
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-700"><Icon className="h-5 w-5" /></div>
-                  <div className="min-w-0">
-                    <div className="truncate text-base font-extrabold tracking-tight text-slate-950 sm:text-xl">{item.value}</div>
-                    <div className="mt-0.5 text-[11px] leading-tight text-ink-muted sm:text-xs">{item.label}</div>
+      <div className="relative z-20 flex flex-col">
+        <section className="order-1 px-4 pt-5 sm:px-6 lg:order-2 lg:px-8 lg:pt-8">
+          <div className="mx-auto max-w-7xl">
+            <div className="mb-4 hidden items-end justify-between gap-4 lg:flex">
+              <div>
+                <h2 className="text-2xl font-extrabold tracking-tight text-slate-950">
+                  Berita Terbaru
+                </h2>
+                <p className="mt-1 text-sm leading-6 text-slate-600">
+                  Ikuti kabar terbaru kegiatan Yayasan Ruang Sejahtera di lapangan.
+                </p>
+              </div>
+              <Link
+                href="/berita"
+                className="inline-flex shrink-0 items-center gap-2 text-sm font-bold text-brand-800 transition hover:text-brand-950"
+              >
+                Lihat Semua Berita <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+
+            {latestArticle ? (
+              <Link
+                href={`/berita/${latestArticle.slug}`}
+                aria-label={`Baca berita terbaru: ${latestArticle.title}`}
+                className={`group grid overflow-hidden rounded-2xl border border-frame bg-white shadow-sm transition hover:border-brand-200 hover:shadow-md ${
+                  latestArticle.imageUrl
+                    ? "sm:grid-cols-[220px_minmax(0,1fr)]"
+                    : ""
+                }`}
+              >
+                {latestArticle.imageUrl && (
+                  <div className="relative aspect-[16/9] overflow-hidden bg-slate-100 sm:aspect-auto sm:min-h-[176px]">
+                    <Image
+                      src={latestArticle.imageUrl}
+                      alt={latestArticle.imageAlt?.trim() || latestArticle.title}
+                      fill
+                      quality={60}
+                      sizes="(max-width: 639px) calc(100vw - 2rem), 220px"
+                      className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+                    />
                   </div>
+                )}
+
+                <div className="flex min-w-0 flex-col justify-center p-5 sm:p-6">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="rounded-full bg-brand-700 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-white lg:hidden">
+                      Berita Terbaru
+                    </span>
+                    {latestArticleDate && (
+                      <span className="rounded-full bg-brand-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-brand-700">
+                        {latestArticleDate}
+                      </span>
+                    )}
+                  </div>
+
+                  <h3 className="mt-3 text-lg font-extrabold leading-snug text-slate-950 transition-colors group-hover:text-brand-800 sm:text-xl">
+                    {latestArticle.title}
+                  </h3>
+
+                  {latestArticle.excerpt && (
+                    <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">
+                      {latestArticle.excerpt}
+                    </p>
+                  )}
+
+                  <span className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-brand-800">
+                    Baca Selengkapnya
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  </span>
                 </div>
-              );
-            })}
+              </Link>
+            ) : (
+              <div className="rounded-2xl border border-dashed border-frame bg-white px-5 py-8 text-center text-slate-600">
+                Berita terbaru akan tampil setelah dipublikasikan.
+              </div>
+            )}
+
+            <Link
+              href="/berita"
+              className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-brand-800 lg:hidden"
+            >
+              Lihat Semua Berita <ArrowRight className="h-4 w-4" />
+            </Link>
           </div>
-        ) : (
-          <div className="px-8 py-6 text-center"><p className="font-medium text-brand-800">Data dampak akan diperbarui setelah laporan kegiatan pertama terverifikasi.</p></div>
-        )}
-      </section>
+        </section>
+
+        <section className="order-2 mx-4 mt-6 max-w-7xl overflow-hidden rounded-2xl border border-frame bg-white shadow-xl sm:mx-6 lg:order-1 lg:mx-auto lg:-mt-14">
+          {hasRealData ? (
+            <div className="grid grid-cols-2 md:grid-cols-4">
+              {impactItems.map((item, index) => {
+                const Icon = item.icon;
+                return (
+                  <div key={item.label} className={`flex items-center gap-3 px-4 py-5 sm:px-6 ${index % 2 ? "border-l border-frame" : ""} ${index > 1 ? "border-t border-frame md:border-t-0" : ""} ${index > 0 ? "md:border-l md:border-frame" : ""}`}>
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-700"><Icon className="h-5 w-5" /></div>
+                    <div className="min-w-0">
+                      <div className="truncate text-base font-extrabold tracking-tight text-slate-950 sm:text-xl">{item.value}</div>
+                      <div className="mt-0.5 text-[11px] leading-tight text-ink-muted sm:text-xs">{item.label}</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="px-8 py-6 text-center"><p className="font-medium text-brand-800">Data dampak akan diperbarui setelah laporan kegiatan pertama terverifikasi.</p></div>
+          )}
+        </section>
+      </div>
 
       <section className="bg-canvas py-14 sm:py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
