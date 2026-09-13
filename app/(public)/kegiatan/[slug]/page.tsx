@@ -15,6 +15,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cache } from "react";
 import { createPageMetadata, createSeoDescription } from "@/lib/seo-metadata";
+import { getSiteUrl } from "@/lib/site-url";
+import { ShareActions } from "@/components/ShareActions";
 import TikTokEmbed from "./components/TikTokEmbed";
 
 type Props = {
@@ -95,6 +97,7 @@ export default async function KegiatanDetailPage(
   }
 
   const { activity, programName } = data;
+  const activityUrl = `${getSiteUrl()}/kegiatan/${slug}`;
 
   const paragraphs = (activity.description ?? "")
     .split(/\r?\n/)
@@ -124,7 +127,7 @@ export default async function KegiatanDetailPage(
             {activity.title}
           </h1>
 
-          <div className="mt-6 flex flex-wrap gap-x-6 gap-y-3 border-b border-slate-200 pb-7 text-sm text-slate-500">
+          <div className="mt-6 flex flex-wrap gap-x-6 gap-y-3 text-sm text-slate-500">
             <div className="flex items-start gap-2">
               <CalendarDays className="mt-0.5 h-4 w-4 shrink-0 text-teal-600" />
 
@@ -149,6 +152,12 @@ export default async function KegiatanDetailPage(
               </div>
             )}
           </div>
+
+          <ShareActions
+            title={activity.title}
+            url={activityUrl}
+            className="mt-5"
+          />
 
           {paragraphs.length > 0 && (
             <div className="mt-8 space-y-5 text-base leading-8 text-slate-700 sm:text-lg sm:leading-8">

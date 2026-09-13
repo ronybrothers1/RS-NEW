@@ -12,6 +12,8 @@ import { cache } from "react";
 import { sanitizeArticleHtml } from "@/lib/article-content";
 import { publishDueArticles } from "@/lib/article-publication";
 import { createPageMetadata, createSeoDescription } from "@/lib/seo-metadata";
+import { getSiteUrl } from "@/lib/site-url";
+import { ShareActions } from "@/components/ShareActions";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -88,6 +90,7 @@ export default async function BeritaDetailPage(props: Props) {
   }
 
   const { article, authorName } = articleData;
+  const articleUrl = `${getSiteUrl()}/berita/${slug}`;
 
   return (
     <div className="min-h-screen bg-white">
@@ -105,7 +108,7 @@ export default async function BeritaDetailPage(props: Props) {
             {article.title}
           </h1>
 
-          <div className="mb-10 flex flex-wrap items-center gap-x-6 gap-y-3 border-b border-slate-100 pb-8 text-sm font-medium text-slate-500">
+          <div className="mb-5 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm font-medium text-slate-500">
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100">
                 <User className="h-4 w-4 text-slate-400" />
@@ -128,6 +131,12 @@ export default async function BeritaDetailPage(props: Props) {
               </span>
             </div>
           </div>
+
+          <ShareActions
+            title={article.title}
+            url={articleUrl}
+            className="mb-10"
+          />
 
           {article.imageUrl && (
             <figure className="mb-10 overflow-hidden rounded-2xl bg-slate-100">
