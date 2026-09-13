@@ -143,6 +143,7 @@ export default function AdminSidebar({ role }: AdminSidebarProps) {
 
   const isLinkActive = (item: { href?: string; exact?: boolean }) => {
     if (!item.href) return false;
+    if (item.href === "/admin/berita" && pathname === "/admin/berita/tulis") return false;
     if (item.exact) return pathname === item.href;
     return pathname === item.href || pathname?.startsWith(`${item.href}/`);
   };
@@ -239,7 +240,7 @@ export default function AdminSidebar({ role }: AdminSidebarProps) {
               width={525}
               height={235}
               sizes="160px"
-              className="h-9 w-auto max-w-[160px] object-contain drop-shadow-[0_1px_1px_rgba(0,0,0,0.9)]"
+              className="h-12 w-auto max-w-[160px] object-contain drop-shadow-[0_1px_1px_rgba(0,0,0,0.9)]"
             />
           </Link>
           <button

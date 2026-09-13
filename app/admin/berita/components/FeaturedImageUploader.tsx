@@ -190,7 +190,7 @@ export default function FeaturedImageUploader({ initialUrl = "" }: { initialUrl?
               </span>
 
               <span className="mt-1 text-xs leading-5 text-slate-500">
-                JPG, PNG, atau WebP Ã‚Â· maksimal 5 MB
+                JPG, PNG, atau WebP - maksimal 5 MB
               </span>
             </>
           )}
