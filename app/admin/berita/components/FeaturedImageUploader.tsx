@@ -1,6 +1,7 @@
 "use client";
 
 import { upload } from "@vercel/blob/client";
+import { compressNewsImage } from "@/lib/client-image-compression";
 import {
   CheckCircle2,
   ImagePlus,
@@ -40,11 +41,12 @@ export default function FeaturedImageUploader({ initialUrl = "" }: { initialUrl?
 
   const [imageUrl, setImageUrl] = useState(initialUrl ?? "");
   const [isUploading, setIsUploading] = useState(false);
+  const [isOptimizing, setIsOptimizing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   const selectFile = () => {
-    if (!isUploading) {
+    if (!isUploading && !isOptimizing) {
       inputRef.current?.click();
     }
   };
@@ -63,18 +65,44 @@ export default function FeaturedImageUploader({ initialUrl = "" }: { initialUrl?
     }
 
     setIsUploading(true);
+    setIsOptimizing(true);
     setProgress(0);
 
+    const optimizationStartedAt = performance.now();
+
+    // Lepaskan event loop sekali agar browser sempat merender status optimasi.
+    await new Promise<void>((resolve) => {
+      setTimeout(resolve, 0);
+    });
+
     try {
-      const safeName = sanitizeFilename(file.name);
+      const optimized = await compressNewsImage(file);
+      const uploadFile = optimized.file;
+
+      // Pastikan status "Mengoptimalkan gambar..." terlihat cukup lama.
+      const minimumOptimizationDisplayMs = 400;
+      const elapsedOptimizationMs = performance.now() - optimizationStartedAt;
+
+      if (elapsedOptimizationMs < minimumOptimizationDisplayMs) {
+        await new Promise<void>((resolve) => {
+          setTimeout(
+            resolve,
+            Math.ceil(minimumOptimizationDisplayMs - elapsedOptimizationMs),
+          );
+        });
+      }
+
+      setIsOptimizing(false);
+
+      const safeName = sanitizeFilename(uploadFile.name);
 
       const blob = await upload(
         `media/berita/${Date.now()}-${safeName}`,
-        file,
+        uploadFile,
         {
           access: "public",
           handleUploadUrl: "/api/admin/media/upload",
-          contentType: file.type,
+          contentType: uploadFile.type,
           onUploadProgress: ({ percentage }) => {
             setProgress(Math.round(percentage));
           },
@@ -90,6 +118,7 @@ export default function FeaturedImageUploader({ initialUrl = "" }: { initialUrl?
           : "Gagal mengunggah gambar.",
       );
     } finally {
+      setIsOptimizing(false);
       setIsUploading(false);
 
       if (inputRef.current) {
@@ -123,7 +152,7 @@ export default function FeaturedImageUploader({ initialUrl = "" }: { initialUrl?
       {!imageUrl ? (
         <button
           type="button"
-          disabled={isUploading}
+          disabled={isUploading || isOptimizing}
           onClick={selectFile}
           className="flex min-h-44 w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 px-6 py-8 text-center transition hover:border-teal-400 hover:bg-teal-50/40 disabled:cursor-not-allowed disabled:opacity-70"
         >
@@ -132,11 +161,15 @@ export default function FeaturedImageUploader({ initialUrl = "" }: { initialUrl?
               <Loader2 className="mb-3 h-8 w-8 animate-spin text-teal-700" />
 
               <span className="text-sm font-semibold text-slate-800">
-                Mengunggah gambar...
+                {isOptimizing
+                  ? "Mengoptimalkan gambar..."
+                  : "Mengunggah gambar..."}
               </span>
 
               <span className="mt-1 text-xs text-slate-500">
-                {progress}%
+                {isOptimizing
+                  ? "Menjaga kualitas gambar"
+                  : `${progress}%`}
               </span>
 
               <div className="mt-4 h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-slate-200">
@@ -157,7 +190,7 @@ export default function FeaturedImageUploader({ initialUrl = "" }: { initialUrl?
               </span>
 
               <span className="mt-1 text-xs leading-5 text-slate-500">
-                JPG, PNG, atau WebP Â· maksimal 5 MB
+                JPG, PNG, atau WebP Ã‚Â· maksimal 5 MB
               </span>
             </>
           )}
