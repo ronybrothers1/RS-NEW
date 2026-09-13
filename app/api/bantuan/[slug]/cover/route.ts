@@ -1,7 +1,4 @@
 import {
-  get,
-} from "@vercel/blob";
-import {
   and,
   eq,
   inArray,
@@ -10,6 +7,9 @@ import {
 import {
   getAssistanceBlobToken,
 } from "@/lib/assistance-media";
+import {
+  createVercelBlobStorage,
+} from "@/lib/storage/providers/vercel-blob";
 import {
   db,
 } from "@/src/db";
@@ -94,14 +94,15 @@ export async function GET(
   }
 
   try {
+    const storage =
+      createVercelBlobStorage({
+        access: "private",
+        token,
+      });
+
     const result =
-      await get(
+      await storage.read(
         photo.imageUrl,
-        {
-          access:
-            "private",
-          token,
-        },
       );
 
     if (!result) {
@@ -118,9 +119,7 @@ export async function GET(
       {
         headers: {
           "Content-Type":
-            result.blob
-              .contentType ||
-            "application/octet-stream",
+            result.contentType,
           "Cache-Control":
             "public, max-age=3600, stale-while-revalidate=86400",
           "X-Content-Type-Options":
