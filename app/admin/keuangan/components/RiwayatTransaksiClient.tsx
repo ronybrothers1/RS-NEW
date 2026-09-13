@@ -30,6 +30,13 @@ import {
 import { formatCurrency } from "@/lib/utils";
 
 type TransactionType = "IN" | "OUT";
+
+type TransactionCategory =
+  | "INCOME"
+  | "EXPENSE"
+  | "LOAN_OUT"
+  | "LOAN_REPAYMENT";
+
 type TransactionTypeFilter =
   | "ALL"
   | TransactionType;
@@ -38,10 +45,12 @@ type ProgramStatus = "ACTIVE" | "INACTIVE";
 type TransactionItem = {
   id: string;
   type: TransactionType;
+  category: TransactionCategory | null;
   amount: string;
   date: string;
   description: string;
   programId: string | null;
+  campaignId: string | null;
   programName: string | null;
   programStatus: ProgramStatus | null;
   donationId: string | null;
@@ -133,6 +142,52 @@ function formatAmountInput(value: string) {
   return Number(digits).toLocaleString("id-ID");
 }
 
+function effectiveCategory(
+  transaction: Pick<
+    TransactionItem,
+    "type" | "category"
+  >,
+): TransactionCategory {
+  return (
+    transaction.category ??
+    (
+      transaction.type === "IN"
+        ? "INCOME"
+        : "EXPENSE"
+    )
+  );
+}
+
+function categoryLabel(
+  category: TransactionCategory,
+) {
+  switch (category) {
+    case "LOAN_OUT":
+      return "Pinjaman Keluar";
+    case "LOAN_REPAYMENT":
+      return "Pengembalian Pinjaman";
+    case "EXPENSE":
+      return "Pengeluaran";
+    default:
+      return "Penerimaan";
+  }
+}
+
+function categoryBadgeClass(
+  category: TransactionCategory,
+) {
+  switch (category) {
+    case "LOAN_OUT":
+      return "bg-amber-50 text-amber-700";
+    case "LOAN_REPAYMENT":
+      return "bg-blue-50 text-blue-700";
+    case "EXPENSE":
+      return "bg-rose-50 text-rose-700";
+    default:
+      return "bg-emerald-50 text-emerald-700";
+  }
+}
+
 function isWebsiteDonation(
   transaction: TransactionItem,
 ) {
@@ -199,6 +254,12 @@ export default function RiwayatTransaksiClient({
     useState<TransactionItem | null>(null);
   const [editType, setEditType] =
     useState<TransactionType>("IN");
+  const [
+    editCategory,
+    setEditCategory,
+  ] = useState<TransactionCategory>(
+    "INCOME",
+  );
   const [editAmount, setEditAmount] =
     useState("");
   const [editProgramId, setEditProgramId] =
@@ -295,6 +356,9 @@ export default function RiwayatTransaksiClient({
 
     setEditItem(transaction);
     setEditType(transaction.type);
+    setEditCategory(
+      effectiveCategory(transaction),
+    );
     setEditAmount(
       formatAmountInput(transaction.amount),
     );
@@ -588,18 +652,28 @@ export default function RiwayatTransaksiClient({
                           </td>
 
                           <td className="px-5 py-4">
-                            {transaction.type ===
-                            "IN" ? (
-                              <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
-                                <ArrowUpRight className="mr-1 h-3 w-3" />
-                                Masuk
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center rounded-full bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700">
-                                <ArrowDownRight className="mr-1 h-3 w-3" />
-                                Keluar
-                              </span>
-                            )}
+                            {(() => {
+                              const category =
+                                effectiveCategory(
+                                  transaction,
+                                );
+
+                              return (
+                                <span
+                                  className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${categoryBadgeClass(category)}`}
+                                >
+                                  {transaction.type ===
+                                  "IN" ? (
+                                    <ArrowUpRight className="mr-1 h-3 w-3" />
+                                  ) : (
+                                    <ArrowDownRight className="mr-1 h-3 w-3" />
+                                  )}
+                                  {categoryLabel(
+                                    category,
+                                  )}
+                                </span>
+                              );
+                            })()}
                           </td>
 
                           <td className="max-w-[320px] px-5 py-4">
@@ -910,9 +984,11 @@ export default function RiwayatTransaksiClient({
                   Jenis
                 </dt>
                 <dd className="mt-1 font-semibold text-slate-900">
-                  {detailItem.type === "IN"
-                    ? "Uang Masuk"
-                    : "Uang Keluar"}
+                  {categoryLabel(
+                    effectiveCategory(
+                      detailItem,
+                    ),
+                  )}
                 </dd>
               </div>
 
@@ -1090,12 +1166,18 @@ export default function RiwayatTransaksiClient({
                   <select
                     name="type"
                     value={editType}
-                    onChange={(event) =>
-                      setEditType(
+                    onChange={(event) => {
+                      const nextType =
                         event.target
-                          .value as TransactionType,
-                      )
-                    }
+                          .value as TransactionType;
+
+                      setEditType(nextType);
+                      setEditCategory(
+                        nextType === "IN"
+                          ? "INCOME"
+                          : "EXPENSE",
+                      );
+                    }}
                     className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5"
                   >
                     <option value="IN">
@@ -1123,6 +1205,54 @@ export default function RiwayatTransaksiClient({
                     className="w-full rounded-xl border border-slate-300 px-4 py-2.5"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  Klasifikasi
+                </label>
+
+                <select
+                  name="category"
+                  value={editCategory}
+                  onChange={(event) =>
+                    setEditCategory(
+                      event.target
+                        .value as TransactionCategory,
+                    )
+                  }
+                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5"
+                >
+                  {editType === "IN" ? (
+                    <>
+                      <option value="INCOME">
+                        Penerimaan
+                      </option>
+                      {!editItem.campaignId && (
+                        <option value="LOAN_REPAYMENT">
+                          Pengembalian Pinjaman
+                        </option>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <option value="EXPENSE">
+                        Pengeluaran
+                      </option>
+                      {!editItem.campaignId && (
+                        <option value="LOAN_OUT">
+                          Pinjaman Keluar
+                        </option>
+                      )}
+                    </>
+                  )}
+                </select>
+
+                {editItem.campaignId && (
+                  <p className="mt-1 text-xs leading-5 text-slate-500">
+                    Transaksi kampanye tidak dapat diklasifikasikan sebagai transaksi pinjaman.
+                  </p>
+                )}
               </div>
 
               <div>
@@ -1156,7 +1286,10 @@ export default function RiwayatTransaksiClient({
               {editType === "IN" && (
                 <div>
                   <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Donatur / Sumber Dana
+                    {editCategory ===
+                    "LOAN_REPAYMENT"
+                      ? "Pihak yang Mengembalikan / Sumber Dana"
+                      : "Donatur / Sumber Dana"}
                   </label>
 
                   <input

@@ -31,6 +31,61 @@ type CampaignStatus =
   | "COMPLETED"
   | "CANCELLED";
 
+type FinancialTransactionCategory =
+  | "INCOME"
+  | "EXPENSE"
+  | "LOAN_OUT"
+  | "LOAN_REPAYMENT";
+
+function defaultCategoryForType(
+  type: "IN" | "OUT",
+): FinancialTransactionCategory {
+  return type === "IN"
+    ? "INCOME"
+    : "EXPENSE";
+}
+
+function resolveTransactionCategory(
+  type: "IN" | "OUT",
+  rawValue: string | null,
+  fallback?: FinancialTransactionCategory | null,
+) {
+  const category =
+    (rawValue ||
+      fallback ||
+      defaultCategoryForType(type)) as
+      FinancialTransactionCategory;
+
+  const valid =
+    type === "IN"
+      ? category === "INCOME" ||
+        category === "LOAN_REPAYMENT"
+      : category === "EXPENSE" ||
+        category === "LOAN_OUT";
+
+  if (!valid) {
+    return {
+      success: false as const,
+      error:
+        "Klasifikasi transaksi tidak sesuai dengan arah kas yang dipilih.",
+    };
+  }
+
+  return {
+    success: true as const,
+    category,
+  };
+}
+
+function isLoanCategory(
+  category: FinancialTransactionCategory,
+) {
+  return (
+    category === "LOAN_OUT" ||
+    category === "LOAN_REPAYMENT"
+  );
+}
+
 function cleanText(
   value: FormDataEntryValue | null,
 ) {
@@ -127,6 +182,7 @@ async function getFinanceSession() {
 function revalidateFinancePages(
   campaignId?: string | null,
 ) {
+  revalidatePath("/");
   revalidatePath("/admin/dashboard");
   revalidatePath(
     "/admin/keuangan/masuk",
@@ -354,11 +410,6 @@ export async function createTransaksiMasuk(
     formData.get("donorName"),
   );
 
-  const description =
-    cleanOptional(
-      formData.get("description"),
-    ) ?? "Penerimaan Dana";
-
   const rawProgramId = cleanOptional(
     formData.get("programId"),
   );
@@ -366,6 +417,45 @@ export async function createTransaksiMasuk(
   const rawCampaignId = cleanOptional(
     formData.get("campaignId"),
   );
+
+  const categoryResult =
+    resolveTransactionCategory(
+      "IN",
+      cleanOptional(
+        formData.get("category"),
+      ),
+    );
+
+  if (!categoryResult.success) {
+    return {
+      success: false,
+      error: categoryResult.error,
+    };
+  }
+
+  const category =
+    categoryResult.category;
+
+  if (
+    category === "LOAN_REPAYMENT" &&
+    rawCampaignId
+  ) {
+    return {
+      success: false,
+      error:
+        "Pengembalian pinjaman tidak boleh dikaitkan ke kampanye.",
+    };
+  }
+
+  const description =
+    cleanOptional(
+      formData.get("description"),
+    ) ??
+    (
+      category === "LOAN_REPAYMENT"
+        ? "Pengembalian Pinjaman"
+        : "Penerimaan Dana"
+    );
 
   if (!date) {
     return {
@@ -431,6 +521,7 @@ export async function createTransaksiMasuk(
               )
               .values({
                 type: "IN",
+                category,
                 amount,
                 date,
                 description,
@@ -521,6 +612,35 @@ export async function createTransaksiKeluar(
   const rawCampaignId = cleanOptional(
     formData.get("campaignId"),
   );
+
+  const categoryResult =
+    resolveTransactionCategory(
+      "OUT",
+      cleanOptional(
+        formData.get("category"),
+      ),
+    );
+
+  if (!categoryResult.success) {
+    return {
+      success: false,
+      error: categoryResult.error,
+    };
+  }
+
+  const category =
+    categoryResult.category;
+
+  if (
+    category === "LOAN_OUT" &&
+    rawCampaignId
+  ) {
+    return {
+      success: false,
+      error:
+        "Pinjaman keluar tidak boleh dikaitkan ke kampanye.",
+    };
+  }
 
   if (!date) {
     return {
@@ -639,6 +759,7 @@ export async function createTransaksiKeluar(
               )
               .values({
                 type: "OUT",
+                category,
                 amount,
                 date,
                 description,
@@ -776,6 +897,38 @@ export async function updateTransaksi(
       success: false,
       error:
         "Jenis transaksi tidak valid.",
+    };
+  }
+
+  const categoryResult =
+    resolveTransactionCategory(
+      type,
+      cleanOptional(
+        formData.get("category"),
+      ),
+      oldTransaction.type === type
+        ? oldTransaction.category
+        : null,
+    );
+
+  if (!categoryResult.success) {
+    return {
+      success: false,
+      error: categoryResult.error,
+    };
+  }
+
+  const category =
+    categoryResult.category;
+
+  if (
+    oldTransaction.campaignId &&
+    isLoanCategory(category)
+  ) {
+    return {
+      success: false,
+      error:
+        "Transaksi kampanye tidak dapat diklasifikasikan sebagai transaksi pinjaman.",
     };
   }
 
@@ -994,6 +1147,7 @@ export async function updateTransaksi(
               )
               .set({
                 type,
+                category,
                 amount,
                 date,
                 description,

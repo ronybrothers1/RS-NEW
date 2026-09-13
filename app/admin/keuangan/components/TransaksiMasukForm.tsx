@@ -29,6 +29,10 @@ type CampaignOption = {
   status: "ACTIVE";
 };
 
+type IncomingCategory =
+  | "INCOME"
+  | "LOAN_REPAYMENT";
+
 function getJakartaDateValue() {
   return new Intl.DateTimeFormat(
     "en-CA",
@@ -81,6 +85,13 @@ export default function TransaksiMasukForm({
     useState("");
 
   const [
+    selectedCategory,
+    setSelectedCategory,
+  ] = useState<IncomingCategory>(
+    "INCOME",
+  );
+
+  const [
     selectedProgram,
     setSelectedProgram,
   ] = useState(
@@ -108,6 +119,19 @@ export default function TransaksiMasukForm({
         selectedProgram,
       ],
     );
+
+  function changeCategory(
+    category: IncomingCategory,
+  ) {
+    setSelectedCategory(category);
+
+    if (
+      category ===
+      "LOAN_REPAYMENT"
+    ) {
+      setSelectedCampaign("");
+    }
+  }
 
   function changeProgram(
     programId: string,
@@ -195,6 +219,39 @@ export default function TransaksiMasukForm({
         </div>
       )}
 
+      <div>
+        <label
+          htmlFor="income-category"
+          className="mb-2 block text-sm font-medium text-slate-700"
+        >
+          Klasifikasi Uang Masuk
+        </label>
+
+        <select
+          id="income-category"
+          name="category"
+          value={selectedCategory}
+          onChange={(event) =>
+            changeCategory(
+              event.target
+                .value as IncomingCategory,
+            )
+          }
+          className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-slate-900 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
+        >
+          <option value="INCOME">
+            Penerimaan
+          </option>
+          <option value="LOAN_REPAYMENT">
+            Pengembalian Pinjaman
+          </option>
+        </select>
+
+        <p className="mt-2 text-xs leading-5 text-slate-500">
+          Penerimaan untuk donasi atau dana masuk biasa. Pengembalian Pinjaman hanya untuk uang pinjaman yang kembali ke kas dan tidak dapat dikaitkan ke kampanye.
+        </p>
+      </div>
+
       <div className="grid gap-5 sm:grid-cols-2">
         <div>
           <label
@@ -259,7 +316,10 @@ export default function TransaksiMasukForm({
           htmlFor="income-donor"
           className="mb-2 block text-sm font-medium text-slate-700"
         >
-          Donatur / Sumber Dana{" "}
+          {selectedCategory ===
+          "LOAN_REPAYMENT"
+            ? "Pihak yang Mengembalikan / Sumber Dana"
+            : "Donatur / Sumber Dana"}{" "}
           <span className="text-rose-500">
             *
           </span>
@@ -331,10 +391,17 @@ export default function TransaksiMasukForm({
                 event.target.value,
               )
             }
-            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-slate-900 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
+            disabled={
+              selectedCategory ===
+              "LOAN_REPAYMENT"
+            }
+            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-slate-900 outline-none transition disabled:bg-slate-100 disabled:text-slate-400 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
           >
             <option value="">
-              Tidak terkait kampanye
+              {selectedCategory ===
+              "LOAN_REPAYMENT"
+                ? "Tidak tersedia untuk pengembalian pinjaman"
+                : "Tidak terkait kampanye"}
             </option>
 
             {availableCampaigns.map(
@@ -375,7 +442,12 @@ export default function TransaksiMasukForm({
           name="description"
           rows={4}
           maxLength={1000}
-          placeholder="Contoh: Donasi kegiatan sosial September 2026"
+          placeholder={
+            selectedCategory ===
+            "LOAN_REPAYMENT"
+              ? "Contoh: Pengembalian pinjaman biaya kendaraan"
+              : "Contoh: Donasi kegiatan sosial September 2026"
+          }
           className="w-full resize-y rounded-xl border border-slate-300 px-4 py-3 text-slate-900 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
         />
       </div>

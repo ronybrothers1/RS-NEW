@@ -14,6 +14,10 @@ import { sql } from "drizzle-orm";
 
 export const roleEnum = pgEnum('role', ['ADMIN', 'OPERATOR', 'USER']);
 export const trxTypeEnum = pgEnum('trx_type', ['IN', 'OUT']);
+export const financialTransactionCategoryEnum = pgEnum(
+  'financial_transaction_category',
+  ['INCOME', 'EXPENSE', 'LOAN_OUT', 'LOAN_REPAYMENT']
+);
 export const articleStatusEnum = pgEnum('article_status', ['DRAFT', 'SCHEDULED', 'PUBLISHED', 'ARCHIVED']);
 export const donationStatusEnum = pgEnum('donation_status', ['PENDING', 'SUCCESS', 'FAILED']);
 export const programStatusEnum = pgEnum('program_status', ['ACTIVE', 'INACTIVE']);
@@ -187,6 +191,7 @@ export const campaigns = pgTable('campaigns', {
 export const financialTransactions = pgTable('financial_transactions', {
   id: uuid('id').defaultRandom().primaryKey(),
   type: trxTypeEnum('type').notNull(),
+  category: financialTransactionCategoryEnum('category'),
   amount: numeric('amount').notNull(),
   date: timestamp('date').notNull(),
   description: text('description').notNull(),

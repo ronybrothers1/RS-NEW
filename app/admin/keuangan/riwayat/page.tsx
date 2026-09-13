@@ -213,12 +213,16 @@ export default async function RiwayatTransaksiPage({
     .select({
       id: financialTransactions.id,
       type: financialTransactions.type,
+      category:
+        financialTransactions.category,
       amount: financialTransactions.amount,
       date: financialTransactions.date,
       description:
         financialTransactions.description,
       programId:
         financialTransactions.programId,
+      campaignId:
+        financialTransactions.campaignId,
       programName: programs.name,
       programStatus: programs.status,
       donationId:

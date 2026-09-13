@@ -19,10 +19,10 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { db } from "@/src/db";
-import { financialTransactions, programs, articles } from "@/src/db/schema";
+import { programs, articles } from "@/src/db/schema";
 import { sql, eq } from "drizzle-orm";
 import { formatCurrency } from "@/lib/utils";
-import { getFinanceOpeningBalance } from "@/lib/finance-opening-balance";
+import { getFinanceSummary } from "@/lib/finance-summary";
 import { createPageMetadata, SITE_DESCRIPTION, SITE_NAME } from "@/lib/seo-metadata";
 
 export const metadata = createPageMetadata({
@@ -43,18 +43,8 @@ const iconMap: Record<string, React.ElementType> = {
 };
 
 export default async function HomePage() {
-  const openingBalance =
-    await getFinanceOpeningBalance();
-
-  const [financialStats] = await db.select({
-    totalIn: sql<number>`COALESCE(SUM(CASE WHEN ${financialTransactions.type} = 'IN' THEN ${financialTransactions.amount} ELSE 0 END), 0)`,
-    totalOut: sql<number>`COALESCE(SUM(CASE WHEN ${financialTransactions.type} = 'OUT' THEN ${financialTransactions.amount} ELSE 0 END), 0)`,
-  }).from(financialTransactions).where(sql`${financialTransactions.deletedAt} IS NULL`);
-
-  const saldo =
-    openingBalance.amount +
-    Number(financialStats?.totalIn || 0) -
-    Number(financialStats?.totalOut || 0);
+  const finance =
+    await getFinanceSummary();
 
   const activePrograms = await db
     .select()
@@ -107,17 +97,20 @@ export default async function HomePage() {
       )
     : null;
 
-  const hasRealData = Number(financialStats?.totalIn) > 0 || activePrograms.length > 0;
+  const hasRealData =
+    finance.totalIncome > 0 ||
+    activePrograms.length > 0;
+
   const impactItems = [
     { label: "Program Sosial", value: activePrograms.length, icon: Users },
     {
       label: "Total Pengeluaran",
-      value: `Rp ${(Number(financialStats?.totalOut || 0) / 1000000).toFixed(1)} Jt`,
+      value: `Rp ${(finance.totalExpense / 1000000).toFixed(1)} Jt`,
       icon: WalletCards,
     },
     {
       label: "Total Penerimaan",
-      value: `Rp ${(Number(financialStats?.totalIn || 0) / 1000000).toFixed(1)} Jt`,
+      value: `Rp ${(finance.totalIncome / 1000000).toFixed(1)} Jt`,
       icon: BarChart3,
     },
     { label: "Laporan Keuangan", value: "Terbuka", icon: FileText },
@@ -374,7 +367,7 @@ export default async function HomePage() {
         <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-9 px-4 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:px-8">
           <div>
             <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">Transparansi Adalah Janji Kami</h2>
-            <p className="mt-4 max-w-2xl text-sm leading-6 text-brand-100 sm:text-base">Kami percaya bahwa setiap rupiah yang dipercayakan kepada yayasan adalah amanah. Laporan penerimaan, pengeluaran, dan saldo kas dapat diakses oleh masyarakat.</p>
+            <p className="mt-4 max-w-2xl text-sm leading-6 text-brand-100 sm:text-base">Kami percaya bahwa setiap rupiah yang dipercayakan kepada yayasan adalah amanah. Laporan penerimaan, pengeluaran, pinjaman, dan saldo kas dapat diakses oleh masyarakat.</p>
             <ul className="mt-5 space-y-2.5 text-sm text-brand-50">
               <li className="flex gap-2.5"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-citrus-300" /> Penerimaan dan pengeluaran tercatat pada ledger keuangan</li>
               <li className="flex gap-2.5"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-citrus-300" /> Transaksi terhubung ke program atau kampanye bila relevan</li>
@@ -383,20 +376,81 @@ export default async function HomePage() {
             <Link href="/transparansi" className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-full bg-citrus-400 px-5 py-2.5 text-sm font-bold text-brand-950 transition hover:bg-citrus-300">Buka Laporan Keuangan <ArrowRight className="h-4 w-4" /></Link>
           </div>
           <div className="overflow-hidden rounded-2xl border border-white/20 bg-brand-900/65 p-3 shadow-2xl backdrop-blur-md sm:p-4">
-            <div className="grid gap-2.5">
-              {[
-                { label: "Total Penerimaan", value: formatCurrency(Number(financialStats?.totalIn || 0)), icon: WalletCards, color: "text-emerald-300" },
-                { label: "Total Pengeluaran", value: formatCurrency(Number(financialStats?.totalOut || 0)), icon: BarChart3, color: "text-citrus-300" },
-                { label: "Saldo Kas Saat Ini", value: formatCurrency(saldo), icon: FileText, color: "text-white" },
-              ].map((item) => {
-                const Icon = item.icon;
-                return (
-                  <div key={item.label} className="flex items-center gap-4 rounded-xl border border-white/10 bg-white/[0.06] px-4 py-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-700/80 text-brand-50"><Icon className="h-5 w-5" /></div>
-                    <div><div className="text-xs font-medium text-brand-200">{item.label}</div><div className={`mt-0.5 text-xl font-extrabold tracking-tight sm:text-2xl ${item.color}`}>{item.value}</div></div>
-                  </div>
-                );
-              })}
+            <div className="rounded-xl border border-white/10 bg-white/[0.08] px-4 py-4 sm:px-5">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.12em] text-brand-200">
+                    Saldo Kas Saat Ini
+                  </p>
+                  <p className="mt-1 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+                    {formatCurrency(finance.cashBalance)}
+                  </p>
+                </div>
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-700/80 text-brand-50">
+                  <FileText className="h-5 w-5" />
+                </div>
+              </div>
+              <p className="mt-2 text-xs leading-5 text-brand-200">
+                Saldo setelah seluruh penerimaan, pengeluaran, dan transaksi pinjaman tercatat.
+              </p>
+            </div>
+
+            <div className="mt-3 overflow-hidden rounded-xl border border-white/10 bg-brand-950/20">
+              <div className="border-b border-white/10 px-4 py-3">
+                <p className="text-sm font-bold text-white">
+                  Bagaimana saldo ini terbentuk?
+                </p>
+                <p className="mt-0.5 text-xs text-brand-200">
+                  Rekonsiliasi seluruh komponen kas yang ditampilkan secara terbuka.
+                </p>
+              </div>
+
+              <div className="divide-y divide-white/10 px-4">
+                <div className="flex items-center justify-between gap-4 py-2.5 text-sm">
+                  <span className="text-brand-100">Saldo awal</span>
+                  <span className="font-bold text-white">
+                    {formatCurrency(finance.openingBalance)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-4 py-2.5 text-sm">
+                  <span className="text-brand-100">+ Penerimaan</span>
+                  <span className="font-bold text-emerald-300">
+                    {formatCurrency(finance.totalIncome)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-4 py-2.5 text-sm">
+                  <span className="text-brand-100">+ Pengembalian pinjaman</span>
+                  <span className="font-bold text-emerald-300">
+                    {formatCurrency(finance.loanRepayment)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-4 py-2.5 text-sm">
+                  <span className="text-brand-100">− Pengeluaran</span>
+                  <span className="font-bold text-citrus-300">
+                    {formatCurrency(finance.totalExpense)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-4 py-2.5 text-sm">
+                  <span className="text-brand-100">− Pinjaman keluar</span>
+                  <span className="font-bold text-citrus-300">
+                    {formatCurrency(finance.loanOut)}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between gap-4 border-t border-white/15 bg-white/[0.06] px-4 py-3">
+                <span className="text-sm font-bold text-white">
+                  = Saldo kas saat ini
+                </span>
+                <span className="text-lg font-extrabold text-white">
+                  {formatCurrency(finance.cashBalance)}
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.05] px-4 py-3 text-xs leading-5 text-brand-100">
+              <span className="font-bold text-white">Pinjaman beredar {formatCurrency(finance.loanOutstanding)}</span>
+              {" "}berasal dari {formatCurrency(finance.loanOut)} pinjaman keluar dikurangi {formatCurrency(finance.loanRepayment)} yang sudah dikembalikan.
             </div>
           </div>
         </div>

@@ -36,6 +36,7 @@ async function getAdminSession() {
 }
 
 function revalidateDonationPages() {
+  revalidatePath("/");
   revalidatePath("/admin/donasi");
   revalidatePath("/admin/dashboard");
   revalidatePath("/donasi");
@@ -268,6 +269,7 @@ export async function verifyDonation(
               )
               .values({
                 type: "IN",
+                category: "INCOME",
                 amount:
                   updatedDonation.amount,
                 date: new Date(),

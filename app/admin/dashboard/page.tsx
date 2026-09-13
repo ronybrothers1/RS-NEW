@@ -29,7 +29,7 @@ import {
   programs,
 } from "@/src/db/schema";
 import { formatCurrency } from "@/lib/utils";
-import { getFinanceOpeningBalance } from "@/lib/finance-opening-balance";
+import { getFinanceSummary } from "@/lib/finance-summary";
 
 export const dynamic = "force-dynamic";
 
@@ -106,11 +106,10 @@ function articleStatus(status: string) {
 }
 
 export default async function DashboardPage() {
-  const openingBalance =
-    await getFinanceOpeningBalance();
+  const finance =
+    await getFinanceSummary();
 
   const [
-    financialStats,
     activityStats,
     articleStats,
     donationStats,
@@ -119,41 +118,6 @@ export default async function DashboardPage() {
     latestActivities,
     latestArticles,
   ] = await Promise.all([
-    db
-      .select({
-        totalIn: sql<number>`
-          COALESCE(
-            SUM(
-              CASE
-                WHEN ${financialTransactions.type} = 'IN'
-                THEN ${financialTransactions.amount}
-                ELSE 0
-              END
-            ),
-            0
-          )
-        `,
-        totalOut: sql<number>`
-          COALESCE(
-            SUM(
-              CASE
-                WHEN ${financialTransactions.type} = 'OUT'
-                THEN ${financialTransactions.amount}
-                ELSE 0
-              END
-            ),
-            0
-          )
-        `,
-        count: sql<number>`COUNT(*)`,
-      })
-      .from(financialTransactions)
-      .where(
-        isNull(
-          financialTransactions.deletedAt,
-        ),
-      ),
-
     db
       .select({
         total: sql<number>`COUNT(*)`,
@@ -404,13 +368,6 @@ export default async function DashboardPage() {
       .limit(4),
   ]);
 
-  const finance =
-    financialStats[0] ?? {
-      totalIn: 0,
-      totalOut: 0,
-      count: 0,
-    };
-
   const activity =
     activityStats[0] ?? {
       total: 0,
@@ -444,19 +401,20 @@ export default async function DashboardPage() {
       inactive: 0,
     };
 
-  const totalIn = Number(
-    finance.totalIn || 0,
-  );
+  const totalIncome =
+    finance.totalIncome;
 
-  const totalOut = Number(
-    finance.totalOut || 0,
-  );
+  const totalExpense =
+    finance.totalExpense;
 
-  const saldo = openingBalance.amount + totalIn - totalOut;
+  const saldo =
+    finance.cashBalance;
 
-  const transactionCount = Number(
-    finance.count || 0,
-  );
+  const transactionCount =
+    finance.transactionCount;
+
+  const loanOutstanding =
+    finance.loanOutstanding;
 
   const pendingDonationCount = Number(
     donation.pendingCount || 0,
@@ -523,7 +481,7 @@ export default async function DashboardPage() {
       </section>
 
       <section
-        className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
+        className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5"
         aria-label="Ringkasan utama"
       >
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -550,7 +508,7 @@ export default async function DashboardPage() {
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
           <div className="flex items-center justify-between gap-4">
             <p className="text-sm font-medium text-slate-500">
-              Total Uang Masuk
+              Total Penerimaan
             </p>
 
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
@@ -559,7 +517,7 @@ export default async function DashboardPage() {
           </div>
 
           <p className="mt-3 text-2xl font-bold tracking-tight text-slate-950">
-            {formatCurrency(totalIn)}
+            {formatCurrency(totalIncome)}
           </p>
 
           <Link
@@ -574,7 +532,7 @@ export default async function DashboardPage() {
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
           <div className="flex items-center justify-between gap-4">
             <p className="text-sm font-medium text-slate-500">
-              Total Uang Keluar
+              Total Pengeluaran
             </p>
 
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 text-rose-600">
@@ -583,7 +541,7 @@ export default async function DashboardPage() {
           </div>
 
           <p className="mt-3 text-2xl font-bold tracking-tight text-slate-950">
-            {formatCurrency(totalOut)}
+            {formatCurrency(totalExpense)}
           </p>
 
           <Link
@@ -593,6 +551,28 @@ export default async function DashboardPage() {
             Catat pengeluaran
             <ChevronRight className="ml-1 h-3.5 w-3.5" />
           </Link>
+        </div>
+
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="flex items-center justify-between gap-4">
+            <p className="text-sm font-medium text-slate-500">
+              Pinjaman Beredar
+            </p>
+
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+              <Activity className="h-5 w-5" />
+            </div>
+          </div>
+
+          <p className="mt-3 text-2xl font-bold tracking-tight text-slate-950">
+            {formatCurrency(
+              loanOutstanding,
+            )}
+          </p>
+
+          <p className="mt-2 text-xs text-slate-400">
+            Pinjaman keluar yang belum kembali
+          </p>
         </div>
 
         <div
