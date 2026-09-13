@@ -1,11 +1,9 @@
 import {
-  get,
-  head,
-} from "@vercel/blob";
-
-import {
   getAssistanceBlobToken,
 } from "@/lib/assistance-media";
+import {
+  createVercelBlobStorage,
+} from "@/lib/storage/providers/vercel-blob";
 
 export const DONATION_PROOF_BASE_PATH =
   "media/donasi";
@@ -121,12 +119,15 @@ export async function validatePrivateDonationProof(
   }
 
   try {
+    const storage =
+      createVercelBlobStorage({
+        access: "private",
+        token,
+      });
+
     const metadata =
-      await head(
+      await storage.head(
         value,
-        {
-          token,
-        },
       );
 
     if (
@@ -265,22 +266,18 @@ export async function getDonationProofForStaff(
       return null;
     }
 
+    const storage =
+      createVercelBlobStorage({
+        access: "private",
+        token,
+      });
+
     const result =
-      await get(
+      await storage.read(
         value,
-        {
-          access:
-            "private",
-          token,
-        },
       );
 
-    if (
-      !result ||
-      result.statusCode !==
-        200 ||
-      !result.stream
-    ) {
+    if (!result) {
       return null;
     }
 
@@ -288,9 +285,7 @@ export async function getDonationProofForStaff(
       stream:
         result.stream,
       contentType:
-        result.blob
-          .contentType ||
-        "application/octet-stream",
+        result.contentType,
     };
   }
 
