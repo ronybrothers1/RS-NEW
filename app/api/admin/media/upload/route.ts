@@ -2,6 +2,7 @@ import {
   handleUpload,
   type HandleUploadBody,
 } from "@vercel/blob/client";
+import { del, list } from "@vercel/blob";
 import {
   NextResponse,
 } from "next/server";
@@ -12,6 +13,8 @@ import {
 import {
   rateLimit,
 } from "@/lib/rate-limit";
+import { db } from "@/src/db";
+import { articles } from "@/src/db/schema";
 
 const MAX_IMAGE_SIZE =
   5 * 1024 * 1024;
@@ -21,6 +24,76 @@ const ALLOWED_CONTENT_TYPES = [
   "image/png",
   "image/webp",
 ];
+
+
+const NEWS_BLOB_PREFIX = "media/berita/";
+const STALE_NEWS_BLOB_AGE_MS =
+  7 * 24 * 60 * 60 * 1000;
+const NEWS_BLOB_LIST_LIMIT = 250;
+
+async function cleanupStaleNewsBlobOrphans() {
+  const cutoff =
+    Date.now() - STALE_NEWS_BLOB_AGE_MS;
+
+  const articleReferences = await db
+    .select({
+      imageUrl: articles.imageUrl,
+      content: articles.content,
+    })
+    .from(articles);
+
+  const featuredImageUrls = new Set(
+    articleReferences
+      .map((article) => article.imageUrl)
+      .filter((value): value is string => Boolean(value)),
+  );
+
+  const articleContents = articleReferences.map(
+    (article) => article.content,
+  );
+
+  const orphanUrls = [];
+  let cursor: string | undefined;
+
+  do {
+    const result = await list({
+      prefix: NEWS_BLOB_PREFIX,
+      limit: NEWS_BLOB_LIST_LIMIT,
+      cursor,
+    });
+
+    for (const blob of result.blobs) {
+      if (blob.uploadedAt.getTime() > cutoff) {
+        continue;
+      }
+
+      const referencedAsFeatured =
+        featuredImageUrls.has(blob.url) ||
+        featuredImageUrls.has(blob.downloadUrl);
+
+      if (referencedAsFeatured) {
+        continue;
+      }
+
+      const referencedInContent =
+        articleContents.some(
+          (content) =>
+            content.includes(blob.url) ||
+            content.includes(blob.downloadUrl),
+        );
+
+      if (!referencedInContent) {
+        orphanUrls.push(blob.url);
+      }
+    }
+
+    cursor = result.cursor;
+  } while (cursor);
+
+  if (orphanUrls.length > 0) {
+    await del(orphanUrls);
+  }
+}
 
 export async function POST(
   request: Request,
@@ -88,6 +161,15 @@ export async function POST(
             ) {
               throw new Error(
                 "Lokasi media tidak diizinkan.",
+              );
+            }
+
+            try {
+              await cleanupStaleNewsBlobOrphans();
+            } catch (error) {
+              console.error(
+                "Gagal membersihkan orphan Blob berita lama.",
+                error,
               );
             }
 
