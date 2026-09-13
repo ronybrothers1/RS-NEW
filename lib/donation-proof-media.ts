@@ -1,9 +1,18 @@
+import type {
+  StorageMetadata,
+} from "@/lib/storage/contracts";
 import {
-  getAssistanceBlobToken,
-} from "@/lib/assistance-media";
+  createGoogleDriveStorage,
+  getGoogleDriveFileId,
+  GOOGLE_DRIVE_LOCATOR_PREFIX,
+  type GoogleDriveStorageAdapter,
+} from "@/lib/storage/providers/google-drive";
 import {
   createVercelBlobStorage,
 } from "@/lib/storage/providers/vercel-blob";
+import {
+  getAssistanceBlobToken,
+} from "@/lib/assistance-media";
 
 export const DONATION_PROOF_BASE_PATH =
   "media/donasi";
@@ -22,8 +31,133 @@ const allowedTypes =
     DONATION_PROOF_TYPES,
   );
 
+type GoogleDriveDonationConfig = {
+  clientId: string;
+  clientSecret: string;
+  refreshToken: string;
+  folderId: string;
+};
+
+function getGoogleDriveDonationConfig():
+  GoogleDriveDonationConfig | null {
+  const clientId =
+    process.env
+      .GOOGLE_DRIVE_CLIENT_ID
+      ?.trim();
+
+  const clientSecret =
+    process.env
+      .GOOGLE_DRIVE_CLIENT_SECRET
+      ?.trim();
+
+  const refreshToken =
+    process.env
+      .GOOGLE_DRIVE_REFRESH_TOKEN
+      ?.trim();
+
+  const folderId =
+    process.env
+      .GOOGLE_DRIVE_DONATION_FOLDER_ID
+      ?.trim();
+
+  if (
+    !clientId ||
+    !clientSecret ||
+    !refreshToken ||
+    !folderId
+  ) {
+    return null;
+  }
+
+  return {
+    clientId,
+    clientSecret,
+    refreshToken,
+    folderId,
+  };
+}
+
+function getDonationProofGoogleDriveStorage(
+  config:
+    GoogleDriveDonationConfig,
+): GoogleDriveStorageAdapter {
+  return createGoogleDriveStorage({
+    clientId:
+      config.clientId,
+    clientSecret:
+      config.clientSecret,
+    refreshToken:
+      config.refreshToken,
+  });
+}
+
+export function isDonationProofGoogleDriveConfigured() {
+  return Boolean(
+    getGoogleDriveDonationConfig(),
+  );
+}
+
+export async function createDonationProofUploadSession(
+  input: {
+    filename: string;
+    contentType: string;
+    size: number;
+  },
+) {
+  const config =
+    getGoogleDriveDonationConfig();
+
+  if (!config) {
+    throw new Error(
+      "Penyimpanan Google Drive bukti transfer belum dikonfigurasi.",
+    );
+  }
+
+  const storage =
+    getDonationProofGoogleDriveStorage(
+      config,
+    );
+
+  return storage
+    .createResumableUploadSession({
+      folderId:
+        config.folderId,
+      filename:
+        input.filename,
+      contentType:
+        input.contentType,
+      size:
+        input.size,
+    });
+}
+
 export function getDonationProofBlobToken() {
   return getAssistanceBlobToken();
+}
+
+export function isGoogleDriveDonationProofLocator(
+  value: string,
+) {
+  const normalized =
+    value.trim();
+
+  if (
+    !normalized.startsWith(
+      GOOGLE_DRIVE_LOCATOR_PREFIX,
+    )
+  ) {
+    return false;
+  }
+
+  try {
+    getGoogleDriveFileId(
+      normalized,
+    );
+
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function isPrivateDonationProofUrl(
@@ -46,7 +180,7 @@ export function isPrivateDonationProofUrl(
     const pathname =
       decodeURIComponent(
         url.pathname.replace(
-          /^\/+/, 
+          /^\/+/,
           "",
         ),
       );
@@ -79,7 +213,7 @@ export function isLegacyPublicDonationProofUrl(
     const pathname =
       decodeURIComponent(
         url.pathname.replace(
-          /^\/+/, 
+          /^\/+/,
           "",
         ),
       );
@@ -92,9 +226,109 @@ export function isLegacyPublicDonationProofUrl(
   }
 }
 
+function validateDonationProofMetadata(
+  metadata: StorageMetadata,
+) {
+  if (
+    !allowedTypes.has(
+      metadata.contentType,
+    )
+  ) {
+    return "Format bukti transfer tidak valid.";
+  }
+
+  if (
+    metadata.size >
+      DONATION_PROOF_MAX_SIZE ||
+    metadata.size <= 0
+  ) {
+    return "Ukuran bukti transfer melebihi batas yang diizinkan.";
+  }
+
+  return null;
+}
+
 export async function validatePrivateDonationProof(
   value: string,
 ) {
+  if (
+    isGoogleDriveDonationProofLocator(
+      value,
+    )
+  ) {
+    const config =
+      getGoogleDriveDonationConfig();
+
+    if (!config) {
+      return {
+        success: false as const,
+        error:
+          "Penyimpanan bukti transfer belum tersedia.",
+      };
+    }
+
+    try {
+      const storage =
+        getDonationProofGoogleDriveStorage(
+          config,
+        );
+
+      const [
+        metadata,
+        parents,
+      ] =
+        await Promise.all([
+          storage.head(
+            value,
+          ),
+          storage.getParents(
+            value,
+          ),
+        ]);
+
+      const metadataError =
+        validateDonationProofMetadata(
+          metadata,
+        );
+
+      if (metadataError) {
+        return {
+          success: false as const,
+          error:
+            metadataError,
+        };
+      }
+
+      if (
+        !parents.includes(
+          config.folderId,
+        )
+      ) {
+        return {
+          success: false as const,
+          error:
+            "Lokasi bukti transfer tidak valid.",
+        };
+      }
+
+      return {
+        success: true as const,
+        metadata,
+      };
+    } catch (error) {
+      console.error(
+        "Google Drive donation proof validation error:",
+        error,
+      );
+
+      return {
+        success: false as const,
+        error:
+          "Bukti transfer tidak dapat diverifikasi. Silakan unggah ulang.",
+      };
+    }
+  }
+
   if (
     !isPrivateDonationProofUrl(
       value,
@@ -130,26 +364,16 @@ export async function validatePrivateDonationProof(
         value,
       );
 
-    if (
-      !allowedTypes.has(
-        metadata.contentType,
-      )
-    ) {
-      return {
-        success: false as const,
-        error:
-          "Format bukti transfer tidak valid.",
-      };
-    }
+    const metadataError =
+      validateDonationProofMetadata(
+        metadata,
+      );
 
-    if (
-      metadata.size >
-      DONATION_PROOF_MAX_SIZE
-    ) {
+    if (metadataError) {
       return {
         success: false as const,
         error:
-          "Ukuran bukti transfer melebihi 5 MB.",
+          metadataError,
       };
     }
 
@@ -252,6 +476,40 @@ export async function getDonationProofForStaff(
 
   if (legacyDataProof) {
     return legacyDataProof;
+  }
+
+  if (
+    isGoogleDriveDonationProofLocator(
+      value,
+    )
+  ) {
+    const config =
+      getGoogleDriveDonationConfig();
+
+    if (!config) {
+      return null;
+    }
+
+    const storage =
+      getDonationProofGoogleDriveStorage(
+        config,
+      );
+
+    const result =
+      await storage.read(
+        value,
+      );
+
+    if (!result) {
+      return null;
+    }
+
+    return {
+      stream:
+        result.stream,
+      contentType:
+        result.contentType,
+    };
   }
 
   if (

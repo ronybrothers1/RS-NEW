@@ -2,9 +2,6 @@
 /* eslint-disable @next/next/no-img-element */
 
 import {
-  upload,
-} from "@vercel/blob/client";
-import {
   CheckCircle2,
   ImagePlus,
   Loader2,
@@ -70,6 +67,304 @@ function sanitizeFilename(
     base ||
     "bukti-transfer"
   }${extension}`;
+}
+
+type UploadSessionResponse = {
+  uploadUrl?: string;
+  locatorPrefix?: string;
+  error?: string;
+};
+
+async function createUploadSession(
+  file: File,
+  safeName: string,
+) {
+  const response =
+    await fetch(
+      "/api/donasi/proof/upload",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type":
+            "application/json",
+        },
+        body:
+          JSON.stringify({
+            filename:
+              safeName,
+            contentType:
+              file.type,
+            size:
+              file.size,
+          }),
+      },
+    );
+
+  const result =
+    (await response
+      .json()
+      .catch(
+        () => null,
+      )) as
+      UploadSessionResponse | null;
+
+  if (!response.ok) {
+    throw new Error(
+      result?.error ||
+        "Gagal menyiapkan upload bukti transfer.",
+    );
+  }
+
+  if (
+    !result?.uploadUrl ||
+    !result.locatorPrefix
+  ) {
+    throw new Error(
+      "Sesi upload bukti transfer tidak valid.",
+    );
+  }
+
+  return {
+    uploadUrl:
+      result.uploadUrl,
+    locatorPrefix:
+      result.locatorPrefix,
+  };
+}
+
+const DRIVE_CHUNK_SIZE =
+  1024 * 1024;
+
+type UploadChunkResponse = {
+  complete?: boolean;
+  fileId?: string;
+  nextStart?: number;
+  error?: string;
+};
+
+function uploadChunkThroughServer(
+  uploadUrl: string,
+  file: File,
+  chunk: Blob,
+  start: number,
+  onProgress: (
+    percentage: number,
+  ) => void,
+) {
+  return new Promise<UploadChunkResponse>(
+    (
+      resolve,
+      reject,
+    ) => {
+      const request =
+        new XMLHttpRequest();
+
+      request.open(
+        "POST",
+        "/api/donasi/proof/upload?mode=chunk",
+      );
+
+      request.setRequestHeader(
+        "Content-Type",
+        "application/octet-stream",
+      );
+
+      request.setRequestHeader(
+        "X-Upload-Session",
+        uploadUrl,
+      );
+
+      request.setRequestHeader(
+        "X-Upload-Content-Type",
+        file.type,
+      );
+
+      request.setRequestHeader(
+        "X-Upload-Start",
+        String(start),
+      );
+
+      request.setRequestHeader(
+        "X-Upload-Total",
+        String(
+          file.size,
+        ),
+      );
+
+      request.upload.onprogress =
+        (
+          event,
+        ) => {
+          if (
+            !event.lengthComputable
+          ) {
+            return;
+          }
+
+          const uploaded =
+            start +
+            event.loaded;
+
+          onProgress(
+            Math.min(
+              99,
+              Math.round(
+                (uploaded /
+                  file.size) *
+                  100,
+              ),
+            ),
+          );
+        };
+
+      request.onerror =
+        () => {
+          reject(
+            new Error(
+              "Koneksi upload bukti transfer terputus.",
+            ),
+          );
+        };
+
+      request.onload =
+        () => {
+          let result:
+            UploadChunkResponse | null =
+              null;
+
+          try {
+            result =
+              JSON.parse(
+                request.responseText,
+              ) as UploadChunkResponse;
+          } catch {
+            result =
+              null;
+          }
+
+          if (
+            request.status < 200 ||
+            request.status >= 300
+          ) {
+            reject(
+              new Error(
+                result?.error ||
+                  `Upload bukti transfer gagal (HTTP ${request.status}).`,
+              ),
+            );
+            return;
+          }
+
+          if (!result) {
+            reject(
+              new Error(
+                "Respons upload bukti transfer tidak valid.",
+              ),
+            );
+            return;
+          }
+
+          resolve(
+            result,
+          );
+        };
+
+      request.send(
+        chunk,
+      );
+    },
+  );
+}
+
+async function uploadToGoogleDrive(
+  uploadUrl: string,
+  file: File,
+  onProgress: (
+    percentage: number,
+  ) => void,
+) {
+  let start = 0;
+
+  while (
+    start <
+    file.size
+  ) {
+    const end =
+      Math.min(
+        start +
+          DRIVE_CHUNK_SIZE,
+        file.size,
+      );
+
+    const chunk =
+      file.slice(
+        start,
+        end,
+      );
+
+    const result =
+      await uploadChunkThroughServer(
+        uploadUrl,
+        file,
+        chunk,
+        start,
+        onProgress,
+      );
+
+    if (
+      result.complete
+    ) {
+      if (
+        typeof result.fileId !==
+          "string" ||
+        !/^[A-Za-z0-9_-]+$/.test(
+          result.fileId,
+        ) ||
+        end !==
+          file.size
+      ) {
+        throw new Error(
+          "Google Drive mengembalikan hasil upload yang tidak valid.",
+        );
+      }
+
+      onProgress(
+        100,
+      );
+
+      return result.fileId;
+    }
+
+    const nextStart =
+      typeof result.nextStart ===
+        "number" &&
+      Number.isSafeInteger(
+        result.nextStart,
+      )
+        ? result.nextStart
+        : end;
+
+    if (
+      nextStart <=
+        start ||
+      nextStart >
+        file.size ||
+      nextStart %
+        (256 * 1024) !==
+        0
+    ) {
+      throw new Error(
+        "Status upload Google Drive tidak valid.",
+      );
+    }
+
+    start =
+      nextStart;
+  }
+
+  throw new Error(
+    "Google Drive tidak menyelesaikan upload bukti transfer.",
+  );
 }
 
 
@@ -169,27 +464,25 @@ export default function DonationProofUploader({
           file.name,
         );
 
-      const blob =
-        await upload(
-          `media/donasi/${Date.now()}-${safeName}`,
+      const {
+        uploadUrl,
+        locatorPrefix,
+      } =
+        await createUploadSession(
           file,
-          {
-            access:
-              "private",
-            handleUploadUrl:
-              "/api/donasi/proof/upload",
-            contentType:
-              file.type,
-            onUploadProgress:
-              ({
-                percentage,
-              }) => {
-                setProgress(
-                  Math.round(
-                    percentage,
-                  ),
-                );
-              },
+          safeName,
+        );
+
+      const fileId =
+        await uploadToGoogleDrive(
+          uploadUrl,
+          file,
+          (
+            percentage,
+          ) => {
+            setProgress(
+              percentage,
+            );
           },
         );
 
@@ -197,7 +490,7 @@ export default function DonationProofUploader({
         previewUrl;
 
       setProofImageUrl(
-        blob.url,
+        `${locatorPrefix}${fileId}`,
       );
 
       setPreviewUrl(

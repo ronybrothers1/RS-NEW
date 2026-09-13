@@ -11,6 +11,9 @@ import type {
 const DRIVE_FILES_ENDPOINT =
   "https://www.googleapis.com/drive/v3/files";
 
+const DRIVE_UPLOAD_ENDPOINT =
+  "https://www.googleapis.com/upload/drive/v3/files";
+
 export const GOOGLE_DRIVE_LOCATOR_PREFIX =
   "gdrive:";
 
@@ -20,11 +23,30 @@ type GoogleDriveStorageOptions = {
   refreshToken: string;
 };
 
+export type GoogleDriveResumableUploadInput = {
+  folderId: string;
+  filename: string;
+  contentType: string;
+  size: number;
+};
+
+export type GoogleDriveStorageAdapter =
+  StorageAdapter & {
+    getParents(
+      locator: string,
+    ): Promise<string[]>;
+
+    createResumableUploadSession(
+      input: GoogleDriveResumableUploadInput,
+    ): Promise<string>;
+  };
+
 type GoogleDriveFileMetadata = {
   id?: string;
   mimeType?: string;
   size?: string;
   createdTime?: string;
+  parents?: string[];
 };
 
 function requireCredential(
@@ -158,11 +180,59 @@ function assertDriveResponse(
   );
 }
 
+function normalizeUploadFilename(
+  value: string,
+) {
+  const normalized =
+    value.trim();
+
+  if (
+    !normalized ||
+    normalized.length > 180
+  ) {
+    throw new Error(
+      "Nama file Google Drive tidak valid.",
+    );
+  }
+
+  return normalized;
+}
+
+function normalizeContentType(
+  value: string,
+) {
+  const normalized =
+    value.trim().toLowerCase();
+
+  if (!normalized) {
+    throw new Error(
+      "Content-Type Google Drive tidak valid.",
+    );
+  }
+
+  return normalized;
+}
+
+function normalizeUploadSize(
+  value: number,
+) {
+  if (
+    !Number.isSafeInteger(value) ||
+    value <= 0
+  ) {
+    throw new Error(
+      "Ukuran upload Google Drive tidak valid.",
+    );
+  }
+
+  return value;
+}
+
 export function createGoogleDriveStorage({
   clientId,
   clientSecret,
   refreshToken,
-}: GoogleDriveStorageOptions): StorageAdapter {
+}: GoogleDriveStorageOptions): GoogleDriveStorageAdapter {
   const oauthClient =
     new OAuth2Client(
       requireCredential(
@@ -364,6 +434,174 @@ export function createGoogleDriveStorage({
     };
   }
 
+  async function getParents(
+    locator: string,
+  ) {
+    const fileId =
+      getGoogleDriveFileId(
+        locator,
+      );
+
+    const response =
+      await requestFile(
+        fileId,
+        {
+          query: {
+            fields:
+              "id,parents",
+          },
+        },
+      );
+
+    assertDriveResponse(
+      response,
+      "parents",
+    );
+
+    const metadata =
+      (await response.json()) as
+        GoogleDriveFileMetadata;
+
+    if (
+      !metadata.id ||
+      metadata.id !== fileId
+    ) {
+      throw new Error(
+        "Google Drive mengembalikan parent file yang tidak sesuai.",
+      );
+    }
+
+    return (
+      metadata.parents || []
+    ).filter(
+      (
+        parentId,
+      ): parentId is string =>
+        typeof parentId ===
+          "string" &&
+        /^[A-Za-z0-9_-]+$/.test(
+          parentId,
+        ),
+    );
+  }
+
+  async function createResumableUploadSession({
+    folderId,
+    filename,
+    contentType,
+    size,
+  }: GoogleDriveResumableUploadInput) {
+    const normalizedFolderId =
+      normalizeGoogleDriveFileId(
+        folderId,
+      );
+
+    const normalizedFilename =
+      normalizeUploadFilename(
+        filename,
+      );
+
+    const normalizedContentType =
+      normalizeContentType(
+        contentType,
+      );
+
+    const normalizedSize =
+      normalizeUploadSize(
+        size,
+      );
+
+    const url =
+      new URL(
+        DRIVE_UPLOAD_ENDPOINT,
+      );
+
+    url.searchParams.set(
+      "uploadType",
+      "resumable",
+    );
+
+    url.searchParams.set(
+      "supportsAllDrives",
+      "true",
+    );
+
+    url.searchParams.set(
+      "fields",
+      "id,mimeType,size,createdTime,parents",
+    );
+
+    const token =
+      await getAccessToken();
+
+    const response =
+      await fetch(
+        url,
+        {
+          method:
+            "POST",
+          headers: {
+            Authorization:
+              `Bearer ${token}`,
+            "Content-Type":
+              "application/json; charset=UTF-8",
+            "X-Upload-Content-Type":
+              normalizedContentType,
+            "X-Upload-Content-Length":
+              String(
+                normalizedSize,
+              ),
+          },
+          body:
+            JSON.stringify({
+              name:
+                normalizedFilename,
+              mimeType:
+                normalizedContentType,
+              parents: [
+                normalizedFolderId,
+              ],
+            }),
+          cache: "no-store",
+        },
+      );
+
+    assertDriveResponse(
+      response,
+      "resumable upload session",
+    );
+
+    const location =
+      response.headers.get(
+        "location",
+      );
+
+    if (!location) {
+      throw new Error(
+        "Google Drive tidak mengembalikan URL sesi upload.",
+      );
+    }
+
+    const sessionUrl =
+      new URL(location);
+
+    if (
+      sessionUrl.protocol !==
+        "https:" ||
+      sessionUrl.hostname !==
+        "www.googleapis.com" ||
+      !sessionUrl.pathname.startsWith(
+        "/upload/drive/v3/files",
+      )
+    ) {
+      throw new Error(
+        "URL sesi upload Google Drive tidak valid.",
+      );
+    }
+
+    return sessionUrl.toString();
+  }
+
   async function deleteObject(
     locator: string,
   ) {
@@ -400,6 +638,8 @@ export function createGoogleDriveStorage({
       "private",
     read,
     head,
+    getParents,
+    createResumableUploadSession,
     async delete(locator) {
       const locators =
         Array.isArray(locator)
