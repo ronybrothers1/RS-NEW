@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 
 import { db } from "@/src/db";
 import { articles, users } from "@/src/db/schema";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Calendar, User } from "lucide-react";
 import Link from "next/link";
@@ -91,6 +91,46 @@ export default async function BeritaDetailPage(props: Props) {
 
   const { article, authorName } = articleData;
   const articleUrl = `${getSiteUrl()}/berita/${slug}`;
+  const currentArticleDate = article.publishedAt ?? article.createdAt;
+
+  const [previousArticle] = await db
+    .select({
+      title: articles.title,
+      slug: articles.slug,
+    })
+    .from(articles)
+    .where(
+      and(
+        eq(articles.status, "PUBLISHED"),
+        sql`(
+          COALESCE(${articles.publishedAt}, ${articles.createdAt}) < ${currentArticleDate}
+          OR (
+            COALESCE(${articles.publishedAt}, ${articles.createdAt}) = ${currentArticleDate}
+            AND ${articles.createdAt} < ${article.createdAt}
+          )
+        )`,
+      ),
+    )
+    .orderBy(
+      sql`COALESCE(${articles.publishedAt}, ${articles.createdAt}) DESC`,
+      sql`${articles.createdAt} DESC`,
+    )
+    .limit(1);
+
+  const sanitizedContent = sanitizeArticleHtml(article.content);
+  const paragraphEnds = [...sanitizedContent.matchAll(/<\/p>/gi)];
+  const midpointParagraph =
+    paragraphEnds[Math.ceil(paragraphEnds.length / 2) - 1];
+
+  const splitAt =
+    previousArticle &&
+    paragraphEnds.length >= 2 &&
+    midpointParagraph?.index !== undefined
+      ? midpointParagraph.index + midpointParagraph[0].length
+      : sanitizedContent.length;
+
+  const contentBeforeReadMore = sanitizedContent.slice(0, splitAt);
+  const contentAfterReadMore = sanitizedContent.slice(splitAt);
 
   return (
     <div className="min-h-screen bg-white">
@@ -186,10 +226,55 @@ export default async function BeritaDetailPage(props: Props) {
               [&_iframe]:border-0
             "
             dangerouslySetInnerHTML={{
-              __html: sanitizeArticleHtml(article.content),
+              __html: contentBeforeReadMore,
             }}
           />
-        </article>
+
+          {previousArticle && (
+            <aside className="my-8 border-l-4 border-teal-600 bg-teal-50/60 px-4 py-4 sm:px-5">
+              <p className="leading-7 text-slate-700">
+                <span className="text-sm font-bold text-slate-900">
+                  Baca juga:{" "}
+                </span>
+                <Link
+                  href={`/berita/${previousArticle.slug}`}
+                  className="text-base font-semibold text-teal-700 underline decoration-teal-300 underline-offset-4 transition-colors hover:text-teal-900 sm:text-lg"
+                >
+                  {previousArticle.title}
+                </Link>
+              </p>
+            </aside>
+          )}
+
+          {contentAfterReadMore && (
+            <div
+              className="
+                prose prose-slate max-w-none
+                sm:prose-lg
+                prose-headings:font-bold
+                prose-headings:leading-tight
+                prose-p:leading-8
+                prose-li:leading-8
+                prose-a:text-teal-600
+                prose-a:break-words
+                prose-img:h-auto
+                prose-img:max-w-full
+                prose-img:rounded-xl
+                [&_.ql-align-center]:text-center
+                [&_.ql-align-right]:text-right
+                [&_.ql-align-justify]:text-justify
+                [&_iframe]:aspect-video
+                [&_iframe]:h-auto
+                [&_iframe]:w-full
+                [&_iframe]:max-w-full
+                [&_iframe]:rounded-xl
+                [&_iframe]:border-0
+              "
+              dangerouslySetInnerHTML={{
+                __html: contentAfterReadMore,
+              }}
+            />
+          )}        </article>
       </main>
     </div>
   );
