@@ -1,12 +1,12 @@
 "use server";
 
 import { auth } from "@/auth";
-import { del } from "@vercel/blob";
 import { db } from "@/src/db";
 import { articles, auditLogs } from "@/src/db/schema";
 import { and, eq, ne } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { hasMeaningfulArticleContent } from "@/lib/article-content";
+import { createVercelBlobStorage } from "@/lib/storage/providers/vercel-blob";
 
 type ArticleStatus = "DRAFT" | "SCHEDULED" | "PUBLISHED" | "ARCHIVED";
 
@@ -49,6 +49,11 @@ function cleanOptional(value: FormDataEntryValue | null) {
 }
 
 
+const newsBlobStorage =
+  createVercelBlobStorage({
+    access: "public",
+  });
+
 function isManagedNewsBlobUrl(value: string | null): value is string {
   if (!value) return false;
 
@@ -77,7 +82,7 @@ async function deleteUnusedNewsBlob(value: string | null) {
 
     if (reference) return;
 
-    await del(value);
+    await newsBlobStorage.delete(value);
   } catch (error) {
     console.error(
       "Gagal membersihkan Blob gambar berita yang tidak lagi digunakan.",

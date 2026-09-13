@@ -2,7 +2,6 @@ import {
   handleUpload,
   type HandleUploadBody,
 } from "@vercel/blob/client";
-import { del, list } from "@vercel/blob";
 import {
   NextResponse,
 } from "next/server";
@@ -15,6 +14,7 @@ import {
 } from "@/lib/rate-limit";
 import { db } from "@/src/db";
 import { articles } from "@/src/db/schema";
+import { createVercelBlobStorage } from "@/lib/storage/providers/vercel-blob";
 
 const MAX_IMAGE_SIZE =
   5 * 1024 * 1024;
@@ -25,6 +25,11 @@ const ALLOWED_CONTENT_TYPES = [
   "image/webp",
 ];
 
+
+const newsBlobStorage =
+  createVercelBlobStorage({
+    access: "public",
+  });
 
 const NEWS_BLOB_PREFIX = "media/berita/";
 const STALE_NEWS_BLOB_AGE_MS =
@@ -56,13 +61,13 @@ async function cleanupStaleNewsBlobOrphans() {
   let cursor: string | undefined;
 
   do {
-    const result = await list({
+    const result = await newsBlobStorage.list({
       prefix: NEWS_BLOB_PREFIX,
       limit: NEWS_BLOB_LIST_LIMIT,
       cursor,
     });
 
-    for (const blob of result.blobs) {
+    for (const blob of result.objects) {
       if (blob.uploadedAt.getTime() > cutoff) {
         continue;
       }
@@ -91,7 +96,7 @@ async function cleanupStaleNewsBlobOrphans() {
   } while (cursor);
 
   if (orphanUrls.length > 0) {
-    await del(orphanUrls);
+    await newsBlobStorage.delete(orphanUrls);
   }
 }
 
