@@ -191,7 +191,7 @@ export const campaigns = pgTable('campaigns', {
 export const financialTransactions = pgTable('financial_transactions', {
   id: uuid('id').defaultRandom().primaryKey(),
   type: trxTypeEnum('type').notNull(),
-  category: financialTransactionCategoryEnum('category'),
+  category: financialTransactionCategoryEnum('category').notNull(),
   amount: numeric('amount').notNull(),
   date: timestamp('date').notNull(),
   description: text('description').notNull(),
