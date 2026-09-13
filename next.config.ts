@@ -32,6 +32,15 @@ const securityHeaders = [
   },
 ];
 
+const noIndexHeaders = [
+  {
+    key:
+      "X-Robots-Tag",
+    value:
+      "noindex, nofollow",
+  },
+];
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
 
@@ -91,6 +100,56 @@ const nextConfig: NextConfig = {
         source: "/(.*)",
         headers:
           securityHeaders,
+      },
+      {
+        source: "/login",
+        headers:
+          noIndexHeaders,
+      },
+      {
+        source: "/register",
+        headers:
+          noIndexHeaders,
+      },
+      {
+        source:
+          "/lupa-password",
+        headers:
+          noIndexHeaders,
+      },
+      {
+        source:
+          "/lupa-password/:path*",
+        headers:
+          noIndexHeaders,
+      },
+      {
+        source:
+          "/verifikasi-email",
+        headers:
+          noIndexHeaders,
+      },
+      {
+        source: "/akun",
+        headers:
+          noIndexHeaders,
+      },
+      {
+        source:
+          "/akun/:path*",
+        headers:
+          noIndexHeaders,
+      },
+      {
+        source: "/admin",
+        headers:
+          noIndexHeaders,
+      },
+      {
+        source:
+          "/admin/:path*",
+        headers:
+          noIndexHeaders,
       },
     ];
   },
