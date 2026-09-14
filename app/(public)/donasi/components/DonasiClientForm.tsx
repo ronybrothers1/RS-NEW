@@ -661,6 +661,9 @@ export default function DonasiClientForm({
         </div>
 
         <DonationProofUploader
+          disabled={
+            isPending
+          }
           onStateChange={
             setProofState
           }

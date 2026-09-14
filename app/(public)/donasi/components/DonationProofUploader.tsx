@@ -132,6 +132,51 @@ async function createUploadSession(
   };
 }
 
+type CleanupResponse = {
+  deleted?: boolean;
+  preserved?: boolean;
+  error?: string;
+};
+
+async function cleanupDonationProof(
+  locator: string,
+) {
+  const response =
+    await fetch(
+      "/api/donasi/proof/upload?mode=cleanup",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type":
+            "application/json",
+        },
+        body:
+          JSON.stringify({
+            locator,
+          }),
+      },
+    );
+
+  const result =
+    (await response
+      .json()
+      .catch(
+        () => null,
+      )) as
+      CleanupResponse | null;
+
+  if (
+    !response.ok ||
+    result?.deleted !==
+      true
+  ) {
+    throw new Error(
+      result?.error ||
+        "Bukti transfer lama tidak dapat dibersihkan.",
+    );
+  }
+}
+
 const DRIVE_CHUNK_SIZE =
   1024 * 1024;
 
@@ -370,11 +415,13 @@ async function uploadToGoogleDrive(
 
 export default function DonationProofUploader({
   onStateChange,
+  disabled = false,
 }: {
   onStateChange: (
     state:
       UploadState,
   ) => void;
+  disabled?: boolean;
 }) {
   const inputRef =
     useRef<HTMLInputElement>(
@@ -397,6 +444,11 @@ export default function DonationProofUploader({
   ] = useState(false);
 
   const [
+    isCleaning,
+    setIsCleaning,
+  ] = useState(false);
+
+  const [
     progress,
     setProgress,
   ] = useState(0);
@@ -410,7 +462,9 @@ export default function DonationProofUploader({
 
   function selectFile() {
     if (
-      !isUploading
+      !isUploading &&
+      !isCleaning &&
+      !disabled
     ) {
       inputRef.current
         ?.click();
@@ -420,6 +474,10 @@ export default function DonationProofUploader({
   async function uploadFile(
     file: File,
   ) {
+    if (disabled) {
+      return;
+    }
+
     setError(null);
 
     if (
@@ -458,6 +516,12 @@ export default function DonationProofUploader({
         file,
       );
 
+    const previousProof =
+      proofImageUrl;
+
+    const previousPreview =
+      previewUrl;
+
     try {
       const safeName =
         sanitizeFilename(
@@ -486,11 +550,12 @@ export default function DonationProofUploader({
           },
         );
 
-      const previousPreview =
-        previewUrl;
+      const nextProofImageUrl =
+        locatorPrefix +
+        fileId;
 
       setProofImageUrl(
-        `${locatorPrefix}${fileId}`,
+        nextProofImageUrl,
       );
 
       setPreviewUrl(
@@ -507,6 +572,20 @@ export default function DonationProofUploader({
         URL.revokeObjectURL(
           previousPreview,
         );
+      }
+
+      if (
+        previousProof
+      ) {
+        try {
+          await cleanupDonationProof(
+            previousProof,
+          );
+        } catch {
+          setError(
+            "Bukti baru berhasil diunggah, tetapi bukti lama belum dapat dibersihkan otomatis.",
+          );
+        }
       }
 
       onStateChange({
@@ -541,41 +620,76 @@ export default function DonationProofUploader({
     }
   }
 
-  function removeProof() {
+  async function removeProof() {
     if (
-      isUploading
+      isUploading ||
+      isCleaning ||
+      disabled ||
+      !proofImageUrl
     ) {
       return;
     }
 
-    const localPreview =
-      previewUrl;
-
-    setProofImageUrl("");
-    setPreviewUrl("");
-    setProgress(0);
+    setIsCleaning(
+      true,
+    );
     setError(null);
-
-    if (
-      localPreview
-    ) {
-      URL.revokeObjectURL(
-        localPreview,
-      );
-    }
-
-    if (
-      inputRef.current
-    ) {
-      inputRef.current.value =
-        "";
-    }
 
     onStateChange({
       ready: false,
-      uploading: false,
+      uploading: true,
     });
 
+    try {
+      await cleanupDonationProof(
+        proofImageUrl,
+      );
+
+      const localPreview =
+        previewUrl;
+
+      setProofImageUrl("");
+      setPreviewUrl("");
+      setProgress(0);
+
+      if (
+        localPreview
+      ) {
+        URL.revokeObjectURL(
+          localPreview,
+        );
+      }
+
+      if (
+        inputRef.current
+      ) {
+        inputRef.current.value =
+          "";
+      }
+
+      onStateChange({
+        ready: false,
+        uploading: false,
+      });
+    } catch (
+      cleanupError
+    ) {
+      setError(
+        cleanupError instanceof
+          Error
+          ? cleanupError.message
+          : "Bukti transfer tidak dapat dihapus.",
+      );
+
+      onStateChange({
+        ready: true,
+        uploading: false,
+      });
+    } finally {
+      setIsCleaning(
+        false,
+      );
+    }
   }
 
   return (
@@ -612,7 +726,9 @@ export default function DonationProofUploader({
         <button
           type="button"
           disabled={
-            isUploading
+            isUploading ||
+            isCleaning ||
+            disabled
           }
           onClick={
             selectFile
@@ -689,10 +805,15 @@ export default function DonationProofUploader({
             <div className="absolute right-3 top-3 flex gap-2">
               <button
                 type="button"
+                disabled={
+                  isUploading ||
+                  isCleaning ||
+                  disabled
+                }
                 onClick={
                   selectFile
                 }
-                className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/95 text-slate-700 shadow-sm hover:bg-white"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/95 text-slate-700 shadow-sm hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
                 title="Ganti bukti transfer"
                 aria-label="Ganti bukti transfer"
               >
@@ -701,10 +822,15 @@ export default function DonationProofUploader({
 
               <button
                 type="button"
+                disabled={
+                  isUploading ||
+                  isCleaning ||
+                  disabled
+                }
                 onClick={
                   removeProof
                 }
-                className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/95 text-rose-600 shadow-sm hover:bg-white"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/95 text-rose-600 shadow-sm hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
                 title="Hapus bukti transfer"
                 aria-label="Hapus bukti transfer"
               >
@@ -714,10 +840,20 @@ export default function DonationProofUploader({
           </div>
 
           <div className="flex items-center gap-2 px-4 py-3 text-xs font-medium text-emerald-700">
-            <CheckCircle2 className="h-4 w-4" />
-            Bukti transfer
-            berhasil diunggah
-            secara privat.
+            {isCleaning ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Menghapus bukti
+                transfer...
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="h-4 w-4" />
+                Bukti transfer
+                berhasil diunggah
+                secara privat.
+              </>
+            )}
           </div>
         </div>
       )}

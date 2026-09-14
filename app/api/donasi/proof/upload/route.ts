@@ -1,12 +1,18 @@
 import {
+  eq,
+  sql,
+} from "drizzle-orm";
+import {
   NextResponse,
 } from "next/server";
 
 import {
   createDonationProofUploadSession,
+  deleteGoogleDriveDonationProof,
   DONATION_PROOF_MAX_SIZE,
   DONATION_PROOF_TYPES,
   isDonationProofGoogleDriveConfigured,
+  isGoogleDriveDonationProofLocator,
 } from "@/lib/donation-proof-media";
 import {
   GOOGLE_DRIVE_LOCATOR_PREFIX,
@@ -14,6 +20,12 @@ import {
 import {
   rateLimit,
 } from "@/lib/rate-limit";
+import {
+  db,
+} from "@/src/db";
+import {
+  donations,
+} from "@/src/db/schema";
 
 export const runtime =
   "nodejs";
@@ -470,6 +482,171 @@ async function handleChunkUpload(
   }
 }
 
+type CleanupBody = {
+  locator?: unknown;
+};
+
+async function handleCleanup(
+  request: Request,
+  ip: string,
+) {
+  const {
+    success:
+      rateLimitSuccess,
+  } = rateLimit(
+    `donation-proof-cleanup-${ip}`,
+    24,
+    10 * 60 * 1000,
+  );
+
+  if (!rateLimitSuccess) {
+    return NextResponse.json(
+      {
+        error:
+          "Terlalu banyak permintaan cleanup. Silakan coba beberapa saat lagi.",
+      },
+      {
+        status: 429,
+        headers: {
+          "Cache-Control":
+            "no-store",
+        },
+      },
+    );
+  }
+
+  if (
+    !isDonationProofGoogleDriveConfigured()
+  ) {
+    return NextResponse.json(
+      {
+        error:
+          "Penyimpanan bukti transfer belum dikonfigurasi.",
+      },
+      {
+        status: 503,
+        headers: {
+          "Cache-Control":
+            "no-store",
+        },
+      },
+    );
+  }
+
+  try {
+    const body =
+      (await request.json()) as
+        CleanupBody;
+
+    const locator =
+      typeof body.locator ===
+        "string"
+        ? body.locator.trim()
+        : "";
+
+    if (
+      !isGoogleDriveDonationProofLocator(
+        locator,
+      )
+    ) {
+      throw new Error(
+        "Bukti transfer yang akan dihapus tidak valid.",
+      );
+    }
+
+    const outcome =
+      await db.transaction(
+        async (tx) => {
+          await tx.execute(
+            sql`SELECT pg_advisory_xact_lock(hashtext(${locator}))`,
+          );
+
+          const [
+            existingProof,
+          ] =
+            await tx
+              .select({
+                id:
+                  donations.id,
+              })
+              .from(
+                donations,
+              )
+              .where(
+                eq(
+                  donations.proofImage,
+                  locator,
+                ),
+              )
+              .limit(1);
+
+          if (
+            existingProof
+          ) {
+            return "preserved";
+          }
+
+          await deleteGoogleDriveDonationProof(
+            locator,
+          );
+
+          return "deleted";
+        },
+      );
+
+    if (
+      outcome ===
+      "preserved"
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Bukti transfer sudah tercatat pada donasi dan tidak boleh dihapus.",
+          preserved:
+            true,
+        },
+        {
+          status: 409,
+          headers: {
+            "Cache-Control":
+              "no-store",
+          },
+        },
+      );
+    }
+
+    return NextResponse.json(
+      {
+        deleted: true,
+      },
+      {
+        headers: {
+          "Cache-Control":
+            "no-store",
+        },
+      },
+    );
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Gagal membersihkan bukti transfer.";
+
+    return NextResponse.json(
+      {
+        error: message,
+      },
+      {
+        status: 400,
+        headers: {
+          "Cache-Control":
+            "no-store",
+        },
+      },
+    );
+  }
+}
+
 type UploadSessionBody = {
   filename?: unknown;
   contentType?: unknown;
@@ -640,6 +817,16 @@ export async function POST(
     ).searchParams.get(
       "mode",
     );
+
+  if (
+    mode ===
+    "cleanup"
+  ) {
+    return handleCleanup(
+      request,
+      ip,
+    );
+  }
 
   if (
     mode ===

@@ -445,12 +445,29 @@ export async function submitDonation(
         selectedCampaign.slug;
     }
 
+    let lockedProofError:
+      string | null = null;
+
     const inserted =
       await db.transaction(
         async (tx) => {
           await tx.execute(
             sql`SELECT pg_advisory_xact_lock(hashtext(${proofImageUrl}))`,
           );
+
+          const lockedProofValidation =
+            await validatePrivateDonationProof(
+              proofImageUrl,
+            );
+
+          if (
+            !lockedProofValidation.success
+          ) {
+            lockedProofError =
+              lockedProofValidation.error;
+
+            return null;
+          }
 
           const [duplicate] =
             await tx
@@ -509,6 +526,7 @@ export async function submitDonation(
       return {
         success: false,
         error:
+          lockedProofError ||
           "Bukti transfer ini sudah pernah dikirim.",
       };
     }

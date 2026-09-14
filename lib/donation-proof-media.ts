@@ -131,6 +131,56 @@ export async function createDonationProofUploadSession(
     });
 }
 
+export async function deleteGoogleDriveDonationProof(
+  value: string,
+) {
+  const config =
+    getGoogleDriveDonationConfig();
+
+  if (!config) {
+    throw new Error(
+      "Penyimpanan bukti transfer belum tersedia.",
+    );
+  }
+
+  const locator =
+    value.trim();
+
+  if (
+    !isGoogleDriveDonationProofLocator(
+      locator,
+    )
+  ) {
+    throw new Error(
+      "Bukti transfer Google Drive tidak valid.",
+    );
+  }
+
+  const storage =
+    getDonationProofGoogleDriveStorage(
+      config,
+    );
+
+  const parents =
+    await storage.getParents(
+      locator,
+    );
+
+  if (
+    !parents.includes(
+      config.folderId,
+    )
+  ) {
+    throw new Error(
+      "Lokasi bukti transfer tidak valid.",
+    );
+  }
+
+  await storage.delete(
+    locator,
+  );
+}
+
 export function getDonationProofBlobToken() {
   return getAssistanceBlobToken();
 }
