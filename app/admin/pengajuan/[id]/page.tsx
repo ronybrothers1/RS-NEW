@@ -579,6 +579,7 @@ export default async function AdminAssistanceDetailPage({
                       className="overflow-hidden rounded-xl border border-slate-200 bg-slate-100"
                     >
                       <div className="aspect-[4/3]">
+                        {/* eslint-disable-next-line @next/next/no-img-element -- private authenticated media must load directly in the signed-in browser */}
                         <img
                           src={`/api/akun/pengajuan/media/${photo.id}`}
                           alt={`Foto kondisi pengajuan ${index + 1}`}

@@ -465,6 +465,7 @@ export default async function AssistanceApplicationDetailPage({
                         }
                         className="overflow-hidden rounded-xl border border-slate-200 bg-slate-100"
                       >
+                        {/* eslint-disable-next-line @next/next/no-img-element -- private authenticated media must load directly in the signed-in browser */}
                         <img
                           src={`/api/akun/pengajuan/media/${photo.id}`}
                           alt={`Foto kondisi ${index + 1}`}

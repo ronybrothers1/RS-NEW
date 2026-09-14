@@ -200,6 +200,7 @@ export default async function CampaignDetailPage({
           <article className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
             {campaign.coverPhotoId && (
               <div className="aspect-[16/9] bg-slate-100">
+                {/* eslint-disable-next-line @next/next/no-img-element -- campaign cover preserves direct API response and cache semantics */}
                 <img
                   src={`/api/bantuan/${campaign.slug}/cover`}
                   alt={`Foto kampanye ${campaign.title}`}

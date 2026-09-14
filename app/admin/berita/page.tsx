@@ -64,6 +64,7 @@ export default async function BeritaPage() {
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded bg-slate-100 border border-slate-200 overflow-hidden shrink-0 flex items-center justify-center">
                           {art.imageUrl ? (
+                            /* eslint-disable-next-line @next/next/no-img-element -- admin listing intentionally renders the exact stored media URL */
                             <img src={art.imageUrl} alt={art.title} className="w-full h-full object-cover" />
                           ) : (
                             <ImageIcon className="h-5 w-5 text-slate-400" />

@@ -181,6 +181,7 @@ export default async function BeritaDetailPage(props: Props) {
           {article.imageUrl && (
             <figure className="mb-10 overflow-hidden rounded-2xl bg-slate-100">
               <div className="aspect-video w-full overflow-hidden">
+                {/* eslint-disable-next-line @next/next/no-img-element -- stored runtime news media URL is rendered directly for compatibility */}
                 <img
                   src={article.imageUrl}
                   alt={article.imageAlt || article.title}

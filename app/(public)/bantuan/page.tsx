@@ -507,6 +507,7 @@ export default async function AssistanceCampaignsPage() {
                   >
                     <div className="aspect-[16/10] bg-slate-100">
                       {campaign.coverPhotoId ? (
+                        /* eslint-disable-next-line @next/next/no-img-element -- campaign cover preserves direct API response and cache semantics */
                         <img
                           src={`/api/bantuan/${campaign.slug}/cover`}
                           alt={`Foto kampanye ${campaign.title}`}

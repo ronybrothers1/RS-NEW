@@ -81,6 +81,7 @@ export default async function PreviewBeritaPage({
           <figure className="mx-auto mb-8 w-full max-w-4xl px-4 sm:px-6">
             <div className="overflow-hidden rounded-2xl bg-slate-100">
               <div className="aspect-video w-full overflow-hidden">
+                {/* eslint-disable-next-line @next/next/no-img-element -- admin preview intentionally renders the exact stored media URL */}
                 <img
                   src={article.imageUrl}
                   alt={article.imageAlt || article.title}

@@ -315,6 +315,7 @@ export default function CampaignEditorForm({
                   className="cursor-pointer overflow-hidden rounded-xl border border-slate-200 bg-white has-[:checked]:border-teal-600 has-[:checked]:ring-2 has-[:checked]:ring-teal-100"
                 >
                   <div className="aspect-[4/3] bg-slate-100">
+                    {/* eslint-disable-next-line @next/next/no-img-element -- private authenticated media must load directly in the signed-in browser */}
                     <img
                       src={`/api/akun/pengajuan/media/${photo.id}`}
                       alt={`Pilihan foto sampul ${index + 1}`}

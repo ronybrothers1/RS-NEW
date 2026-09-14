@@ -487,6 +487,7 @@ export default function AssistancePhotoUploader({
                 className="overflow-hidden rounded-xl border border-slate-200 bg-white"
               >
                 <div className="aspect-[4/3] bg-slate-100">
+                  {/* eslint-disable-next-line @next/next/no-img-element -- preview may be a browser object URL or authenticated private media */}
                   <img
                     src={
                       photo.previewUrl

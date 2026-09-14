@@ -61,6 +61,7 @@ export default async function PublicBeritaPage() {
               <article key={art.id} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-200 hover:shadow-lg transition-all group flex flex-col">
                 <Link href={`/berita/${art.slug}`} className="aspect-video bg-slate-100 relative overflow-hidden block">
                   {art.imageUrl ? (
+                    /* eslint-disable-next-line @next/next/no-img-element -- stored runtime news media URL is rendered directly for compatibility */
                     <img 
                       src={art.imageUrl} 
                       alt={art.imageAlt || art.title}

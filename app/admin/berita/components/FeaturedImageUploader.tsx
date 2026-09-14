@@ -198,6 +198,7 @@ export default function FeaturedImageUploader({ initialUrl = "" }: { initialUrl?
       ) : (
         <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
           <div className="relative aspect-[16/9] bg-slate-100">
+            {/* eslint-disable-next-line @next/next/no-img-element -- upload preview intentionally renders the exact client-side media URL */}
             <img
               src={imageUrl}
               alt="Preview gambar unggulan"
