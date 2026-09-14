@@ -23,18 +23,18 @@ Untuk bootstrap admin pertama:
 ## Urutan aktivasi database
 
 ```bash
-bun install
-bun run db:push
-bun run db:seed
-bun run typecheck
-bun run build
+npm ci
+npm run db:push
+npm run db:seed
+npm run typecheck
+npm run build
 ```
 
 Untuk workflow migration yang lebih disiplin setelah production aktif:
 
 ```bash
-bun run db:generate
-bun run db:migrate
+npm run db:generate
+npm run db:migrate
 ```
 
 ## Setelah login admin

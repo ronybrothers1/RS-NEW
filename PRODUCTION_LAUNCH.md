@@ -73,7 +73,7 @@ Migrasi domain utama dilakukan setelah semua gate di atas PASS.
 Urutan:
 
 1. Pastikan deployment commit launch berstatus SUCCESS.
-2. Set `NEXT_PUBLIC_SITE_URL=https://www.ruangsejahtera.web.id`.
+2. Set `NEXT_PUBLIC_SITE_URL=https://www.ruangsejahtera.com`.
 3. Hubungkan domain ke project Vercel RS-NEW.
 4. Pastikan HTTPS valid.
 5. Uji `robots.txt`, `sitemap.xml`, canonical metadata, login, donasi, dan `/api/health`.
