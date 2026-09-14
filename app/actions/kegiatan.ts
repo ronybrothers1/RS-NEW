@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@/auth";
+import { getCurrentStaffUser } from "@/lib/current-authz";
 import { db } from "@/src/db";
 import { activities, auditLogs } from "@/src/db/schema";
 import { eq } from "drizzle-orm";
@@ -55,9 +55,9 @@ export async function saveKegiatan(
   _prevState: KegiatanActionState,
   formData: FormData,
 ): Promise<KegiatanActionState> {
-  const session = await auth();
+  const staff = await getCurrentStaffUser();
 
-  if (!session?.user?.id) {
+  if (!staff) {
     return {
       success: false,
       error: "Anda harus login untuk mengelola kegiatan.",
@@ -180,7 +180,7 @@ export async function saveKegiatan(
         .returning();
 
       await db.insert(auditLogs).values({
-        userId: session.user.id,
+        userId: staff.id,
         action: isArchived ? "ARCHIVE" : "UPDATE",
         tableName: "activities",
         recordId: id,
@@ -214,7 +214,7 @@ export async function saveKegiatan(
       .returning();
 
     await db.insert(auditLogs).values({
-      userId: session.user.id,
+      userId: staff.id,
       action: "CREATE",
       tableName: "activities",
       recordId: created.id,
@@ -237,9 +237,9 @@ export async function saveKegiatan(
 }
 
 export async function archiveKegiatan(id: string) {
-  const session = await auth();
+  const staff = await getCurrentStaffUser();
 
-  if (!session?.user?.id) {
+  if (!staff) {
     return {
       success: false,
       error: "Unauthorized",
@@ -285,7 +285,7 @@ export async function archiveKegiatan(id: string) {
       .returning();
 
     await db.insert(auditLogs).values({
-      userId: session.user.id,
+      userId: staff.id,
       action: "ARCHIVE",
       tableName: "activities",
       recordId: id,
@@ -308,9 +308,9 @@ export async function archiveKegiatan(id: string) {
 }
 
 export async function deleteKegiatan(id: string) {
-  const session = await auth();
+  const staff = await getCurrentStaffUser();
 
-  if (!session?.user?.id) {
+  if (!staff) {
     return {
       success: false,
       error: "Unauthorized",
@@ -351,7 +351,7 @@ export async function deleteKegiatan(id: string) {
       .where(eq(activities.id, id));
 
     await db.insert(auditLogs).values({
-      userId: session.user.id,
+      userId: staff.id,
       action: "DELETE",
       tableName: "activities",
       recordId: id,
@@ -376,9 +376,9 @@ export async function togglePublishKegiatan(
   id: string,
   currentStatus: boolean,
 ) {
-  const session = await auth();
+  const staff = await getCurrentStaffUser();
 
-  if (!session?.user?.id) {
+  if (!staff) {
     return {
       success: false,
       error: "Unauthorized",
@@ -419,7 +419,7 @@ export async function togglePublishKegiatan(
       .returning();
 
     await db.insert(auditLogs).values({
-      userId: session.user.id,
+      userId: staff.id,
       action: nextStatus ? "PUBLISH" : "UPDATE",
       tableName: "activities",
       recordId: id,

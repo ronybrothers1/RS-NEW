@@ -2,13 +2,14 @@
 
 import { db } from "@/src/db";
 import { gallery, auditLogs } from "@/src/db/schema";
-import { auth } from "@/auth";
+import { getCurrentStaffUser } from "@/lib/current-authz";
 import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 
 export async function createGaleri(prevState: any, formData: FormData) {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const staff = await getCurrentStaffUser();
+
+  if (!staff) {
     return { success: false, error: "Unauthorized" };
   }
 
@@ -32,7 +33,7 @@ export async function createGaleri(prevState: any, formData: FormData) {
     }).returning();
 
     await db.insert(auditLogs).values({
-      userId: session.user.id,
+      userId: staff.id,
       action: 'CREATE',
       tableName: 'gallery',
       recordId: newGallery.id,
@@ -48,8 +49,9 @@ export async function createGaleri(prevState: any, formData: FormData) {
 }
 
 export async function deleteGaleri(id: string) {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const staff = await getCurrentStaffUser();
+
+  if (!staff) {
     return { success: false, error: "Unauthorized" };
   }
 
@@ -62,7 +64,7 @@ export async function deleteGaleri(id: string) {
     await db.delete(gallery).where(eq(gallery.id, id));
 
     await db.insert(auditLogs).values({
-      userId: session.user.id,
+      userId: staff.id,
       action: 'DELETE',
       tableName: 'gallery',
       recordId: id,
@@ -78,8 +80,9 @@ export async function deleteGaleri(id: string) {
 }
 
 export async function togglePublishGaleri(id: string, currentStatus: boolean) {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const staff = await getCurrentStaffUser();
+
+  if (!staff) {
     return { success: false, error: "Unauthorized" };
   }
 
@@ -90,7 +93,7 @@ export async function togglePublishGaleri(id: string, currentStatus: boolean) {
       .returning();
 
     await db.insert(auditLogs).values({
-      userId: session.user.id,
+      userId: staff.id,
       action: 'UPDATE',
       tableName: 'gallery',
       recordId: id,
