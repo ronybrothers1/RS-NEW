@@ -15,7 +15,7 @@ if (!process.env.AUTH_SECRET) {
   }
 
   console.warn(
-    "⚠️ Peringatan: AUTH_SECRET belum diatur. Menggunakan nilai bawaan. Jangan gunakan di Production.",
+    "âš ï¸ Peringatan: AUTH_SECRET belum diatur. Menggunakan nilai bawaan. Jangan gunakan di Production.",
   );
 }
 
@@ -122,9 +122,16 @@ export const authConfig = {
         return true;
       }
 
+      // Middleware intentionally remains DB-free, so it cannot
+      // prove that an existing JWT sessionVersion still matches
+      // the current database value. Always allow the login page
+      // so a DB-revoked session can recover without a redirect loop.
+      if (isLoginPage) {
+        return true;
+      }
+
       if (
-        (isLoginPage ||
-          isRegisterPage) &&
+        isRegisterPage &&
         isLoggedIn
       ) {
         return Response.redirect(
