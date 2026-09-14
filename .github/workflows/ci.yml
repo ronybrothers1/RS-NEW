@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      CI: "true"
+      NEXT_TELEMETRY_DISABLED: "1"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node 24
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24.x"
+          cache: "npm"
+          cache-dependency-path: package-lock.json
+
+      - name: Pin npm 11.9.0
+        run: npm install --global npm@11.9.0 --no-audit --no-fund
+
+      - name: Verify toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          node_version="$(node --version)"
+          npm_version="$(npm --version)"
+
+          echo "Node: ${node_version}"
+          echo "npm: ${npm_version}"
+
+          [[ "${node_version}" == v24.* ]]
+          [[ "${npm_version}" == "11.9.0" ]]
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Verify package contract immutability
+        run: git diff --exit-code -- package.json package-lock.json
+
+      - name: Lint
+        run: npm run lint -- --max-warnings=0
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run build 2>&1 | tee build.log
+
+      - name: Guard against build-time database access
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if grep -Eiq \
+            'publishDueArticles: failed|ECONNREFUSED|sitemap: failed to fetch|Unexpected error on idle SQL pool|password authentication failed|connect ETIMEDOUT|getaddrinfo ENOTFOUND' \
+            build.log
+          then
+            echo "Forbidden build-time database/network side-effect signature detected."
+            exit 1
+          fi
+
+          echo "No forbidden build-time database side-effect signature detected."
