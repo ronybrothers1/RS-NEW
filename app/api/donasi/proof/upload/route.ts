@@ -21,6 +21,9 @@ import {
   rateLimit,
 } from "@/lib/rate-limit";
 import {
+  getClientIp,
+} from "@/lib/request-ip";
+import {
   db,
 } from "@/src/db";
 import {
@@ -46,25 +49,6 @@ const CHUNK_SIZE =
 
 const CHUNK_ALIGNMENT =
   256 * 1024;
-
-function getRequestIp(
-  request: Request,
-) {
-  const forwardedFor =
-    request.headers.get(
-      "x-forwarded-for",
-    );
-
-  return (
-    forwardedFor
-      ?.split(",")[0]
-      ?.trim() ||
-    request.headers.get(
-      "x-real-ip",
-    ) ||
-    "unknown-ip"
-  );
-}
 
 function sanitizeFilename(
   filename: string,
@@ -205,6 +189,7 @@ async function handleChunkUpload(
   const {
     success:
       rateLimitSuccess,
+    retryAfterMs,
   } = rateLimit(
     `donation-proof-upload-chunk-${ip}`,
     48,
@@ -222,6 +207,16 @@ async function handleChunkUpload(
         headers: {
           "Cache-Control":
             "no-store",
+          "Retry-After":
+            String(
+              Math.max(
+                1,
+                Math.ceil(
+                  retryAfterMs /
+                    1000,
+                ),
+              ),
+            ),
         },
       },
     );
@@ -493,6 +488,7 @@ async function handleCleanup(
   const {
     success:
       rateLimitSuccess,
+    retryAfterMs,
   } = rateLimit(
     `donation-proof-cleanup-${ip}`,
     24,
@@ -510,6 +506,16 @@ async function handleCleanup(
         headers: {
           "Cache-Control":
             "no-store",
+          "Retry-After":
+            String(
+              Math.max(
+                1,
+                Math.ceil(
+                  retryAfterMs /
+                    1000,
+                ),
+              ),
+            ),
         },
       },
     );
@@ -660,6 +666,7 @@ async function handleUploadSession(
   const {
     success:
       rateLimitSuccess,
+    retryAfterMs,
   } = rateLimit(
     `donation-proof-upload-${ip}`,
     8,
@@ -679,6 +686,16 @@ async function handleUploadSession(
         headers: {
           "Cache-Control":
             "no-store",
+          "Retry-After":
+            String(
+              Math.max(
+                1,
+                Math.ceil(
+                  retryAfterMs /
+                    1000,
+                ),
+              ),
+            ),
         },
       },
     );
@@ -807,8 +824,8 @@ export async function POST(
   request: Request,
 ): Promise<NextResponse> {
   const ip =
-    getRequestIp(
-      request,
+    getClientIp(
+      request.headers,
     );
 
   const mode =

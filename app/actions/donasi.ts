@@ -10,6 +10,9 @@ import { revalidatePath } from "next/cache";
 
 import { rateLimit } from "@/lib/rate-limit";
 import {
+  getClientIp,
+} from "@/lib/request-ip";
+import {
   validatePrivateDonationProof,
 } from "@/lib/donation-proof-media";
 import { db } from "@/src/db";
@@ -99,20 +102,10 @@ export async function submitDonation(
   const headersList =
     await headers();
 
-  const forwardedFor =
-    headersList.get(
-      "x-forwarded-for",
-    );
-
   const ip =
-    forwardedFor
-      ?.split(",")[0]
-      ?.trim() ||
-    headersList.get(
-      "x-real-ip",
-    ) ||
-    "unknown-ip";
-
+    getClientIp(
+      headersList,
+    );
   const {
     success:
       rateLimitSuccess,
@@ -578,20 +571,10 @@ export async function checkDonationStatus(
   const headersList =
     await headers();
 
-  const forwardedFor =
-    headersList.get(
-      "x-forwarded-for",
-    );
-
   const ip =
-    forwardedFor
-      ?.split(",")[0]
-      ?.trim() ||
-    headersList.get(
-      "x-real-ip",
-    ) ||
-    "unknown-ip";
-
+    getClientIp(
+      headersList,
+    );
   const {
     success:
       rateLimitSuccess,

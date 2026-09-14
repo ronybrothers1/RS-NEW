@@ -23,6 +23,9 @@ import {
   rateLimit,
 } from "@/lib/rate-limit";
 import {
+  getClientIp,
+} from "@/lib/request-ip";
+import {
   db,
 } from "@/src/db";
 import {
@@ -60,28 +63,6 @@ function normalizePhone(
   return `+62${digits}`;
 }
 
-function getIp(
-  headersList:
-    Awaited<
-      ReturnType<
-        typeof headers
-      >
-    >,
-) {
-  return (
-    headersList
-      .get(
-        "x-forwarded-for",
-      )
-      ?.split(",")[0]
-      ?.trim() ||
-    headersList.get(
-      "x-real-ip",
-    ) ||
-    "unknown-ip"
-  );
-}
-
 export async function registerUser(
   _prevState: RegisterState,
   formData: FormData,
@@ -90,7 +71,9 @@ export async function registerUser(
     await headers();
 
   const ip =
-    getIp(headersList);
+    getClientIp(
+      headersList,
+    );
 
   const {
     success:

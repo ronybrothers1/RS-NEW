@@ -124,6 +124,7 @@ export async function POST(
 
   const {
     success,
+    retryAfterMs,
   } = rateLimit(
     `admin-media-upload-${staff.id}`,
     30,
@@ -141,6 +142,16 @@ export async function POST(
         headers: {
           "Cache-Control":
             "no-store",
+          "Retry-After":
+            String(
+              Math.max(
+                1,
+                Math.ceil(
+                  retryAfterMs /
+                    1000,
+                ),
+              ),
+            ),
         },
       },
     );

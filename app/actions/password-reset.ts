@@ -30,6 +30,9 @@ import {
   rateLimit,
 } from "@/lib/rate-limit";
 import {
+  getClientIp,
+} from "@/lib/request-ip";
+import {
   db,
 } from "@/src/db";
 import {
@@ -48,28 +51,6 @@ export type CompletePasswordResetState = {
   success: boolean;
   error: string | null;
 };
-
-function getIp(
-  headersList:
-    Awaited<
-      ReturnType<
-        typeof headers
-      >
-    >,
-) {
-  return (
-    headersList
-      .get(
-        "x-forwarded-for",
-      )
-      ?.split(",")[0]
-      ?.trim() ||
-    headersList.get(
-      "x-real-ip",
-    ) ||
-    "unknown-ip"
-  );
-}
 
 function normalizeEmail(
   value: FormDataEntryValue | null,
@@ -112,7 +93,9 @@ export async function requestPasswordReset(
     await headers();
 
   const ip =
-    getIp(headersList);
+    getClientIp(
+      headersList,
+    );
 
   const {
     success: allowed,
@@ -223,7 +206,9 @@ export async function resendPasswordResetCode(
     await headers();
 
   const ip =
-    getIp(headersList);
+    getClientIp(
+      headersList,
+    );
 
   const {
     success: allowed,
@@ -398,7 +383,9 @@ export async function completePasswordReset(
     await headers();
 
   const ip =
-    getIp(headersList);
+    getClientIp(
+      headersList,
+    );
 
   const {
     success: allowed,
