@@ -6,7 +6,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { eq } from "drizzle-orm";
 
-import { auth } from "@/auth";
+import { getCurrentDbUser } from "@/lib/current-authz";
 import { db } from "@/src/db";
 import { programs } from "@/src/db/schema";
 import ProgramForm from "../../components/ProgramForm";
@@ -28,11 +28,11 @@ function isUuid(value: string) {
 export default async function EditProgramPage(
   props: Props,
 ) {
-  const session = await auth();
+  const currentUser = await getCurrentDbUser();
 
   if (
-    !session?.user?.id ||
-    (session.user as any).role !== "ADMIN"
+    !currentUser ||
+    currentUser.role !== "ADMIN"
   ) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">

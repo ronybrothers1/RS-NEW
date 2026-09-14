@@ -3,13 +3,13 @@ import { users } from "@/src/db/schema";
 import { desc } from "drizzle-orm";
 import Link from "next/link";
 import { UserPlus, Shield, User } from "lucide-react";
-import { auth } from "@/auth";
+import { getCurrentDbUser } from "@/lib/current-authz";
 import { redirect } from "next/navigation";
 import DeletePenggunaButton from "./components/DeletePenggunaButton";
 
 export default async function PenggunaPage() {
-  const session = await auth();
-  if ((session?.user as any)?.role !== 'ADMIN') {
+  const currentUser = await getCurrentDbUser();
+  if (!currentUser || currentUser.role !== 'ADMIN') {
     redirect('/admin/dashboard');
   }
 
@@ -80,10 +80,10 @@ export default async function PenggunaPage() {
                     })}
                   </td>
                   <td className="px-6 py-4 text-right">
-                    {session?.user?.id !== userRecord.id && (
+                    {currentUser.id !== userRecord.id && (
                       <DeletePenggunaButton id={userRecord.id} />
                     )}
-                    {session?.user?.id === userRecord.id && (
+                    {currentUser.id === userRecord.id && (
                       <span className="text-xs text-slate-400 italic">Akun Anda</span>
                     )}
                   </td>

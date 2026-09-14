@@ -1,15 +1,14 @@
 import { db } from "@/src/db";
 import { settings } from "@/src/db/schema";
-import { auth } from "@/auth";
-import { redirect } from "next/navigation";
+import { getCurrentDbUser } from "@/lib/current-authz";
 import PengaturanForm from "./components/PengaturanForm";
 import { ShieldAlert } from "lucide-react";
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminPengaturanPage() {
-  const session = await auth();
-  if ((session?.user as any)?.role !== 'ADMIN') {
+  const currentUser = await getCurrentDbUser();
+  if (!currentUser || currentUser.role !== 'ADMIN') {
     return (
       <div className="flex flex-col items-center justify-center py-20">
         <ShieldAlert className="h-16 w-16 text-rose-500 mb-4" />

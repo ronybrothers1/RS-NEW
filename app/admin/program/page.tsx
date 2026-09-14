@@ -1,6 +1,6 @@
 import { db } from "@/src/db";
 import { programs } from "@/src/db/schema";
-import { auth } from "@/auth";
+import { getCurrentDbUser } from "@/lib/current-authz";
 import { desc } from "drizzle-orm";
 import { ShieldAlert, Plus } from "lucide-react";
 import Link from "next/link";
@@ -9,8 +9,8 @@ import ProgramList from "./components/ProgramList";
 export const dynamic = 'force-dynamic';
 
 export default async function AdminProgramPage() {
-  const session = await auth();
-  if ((session?.user as any)?.role !== 'ADMIN') {
+  const currentUser = await getCurrentDbUser();
+  if (!currentUser || currentUser.role !== 'ADMIN') {
     return (
       <div className="flex flex-col items-center justify-center py-20">
         <ShieldAlert className="h-16 w-16 text-rose-500 mb-4" />

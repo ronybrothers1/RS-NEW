@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@/auth";
+import { getCurrentDbUser } from "@/lib/current-authz";
 import { db } from "@/src/db";
 import { auditLogs, programs } from "@/src/db/schema";
 import { eq } from "drizzle-orm";
@@ -43,17 +43,16 @@ function revalidateProgramPages() {
 }
 
 async function requireAdminUserId() {
-  const session = await auth();
-  const userId = session?.user?.id;
+  const user = await getCurrentDbUser();
 
   if (
-    !userId ||
-    (session?.user as any)?.role !== "ADMIN"
+    !user ||
+    user.role !== "ADMIN"
   ) {
     return null;
   }
 
-  return userId;
+  return user.id;
 }
 
 export async function createProgram(formData: FormData) {

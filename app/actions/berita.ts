@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@/auth";
+import { getCurrentStaffUser } from "@/lib/current-authz";
 import { db } from "@/src/db";
 import { articles, auditLogs } from "@/src/db/schema";
 import { and, eq, ne } from "drizzle-orm";
@@ -105,20 +105,8 @@ function parseScheduledAt(value: FormDataEntryValue | null) {
   return parsed;
 }
 
-async function getEditorSession() {
-  const session = await auth();
-
-  if (!session?.user?.id) {
-    return null;
-  }
-
-  const role = (session.user as { role?: string }).role;
-
-  if (role !== "ADMIN" && role !== "OPERATOR") {
-    return null;
-  }
-
-  return session;
+async function getEditorUser() {
+  return getCurrentStaffUser();
 }
 
 async function makeUniqueSlug(baseValue: string, excludeId?: string) {
@@ -240,9 +228,9 @@ export async function createBerita(
   _prevState: unknown,
   formData: FormData,
 ): Promise<ActionResult> {
-  const session = await getEditorSession();
+  const staff = await getEditorUser();
 
-  if (!session?.user?.id) {
+  if (!staff) {
     return {
       success: false,
       error: "Anda tidak memiliki akses untuk membuat berita.",
@@ -327,14 +315,14 @@ export async function createBerita(
         metaTitle: cleanOptional(formData.get("metaTitle")),
         metaDescription: cleanOptional(formData.get("metaDescription")),
         status,
-        authorId: session.user.id,
+        authorId: staff.id,
         updatedAt: new Date(),
         ...lifecycle,
       })
       .returning();
 
     await db.insert(auditLogs).values({
-      userId: session.user.id,
+      userId: staff.id,
       action: status === "PUBLISHED" ? "PUBLISH" : "CREATE",
       tableName: "articles",
       recordId: newArticle.id,
@@ -364,9 +352,9 @@ export async function updateBerita(
   _prevState: unknown,
   formData: FormData,
 ): Promise<ActionResult> {
-  const session = await getEditorSession();
+  const staff = await getEditorUser();
 
-  if (!session?.user?.id) {
+  if (!staff) {
     return {
       success: false,
       error: "Anda tidak memiliki akses untuk mengubah berita.",
@@ -477,7 +465,7 @@ export async function updateBerita(
       .returning();
 
     await db.insert(auditLogs).values({
-      userId: session.user.id,
+      userId: staff.id,
       action: getAuditAction(oldArticle.status, status),
       tableName: "articles",
       recordId: id,
@@ -513,9 +501,9 @@ export async function updateBerita(
 export async function archiveBerita(
   id: string,
 ): Promise<ActionResult> {
-  const session = await getEditorSession();
+  const staff = await getEditorUser();
 
-  if (!session?.user?.id) {
+  if (!staff) {
     return {
       success: false,
       error: "Anda tidak memiliki akses untuk mengarsipkan berita.",
@@ -556,7 +544,7 @@ export async function archiveBerita(
     .returning();
 
   await db.insert(auditLogs).values({
-    userId: session.user.id,
+    userId: staff.id,
     action: "ARCHIVE",
     tableName: "articles",
     recordId: id,
@@ -579,9 +567,9 @@ export async function archiveBerita(
 export async function deleteBerita(
   id: string,
 ): Promise<ActionResult> {
-  const session = await getEditorSession();
+  const staff = await getEditorUser();
 
-  if (!session?.user?.id) {
+  if (!staff) {
     return {
       success: false,
       error: "Anda tidak memiliki akses untuk menghapus berita.",
@@ -617,7 +605,7 @@ export async function deleteBerita(
       .where(eq(articles.id, id));
 
     await db.insert(auditLogs).values({
-      userId: session.user.id,
+      userId: staff.id,
       action: "DELETE",
       tableName: "articles",
       recordId: id,

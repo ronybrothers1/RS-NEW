@@ -1,11 +1,30 @@
 ﻿import {
   ArrowLeft,
+  ShieldAlert,
 } from "lucide-react";
 import Link from "next/link";
 
+import { getCurrentDbUser } from "@/lib/current-authz";
 import ProgramForm from "../components/ProgramForm";
 
-export default function TambahProgramPage() {
+export default async function TambahProgramPage() {
+  const currentUser = await getCurrentDbUser();
+
+  if (!currentUser || currentUser.role !== "ADMIN") {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <ShieldAlert className="mb-4 h-16 w-16 text-rose-500" />
+
+        <h2 className="text-xl font-bold text-slate-900">
+          Akses Ditolak
+        </h2>
+
+        <p className="mt-2 text-sm text-slate-500">
+          Hanya Admin yang dapat menambahkan program.
+        </p>
+      </div>
+    );
+  }
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div className="flex items-start gap-4">

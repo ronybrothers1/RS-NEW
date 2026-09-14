@@ -2,12 +2,12 @@
 
 import { db } from "@/src/db";
 import { settings, auditLogs } from "@/src/db/schema";
-import { auth } from "@/auth";
+import { getCurrentDbUser } from "@/lib/current-authz";
 import { revalidatePath } from "next/cache";
 
 export async function saveSettings(prevState: any, formData: FormData) {
-  const session = await auth();
-  if (!session?.user?.id || (session.user as any).role !== 'ADMIN') {
+  const user = await getCurrentDbUser();
+  if (!user || user.role !== 'ADMIN') {
     return {
       success: false,
       error: "Unauthorized. Hanya ADMIN yang berhak mengubah pengaturan.",
@@ -52,7 +52,7 @@ export async function saveSettings(prevState: any, formData: FormData) {
     }
 
     await db.insert(auditLogs).values({
-      userId: session.user.id,
+      userId: user.id,
       action: 'UPDATE_SETTINGS',
       tableName: 'settings',
       recordId: 'system',

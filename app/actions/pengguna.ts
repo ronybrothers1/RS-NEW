@@ -12,8 +12,8 @@ import {
 } from "next/cache";
 
 import {
-  auth,
-} from "@/auth";
+  getCurrentDbUser,
+} from "@/lib/current-authz";
 import {
   db,
 } from "@/src/db";
@@ -30,12 +30,12 @@ export async function createUser(
   prevState: any,
   formData: FormData,
 ) {
-  const session =
-    await auth();
+  const currentUser =
+    await getCurrentDbUser();
 
   if (
-    !session?.user?.id ||
-    (session.user as any).role !==
+    !currentUser ||
+    currentUser.role !==
       "ADMIN"
   ) {
     return {
@@ -113,7 +113,7 @@ export async function createUser(
       .insert(auditLogs)
       .values({
         userId:
-          session.user.id,
+          currentUser.id,
         action:
           "CREATE",
         tableName:
@@ -279,12 +279,12 @@ async function getUserDeletionBlockers(
 export async function deleteUser(
   id: string,
 ) {
-  const session =
-    await auth();
+  const currentUser =
+    await getCurrentDbUser();
 
   if (
-    !session?.user?.id ||
-    (session.user as any).role !==
+    !currentUser ||
+    currentUser.role !==
       "ADMIN"
   ) {
     return {
@@ -295,7 +295,7 @@ export async function deleteUser(
   }
 
   const actorUserId =
-    session.user.id;
+    currentUser.id;
 
   if (
     actorUserId === id
