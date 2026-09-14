@@ -1,7 +1,7 @@
 import { db } from "@/src/db";
 import { auditLogs, users } from "@/src/db/schema";
 import { eq, desc } from "drizzle-orm";
-import { auth } from "@/auth";
+import { getCurrentDbUser } from "@/lib/current-authz";
 import { redirect } from "next/navigation";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
@@ -9,8 +9,13 @@ import { id } from "date-fns/locale";
 export const dynamic = 'force-dynamic';
 
 export default async function AuditLogsPage() {
-  const session = await auth();
-  if ((session?.user as any)?.role !== 'ADMIN') {
+  const currentUser =
+    await getCurrentDbUser();
+
+  if (
+    !currentUser ||
+    currentUser.role !== 'ADMIN'
+  ) {
     redirect('/admin/dashboard');
   }
 

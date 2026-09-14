@@ -12,8 +12,8 @@ import {
 } from "next/navigation";
 
 import {
-  auth,
-} from "@/auth";
+  getCurrentVerifiedPublicUser,
+} from "@/lib/current-authz";
 import {
   getProgramQuestions,
 } from "@/lib/assistance";
@@ -33,7 +33,6 @@ import {
   assistanceApplications,
   auditLogs,
   programs,
-  users,
 } from "@/src/db/schema";
 
 export type AssistanceActionState = {
@@ -236,55 +235,7 @@ function parsePhotos(
   return result;
 }
 
-async function getVerifiedUser() {
-  const session =
-    await auth();
 
-  const userId =
-    session?.user?.id;
-
-  const role = (
-    session?.user as
-      | {
-          role?: string;
-        }
-      | undefined
-  )?.role;
-
-  if (
-    !userId ||
-    role !== "USER"
-  ) {
-    return null;
-  }
-
-  const [user] =
-    await db
-      .select({
-        id: users.id,
-        role: users.role,
-        emailVerifiedAt:
-          users.emailVerifiedAt,
-      })
-      .from(users)
-      .where(
-        eq(
-          users.id,
-          userId,
-        ),
-      )
-      .limit(1);
-
-  if (
-    !user ||
-    user.role !== "USER" ||
-    !user.emailVerifiedAt
-  ) {
-    return null;
-  }
-
-  return user;
-}
 
 async function parseApplication(
   formData: FormData,
@@ -551,7 +502,7 @@ export async function createAssistanceApplication(
   formData: FormData,
 ): Promise<AssistanceActionState> {
   const user =
-    await getVerifiedUser();
+    await getCurrentVerifiedPublicUser();
 
   if (!user) {
     return {
@@ -731,7 +682,7 @@ export async function updateAssistanceApplication(
   formData: FormData,
 ): Promise<AssistanceActionState> {
   const user =
-    await getVerifiedUser();
+    await getCurrentVerifiedPublicUser();
 
   if (!user) {
     return {

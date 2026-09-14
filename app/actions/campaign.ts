@@ -12,8 +12,8 @@ import {
 } from "next/navigation";
 
 import {
-  auth,
-} from "@/auth";
+  getCurrentStaffUser,
+} from "@/lib/current-authz";
 import {
   db,
 } from "@/src/db";
@@ -22,7 +22,6 @@ import {
   assistanceApplications,
   auditLogs,
   campaigns,
-  users,
 } from "@/src/db/schema";
 
 export type CampaignActionState = {
@@ -54,58 +53,7 @@ function cleanText(
   return text;
 }
 
-async function getStaffUser() {
-  const session =
-    await auth();
 
-  const userId =
-    session?.user?.id;
-
-  const sessionRole = (
-    session?.user as
-      | {
-          role?: string;
-        }
-      | undefined
-  )?.role;
-
-  if (
-    !userId ||
-    (
-      sessionRole !== "ADMIN" &&
-      sessionRole !== "OPERATOR"
-    )
-  ) {
-    return null;
-  }
-
-  const [user] =
-    await db
-      .select({
-        id: users.id,
-        role: users.role,
-      })
-      .from(users)
-      .where(
-        eq(
-          users.id,
-          userId,
-        ),
-      )
-      .limit(1);
-
-  if (
-    !user ||
-    (
-      user.role !== "ADMIN" &&
-      user.role !== "OPERATOR"
-    )
-  ) {
-    return null;
-  }
-
-  return user;
-}
 
 function refreshCampaignPaths(
   applicationId: string,
@@ -138,7 +86,7 @@ export async function saveCampaign(
   formData: FormData,
 ): Promise<CampaignActionState> {
   const staff =
-    await getStaffUser();
+    await getCurrentStaffUser();
 
   if (!staff) {
     return {

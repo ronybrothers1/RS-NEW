@@ -18,7 +18,9 @@ import {
 import Link from "next/link";
 import type { Metadata } from "next";
 
-import { auth } from "@/auth";
+import {
+  getCurrentDbUser,
+} from "@/lib/current-authz";
 import {
   formatRupiah,
   getProgramQuestions,
@@ -44,9 +46,11 @@ export const metadata: Metadata = createPageMetadata({
 });
 
 export default async function AssistanceCampaignsPage() {
-  const session = await auth();
-  const sessionRole = (session?.user as { role?: string } | undefined)?.role;
-  const canSubmitApplication = sessionRole === "USER";
+  const currentUser =
+    await getCurrentDbUser();
+
+  const canSubmitApplication =
+    currentUser?.role === "USER";
 
   const [
     rows,

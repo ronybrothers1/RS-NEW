@@ -14,8 +14,8 @@ import {
 } from "next/navigation";
 
 import {
-  auth,
-} from "@/auth";
+  getCurrentDbUser,
+} from "@/lib/current-authz";
 import {
   ASSISTANCE_STATUS_META,
   formatRupiah,
@@ -34,25 +34,17 @@ export const dynamic =
   "force-dynamic";
 
 export default async function AssistanceApplicationsPage() {
-  const session =
-    await auth();
+  const currentUser =
+    await getCurrentDbUser();
 
-  if (
-    !session?.user?.id
-  ) {
+  if (!currentUser) {
     redirect(
       "/login",
     );
   }
 
-  const role = (
-    session.user as {
-      role?: string;
-    }
-  ).role;
-
   if (
-    role !== "USER"
+    currentUser.role !== "USER"
   ) {
     redirect(
       "/admin/dashboard",
@@ -70,7 +62,7 @@ export default async function AssistanceApplicationsPage() {
       .where(
         eq(
           users.id,
-          session.user.id,
+          currentUser.id,
         ),
       )
       .limit(1);

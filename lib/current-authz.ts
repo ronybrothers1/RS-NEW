@@ -20,6 +20,8 @@ export type CurrentDbUser = {
     | "USER";
   emailVerifiedAt:
     Date | null;
+  sessionVersion:
+    number;
 };
 
 export async function getCurrentDbUser():
@@ -30,7 +32,23 @@ Promise<CurrentDbUser | null> {
   const userId =
     session?.user?.id;
 
-  if (!userId) {
+  const sessionVersion = (
+    session?.user as
+      | {
+          sessionVersion?: unknown;
+        }
+      | undefined
+  )?.sessionVersion;
+
+  if (
+    !userId ||
+    typeof sessionVersion !==
+      "number" ||
+    !Number.isInteger(
+      sessionVersion,
+    ) ||
+    sessionVersion < 0
+  ) {
     return null;
   }
 
@@ -41,6 +59,8 @@ Promise<CurrentDbUser | null> {
         role: users.role,
         emailVerifiedAt:
           users.emailVerifiedAt,
+        sessionVersion:
+          users.sessionVersion,
       })
       .from(users)
       .where(
@@ -51,7 +71,15 @@ Promise<CurrentDbUser | null> {
       )
       .limit(1);
 
-  return user || null;
+  if (
+    !user ||
+    user.sessionVersion !==
+      sessionVersion
+  ) {
+    return null;
+  }
+
+  return user;
 }
 
 export async function getCurrentStaffUser() {

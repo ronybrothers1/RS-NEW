@@ -43,6 +43,7 @@ export const users = pgTable('users', {
   emailVerifiedAt: timestamp('email_verified_at'),
   passwordHash: text('password_hash').notNull(),
   role: roleEnum('role').default('OPERATOR').notNull(),
+  sessionVersion: integer('session_version').default(0).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (table) => [
   uniqueIndex('users_email_lower_unique')

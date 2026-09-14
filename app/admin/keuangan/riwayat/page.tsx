@@ -1,4 +1,4 @@
-import { auth } from "@/auth";
+import { getCurrentDbUser } from "@/lib/current-authz";
 import { db } from "@/src/db";
 import {
   financialTransactions,
@@ -160,9 +160,9 @@ export default async function RiwayatTransaksiPage({
     ...conditions,
   );
 
-  const [session, programRows, countRows] =
+  const [currentUser, programRows, countRows] =
     await Promise.all([
-      auth(),
+      getCurrentDbUser(),
       db
         .select({
           id: programs.id,
@@ -261,13 +261,8 @@ export default async function RiwayatTransaksiPage({
     .limit(PAGE_SIZE)
     .offset(offset);
 
-  const role = (
-    session?.user as
-      | {
-          role?: string;
-        }
-      | undefined
-  )?.role;
+  const role =
+    currentUser?.role;
 
   const transactions = transactionRows.map(
     (transaction) => ({

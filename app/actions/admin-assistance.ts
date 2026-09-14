@@ -12,8 +12,8 @@ import {
 } from "next/navigation";
 
 import {
-  auth,
-} from "@/auth";
+  getCurrentStaffUser,
+} from "@/lib/current-authz";
 import {
   db,
 } from "@/src/db";
@@ -21,7 +21,6 @@ import {
   assistanceApplications,
   auditLogs,
   campaigns,
-  users,
 } from "@/src/db/schema";
 
 export type AdminAssistanceActionState = {
@@ -62,58 +61,7 @@ function toCampaignSlug(
   return `${base}-${applicationId.slice(0, 8)}`;
 }
 
-async function getStaffUser() {
-  const session =
-    await auth();
 
-  const userId =
-    session?.user?.id;
-
-  const sessionRole = (
-    session?.user as
-      | {
-          role?: string;
-        }
-      | undefined
-  )?.role;
-
-  if (
-    !userId ||
-    (
-      sessionRole !== "ADMIN" &&
-      sessionRole !== "OPERATOR"
-    )
-  ) {
-    return null;
-  }
-
-  const [user] =
-    await db
-      .select({
-        id: users.id,
-        role: users.role,
-      })
-      .from(users)
-      .where(
-        eq(
-          users.id,
-          userId,
-        ),
-      )
-      .limit(1);
-
-  if (
-    !user ||
-    (
-      user.role !== "ADMIN" &&
-      user.role !== "OPERATOR"
-    )
-  ) {
-    return null;
-  }
-
-  return user;
-}
 
 function refreshReviewPaths(
   applicationId: string,
@@ -144,7 +92,7 @@ export async function reviewAssistanceApplication(
   formData: FormData,
 ): Promise<AdminAssistanceActionState> {
   const staff =
-    await getStaffUser();
+    await getCurrentStaffUser();
 
   if (!staff) {
     return {

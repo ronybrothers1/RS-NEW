@@ -104,6 +104,8 @@ export const {
             userRecord.email,
           role:
             userRecord.role,
+          sessionVersion:
+            userRecord.sessionVersion,
         };
       },
     }),
@@ -164,6 +166,8 @@ export const {
             userRecord.email,
           role:
             userRecord.role,
+          sessionVersion:
+            userRecord.sessionVersion,
         };
       },
     }),

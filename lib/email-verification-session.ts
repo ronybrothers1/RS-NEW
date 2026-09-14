@@ -3,8 +3,8 @@ import {
 } from "next/headers";
 
 import {
-  auth,
-} from "@/auth";
+  getCurrentDbUser,
+} from "@/lib/current-authz";
 
 import {
   createPendingEmailVerificationToken,
@@ -70,21 +70,14 @@ export async function getEmailVerificationUserId() {
   // Mendukung USER yang sudah login
   // sebelum fitur verifikasi email
   // ditambahkan.
-  const session = await auth();
-
-  const role = (
-    session?.user as
-      | {
-          role?: string;
-        }
-      | undefined
-  )?.role;
+  const currentUser =
+    await getCurrentDbUser();
 
   if (
-    role === "USER" &&
-    session?.user?.id
+    currentUser?.role ===
+    "USER"
   ) {
-    return session.user.id;
+    return currentUser.id;
   }
 
   return null;

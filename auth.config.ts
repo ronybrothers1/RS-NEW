@@ -38,14 +38,32 @@ export const authConfig = {
       const pathname =
         nextUrl.pathname;
 
-      const isLoggedIn =
-        Boolean(auth?.user);
-
-      const role = (
+      const sessionUser = (
         auth?.user as
-          | { role?: string }
+          | {
+              role?: string;
+              sessionVersion?: unknown;
+            }
           | undefined
-      )?.role;
+      );
+
+      const sessionVersion =
+        sessionUser?.sessionVersion;
+
+      const hasValidSessionVersion =
+        typeof sessionVersion ===
+          "number" &&
+        Number.isInteger(
+          sessionVersion,
+        ) &&
+        sessionVersion >= 0;
+
+      const isLoggedIn =
+        Boolean(auth?.user) &&
+        hasValidSessionVersion;
+
+      const role =
+        sessionUser?.role;
 
       const isStaff =
         role === "ADMIN" ||
@@ -127,12 +145,17 @@ export const authConfig = {
       user,
     }) {
       if (user) {
-        token.id = user.id;
-        token.role = (
+        const authenticatedUser =
           user as {
             role?: string;
-          }
-        ).role;
+            sessionVersion?: number;
+          };
+
+        token.id = user.id;
+        token.role =
+          authenticatedUser.role;
+        token.sessionVersion =
+          authenticatedUser.sessionVersion;
       }
 
       return token;
@@ -146,12 +169,19 @@ export const authConfig = {
         session.user.id =
           token.id as string;
 
-        (
+        const sessionUser =
           session.user as {
             role?: string;
-          }
-        ).role =
+            sessionVersion?: number;
+          };
+
+        sessionUser.role =
           token.role as string;
+
+        sessionUser.sessionVersion =
+          token.sessionVersion as
+            | number
+            | undefined;
       }
 
       return session;

@@ -6,6 +6,7 @@ import {
 import {
   eq,
   ilike,
+  sql,
 } from "drizzle-orm";
 import {
   headers,
@@ -534,6 +535,8 @@ export async function completePasswordReset(
         .update(users)
         .set({
           passwordHash,
+          sessionVersion:
+            sql`${users.sessionVersion} + 1`,
         })
         .where(
           eq(
