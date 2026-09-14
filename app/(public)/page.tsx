@@ -126,7 +126,6 @@ export default async function HomePage() {
     <div className="min-h-screen bg-canvas text-ink">
       <section className="relative isolate overflow-hidden bg-brand-950 text-white">
         <picture
-          aria-hidden="true"
           className="absolute inset-0 -z-20 hidden lg:block"
         >
           <source
