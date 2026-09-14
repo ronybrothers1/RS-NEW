@@ -83,8 +83,8 @@ export default function TambahPenggunaPage() {
                 type="password"
                 name="password"
                 required
-                minLength={6}
-                placeholder="Minimal 6 karakter"
+                minLength={8}
+                placeholder="Minimal 8 karakter"
                 className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-teal-500 focus:border-teal-500 text-slate-900"
               />
             </div>

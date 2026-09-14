@@ -5,6 +5,7 @@ import {
 } from "bcryptjs";
 import {
   eq,
+  ilike,
   or,
 } from "drizzle-orm";
 import {
@@ -49,7 +50,12 @@ export async function createUser(
     formData.get("name") as string;
 
   const email =
-    formData.get("email") as string;
+    String(
+      formData.get("email") ||
+        "",
+    )
+      .trim()
+      .toLowerCase();
 
   const password =
     formData.get("password") as string;
@@ -83,11 +89,44 @@ export async function createUser(
     };
   }
 
-  if (password.length < 6) {
+  if (
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+      email,
+    )
+  ) {
     return {
       success: false,
       error:
-        "Password minimal 6 karakter.",
+        "Alamat email tidak valid.",
+    };
+  }
+
+  const [existingUser] =
+    await db
+      .select({
+        id: users.id,
+      })
+      .from(users)
+      .where(
+        ilike(
+          users.email,
+          email,
+        ),
+      )
+      .limit(1);
+
+  if (existingUser) {
+    return {
+      success: false,
+      error:
+        "Email sudah digunakan oleh pengguna lain.",
+    };
+  }
+  if (password.length < 8) {
+    return {
+      success: false,
+      error:
+        "Password minimal 8 karakter.",
     };
   }
 
@@ -95,7 +134,7 @@ export async function createUser(
     const passwordHash =
       await hash(
         password,
-        10,
+        12,
       );
 
     const [newUser] =
