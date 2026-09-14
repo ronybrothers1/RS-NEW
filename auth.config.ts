@@ -15,7 +15,7 @@ if (!process.env.AUTH_SECRET) {
   }
 
   console.warn(
-    "âš ï¸ Peringatan: AUTH_SECRET belum diatur. Menggunakan nilai bawaan. Jangan gunakan di Production.",
+    "⚠️ Peringatan: AUTH_SECRET belum diatur. Menggunakan nilai bawaan. Jangan gunakan di Production.",
   );
 }
 
