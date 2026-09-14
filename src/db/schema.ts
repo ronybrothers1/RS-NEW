@@ -1,6 +1,7 @@
 import { 
   pgTable, 
   index,
+  uniqueIndex,
   uuid, 
   text, 
   timestamp, 
@@ -43,7 +44,10 @@ export const users = pgTable('users', {
   passwordHash: text('password_hash').notNull(),
   role: roleEnum('role').default('OPERATOR').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-});
+}, (table) => [
+  uniqueIndex('users_email_lower_unique')
+    .on(sql`lower(${table.email})`),
+]);
 
 export const emailVerificationCodes = pgTable('email_verification_codes', {
   id: uuid('id').defaultRandom().primaryKey(),
