@@ -6,6 +6,7 @@ import {
   BookOpen,
   ChevronLeft,
   ChevronRight,
+  Download,
   RotateCcw,
   Search,
   TrendingUp,
@@ -422,6 +423,15 @@ export default async function TransparansiPage({
                 <RotateCcw className="h-4 w-4" />
                 Reset
               </Link>
+
+              <a
+                href="/api/transparansi/buku-kas"
+                className={secondary3dButton}
+                aria-label={`Unduh PDF Buku Kas ${cashbook.period.label}`}
+              >
+                <Download className="h-4 w-4" />
+                Unduh PDF Bulan Ini
+              </a>
             </div>
           </form>
         </section>
