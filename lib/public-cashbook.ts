@@ -28,7 +28,6 @@ const MIN_YEAR = 2021;
 const MAX_YEAR = 2100;
 
 export type PublicCashbookRequest = {
-  month?: string | null;
   query?: string | null;
   page?: number | string | null;
 };
@@ -111,48 +110,15 @@ function formatMonthLabel(
   );
 }
 
-function parseRequestedMonth(
-  rawValue?: string | null,
-): PublicCashbookPeriod {
+function getCurrentPublicCashbookPeriod(): PublicCashbookPeriod {
   const current =
     getJakartaMonthPeriod();
 
-  let year =
+  const year =
     current.year;
-  let month =
+
+  const month =
     current.month;
-
-  if (rawValue) {
-    const match =
-      /^(\d{4})-(\d{2})$/.exec(
-        rawValue.trim(),
-      );
-
-    if (match) {
-      const candidateYear =
-        Number(match[1]);
-      const candidateMonth =
-        Number(match[2]);
-
-      if (
-        Number.isInteger(
-          candidateYear,
-        ) &&
-        candidateYear >= MIN_YEAR &&
-        candidateYear <= MAX_YEAR &&
-        Number.isInteger(
-          candidateMonth,
-        ) &&
-        candidateMonth >= 1 &&
-        candidateMonth <= 12
-      ) {
-        year =
-          candidateYear;
-        month =
-          candidateMonth;
-      }
-    }
-  }
 
   const bounds =
     getJakartaMonthBounds(
@@ -162,7 +128,7 @@ function parseRequestedMonth(
 
   if (!bounds) {
     throw new Error(
-      "Periode Buku Kas tidak valid.",
+      "Periode Buku Kas bulan berjalan tidak valid.",
     );
   }
 
@@ -306,9 +272,7 @@ export async function getPublicCashbook(
   request: PublicCashbookRequest = {},
 ): Promise<PublicCashbookResult> {
   const period =
-    parseRequestedMonth(
-      request.month,
-    );
+    getCurrentPublicCashbookPeriod();
 
   const query =
     normalizePublicQuery(

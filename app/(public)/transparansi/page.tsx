@@ -36,7 +36,6 @@ export const metadata: Metadata =
   });
 
 type TransparencySearchParams = {
-  month?: string | string[];
   q?: string | string[];
   page?: string | string[];
 };
@@ -99,21 +98,14 @@ function formatDate(
 }
 
 function buildCashbookHref({
-  month,
   query,
   page,
 }: {
-  month: string;
   query: string;
   page: number;
 }) {
   const params =
     new URLSearchParams();
-
-  params.set(
-    "month",
-    month,
-  );
 
   if (query) {
     params.set(
@@ -149,10 +141,6 @@ export default async function TransparansiPage({
   ] =
     await Promise.all([
       getPublicCashbook({
-        month:
-          getFirstParam(
-            params.month,
-          ),
         query:
           getFirstParam(
             params.q,
@@ -384,29 +372,8 @@ export default async function TransparansiPage({
           <form
             method="get"
             action="/transparansi"
-            className="grid gap-4 lg:grid-cols-[190px_minmax(0,1fr)_auto]"
+            className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto]"
           >
-            <div>
-              <label
-                htmlFor="cashbook-month"
-                className="mb-2 block text-sm font-semibold text-ink"
-              >
-                Periode
-              </label>
-
-              <input
-                id="cashbook-month"
-                type="month"
-                name="month"
-                min="2021-01"
-                max="2100-12"
-                defaultValue={
-                  cashbook.period.value
-                }
-                className="min-h-11 w-full rounded-xl border border-frame bg-white px-3 py-2.5 text-sm text-ink outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-200"
-              />
-            </div>
-
             <div>
               <label
                 htmlFor="cashbook-search"
@@ -706,8 +673,6 @@ export default async function TransparansiPage({
                   {pagination.currentPage > 1 ? (
                     <Link
                       href={buildCashbookHref({
-                        month:
-                          cashbook.period.value,
                         query:
                           cashbook.query,
                         page:
@@ -732,8 +697,6 @@ export default async function TransparansiPage({
                   {pagination.currentPage < pagination.totalPages ? (
                     <Link
                       href={buildCashbookHref({
-                        month:
-                          cashbook.period.value,
                         query:
                           cashbook.query,
                         page:
