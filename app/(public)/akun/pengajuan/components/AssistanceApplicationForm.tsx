@@ -80,6 +80,21 @@ const inputClass =
 const labelClass =
   "text-sm font-semibold text-slate-800";
 
+function formatRupiahInput(
+  value: string,
+) {
+  const digits =
+    value
+      .replace(/\D/g, "")
+      .replace(/^0+(?=\d)/, "")
+      .slice(0, 11);
+
+  return digits.replace(
+    /\B(?=(\d{3})+(?!\d))/g,
+    ".",
+  );
+}
+
 export default function AssistanceApplicationForm({
   userId,
   programs,
@@ -112,6 +127,17 @@ export default function AssistanceApplicationForm({
       ?.programId ||
       programs[0]?.id ||
       "",
+  );
+
+  const [
+    targetAmount,
+    setTargetAmount,
+  ] = useState(
+    formatRupiahInput(
+      initialApplication
+        ?.targetAmount ||
+        "",
+    ),
   );
 
   const [
@@ -352,17 +378,23 @@ export default function AssistanceApplicationForm({
             </span>
             <input
               name="targetAmount"
-              type="number"
-              min="1"
-              max="10000000000"
-              step="1000"
+              type="text"
+              inputMode="numeric"
+              maxLength={14}
               required
-              defaultValue={
-                initialApplication
-                  ?.targetAmount ||
-                ""
+              value={
+                targetAmount
               }
-              placeholder="Contoh: 20000000"
+              onChange={(
+                event,
+              ) => {
+                setTargetAmount(
+                  formatRupiahInput(
+                    event.target.value,
+                  ),
+                );
+              }}
+              placeholder="Contoh: 20.000.000"
               className={
                 inputClass
               }

@@ -12,6 +12,7 @@ import {
 import Link from "next/link";
 import {
   useActionState,
+  useState,
 } from "react";
 
 import type {
@@ -59,6 +60,21 @@ const initialState:
 
 const inputClass =
   "mt-2 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:ring-4 focus:ring-teal-50";
+
+function formatRupiahInput(
+  value: string,
+) {
+  const digits =
+    value
+      .replace(/\D/g, "")
+      .replace(/^0+(?=\d)/, "")
+      .slice(0, 11);
+
+  return digits.replace(
+    /\B(?=(\d{3})+(?!\d))/g,
+    ".",
+  );
+}
 
 const statusMeta: Record<
   CampaignStatus,
@@ -110,6 +126,15 @@ export default function CampaignEditorForm({
   ] = useActionState(
     action,
     initialState,
+  );
+
+  const [
+    targetAmount,
+    setTargetAmount,
+  ] = useState(
+    formatRupiahInput(
+      campaign.targetAmount,
+    ),
   );
 
   const terminal =
@@ -238,14 +263,23 @@ export default function CampaignEditorForm({
               </span>
               <input
                 name="targetAmount"
-                type="number"
+                type="text"
                 inputMode="numeric"
-                min={1}
-                max={10000000000}
-                defaultValue={
-                  campaign.targetAmount
+                maxLength={14}
+                value={
+                  targetAmount
                 }
+                onChange={(
+                  event,
+                ) => {
+                  setTargetAmount(
+                    formatRupiahInput(
+                      event.target.value,
+                    ),
+                  );
+                }}
                 disabled={terminal}
+                placeholder="Contoh: 20.000.000"
                 className={`${inputClass} pl-12`}
               />
             </div>

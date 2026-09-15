@@ -2,6 +2,7 @@ import { db } from "@/src/db";
 import type { Metadata } from "next";
 import { createPageMetadata } from "@/lib/seo-metadata";
 import { getFinanceSummary } from "@/lib/finance-summary";
+import { getFinanceMonthlySummary } from "@/lib/finance-monthly-summary";
 import { financialTransactions, programs } from "@/src/db/schema";
 import { and, desc, eq, gte, isNull, lt } from "drizzle-orm";
 
@@ -16,21 +17,7 @@ export const metadata: Metadata = createPageMetadata({
   path: "/transparansi",
 });
 
-function getJakartaToday() {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Jakarta",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(new Date());
 
-  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
-  return {
-    year: Number(values.year),
-    month: Number(values.month),
-    day: Number(values.day),
-  };
-}
 
 type FinanceCategory =
   | "INCOME"
@@ -74,20 +61,16 @@ function transactionCategoryLabel(
 }
 
 export default async function TransparansiPage() {
-  const finance =
-    await getFinanceSummary();
+  const [
+    finance,
+    monthlyFinance,
+  ] =
+    await Promise.all([
+      getFinanceSummary(),
+      getFinanceMonthlySummary(),
+    ]);
 
-  const today = getJakartaToday();
-  const monthStart = new Date(Date.UTC(today.year, today.month - 1, 1));
-  const tomorrow = new Date(Date.UTC(today.year, today.month - 1, today.day + 1));
-  const periodStartLabel = new Intl.DateTimeFormat("id-ID", {
-    day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Jakarta",
-  }).format(new Date(Date.UTC(today.year, today.month - 1, 1, 12)));
-  const periodEndLabel = new Intl.DateTimeFormat("id-ID", {
-    day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Jakarta",
-  }).format(new Date(Date.UTC(today.year, today.month - 1, today.day, 12)));
-
-  // Seluruh transaksi pada bulan berjalan sampai hari ini (WIB).
+  // Seluruh transaksi bulan berjalan menggunakan batas kalender WIB.
   const monthlyTransactions = await db
     .select({
       id: financialTransactions.id,
@@ -105,8 +88,8 @@ export default async function TransparansiPage() {
     .where(
       and(
         isNull(financialTransactions.deletedAt),
-        gte(financialTransactions.date, monthStart),
-        lt(financialTransactions.date, tomorrow),
+        gte(financialTransactions.date, monthlyFinance.periodStart),
+        lt(financialTransactions.date, monthlyFinance.periodEndExclusive),
       ),
     )
     .orderBy(
@@ -140,10 +123,10 @@ export default async function TransparansiPage() {
                 Saldo Kas Saat Ini
               </p>
               <p className="mt-2 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-                Rp {finance.cashBalance.toLocaleString('id-ID')}
+                Rp {monthlyFinance.closingBalance.toLocaleString('id-ID')}
               </p>
               <p className="mt-4 max-w-md text-sm leading-6 text-brand-100">
-                Ini adalah posisi kas setelah saldo awal, penerimaan, pengeluaran, pinjaman keluar, dan pengembalian pinjaman dihitung seluruhnya.
+                Posisi kas merupakan saldo awal bulan ditambah seluruh penerimaan dan dikurangi seluruh pengeluaran bulan {monthlyFinance.monthLabel}.
               </p>
             </div>
           </div>
@@ -154,50 +137,46 @@ export default async function TransparansiPage() {
                 Rekonsiliasi Saldo Kas
               </h2>
               <p className="mt-1 text-sm text-ink-muted">
-                Rincian berikut menunjukkan secara langsung dari mana saldo kas saat ini terbentuk.
+                Rekonsiliasi arus kas bulan {monthlyFinance.monthLabel}.
               </p>
             </div>
 
             <div className="divide-y divide-frame px-6">
               <div className="flex items-center justify-between gap-4 py-3">
-                <span className="text-sm text-ink-muted">Saldo awal</span>
+                <span className="text-sm text-ink-muted">
+                  Saldo awal bulan {monthlyFinance.monthLabel}
+                </span>
                 <span className="font-bold text-ink">
-                  Rp {finance.openingBalance.toLocaleString('id-ID')}
+                  Rp {monthlyFinance.openingBalance.toLocaleString('id-ID')}
                 </span>
               </div>
-              <div className="flex items-center justify-between gap-4 py-3">
-                <span className="text-sm text-ink-muted">+ Penerimaan</span>
-                <span className="font-bold text-emerald-700">
-                  Rp {finance.totalIncome.toLocaleString('id-ID')}
-                </span>
-              </div>
-              <div className="flex items-center justify-between gap-4 py-3">
-                <span className="text-sm text-ink-muted">+ Pengembalian pinjaman</span>
-                <span className="font-bold text-emerald-700">
-                  Rp {finance.loanRepayment.toLocaleString('id-ID')}
-                </span>
-              </div>
-              <div className="flex items-center justify-between gap-4 py-3">
-                <span className="text-sm text-ink-muted">− Pengeluaran</span>
-                <span className="font-bold text-rose-700">
-                  Rp {finance.totalExpense.toLocaleString('id-ID')}
-                </span>
-              </div>
-              <div className="flex items-center justify-between gap-4 py-3">
-                <span className="text-sm text-ink-muted">− Pinjaman keluar</span>
-                <span className="font-bold text-rose-700">
-                  Rp {finance.loanOut.toLocaleString('id-ID')}
-                </span>
-              </div>
-            </div>
 
-            <div className="flex items-center justify-between gap-4 border-t border-brand-200 bg-brand-50 px-6 py-4">
-              <span className="font-bold text-brand-900">
-                = Saldo kas saat ini
-              </span>
-              <span className="text-xl font-extrabold text-brand-800">
-                Rp {finance.cashBalance.toLocaleString('id-ID')}
-              </span>
+              <div className="flex items-center justify-between gap-4 py-3">
+                <span className="text-sm text-ink-muted">
+                  Penerimaan bulan {monthlyFinance.monthLabel}
+                </span>
+                <span className="font-bold text-emerald-700">
+                  Rp {monthlyFinance.cashIn.toLocaleString('id-ID')}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between gap-4 py-3">
+                <span className="text-sm text-ink-muted">
+                  Pengeluaran bulan {monthlyFinance.monthLabel}
+                </span>
+                <span className="font-bold text-rose-700">
+                  Rp {monthlyFinance.cashOut.toLocaleString('id-ID')}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between gap-4 bg-brand-50 py-4">
+                <span className="font-bold text-brand-900">
+                  Sisa saldo bulan {monthlyFinance.monthLabel}
+                </span>
+                <span className="text-xl font-extrabold text-brand-800">
+                  Rp {monthlyFinance.closingBalance.toLocaleString('id-ID')}
+                </span>
+              </div>
             </div>
           </div>
         </section>
@@ -250,7 +229,7 @@ export default async function TransparansiPage() {
             <div>
               <h2 className="text-lg font-bold text-ink">Riwayat Transaksi Bulan Ini</h2>
               <p className="text-sm text-ink-muted">
-                Seluruh transaksi {periodStartLabel} - {periodEndLabel} yang tercatat di sistem.
+                Seluruh transaksi bulan {monthlyFinance.monthLabel} yang tercatat di sistem.
               </p>
             </div>
           </div>

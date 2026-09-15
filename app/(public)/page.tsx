@@ -23,6 +23,7 @@ import { programs, articles } from "@/src/db/schema";
 import { sql, eq } from "drizzle-orm";
 import { formatCurrency } from "@/lib/utils";
 import { getFinanceSummary } from "@/lib/finance-summary";
+import { getFinanceMonthlySummary } from "@/lib/finance-monthly-summary";
 import { createPageMetadata, SITE_DESCRIPTION, SITE_NAME } from "@/lib/seo-metadata";
 
 export const metadata = createPageMetadata({
@@ -43,8 +44,14 @@ const iconMap: Record<string, React.ElementType> = {
 };
 
 export default async function HomePage() {
-  const finance =
-    await getFinanceSummary();
+  const [
+    finance,
+    monthlyFinance,
+  ] =
+    await Promise.all([
+      getFinanceSummary(),
+      getFinanceMonthlySummary(),
+    ]);
 
   const activePrograms = await db
     .select()
@@ -382,7 +389,7 @@ export default async function HomePage() {
                     Saldo Kas Saat Ini
                   </p>
                   <p className="mt-1 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-                    {formatCurrency(finance.cashBalance)}
+                    {formatCurrency(monthlyFinance.closingBalance)}
                   </p>
                 </div>
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-700/80 text-brand-50">
@@ -390,60 +397,56 @@ export default async function HomePage() {
                 </div>
               </div>
               <p className="mt-2 text-xs leading-5 text-brand-200">
-                Saldo setelah seluruh penerimaan, pengeluaran, dan transaksi pinjaman tercatat.
+                Posisi kas bulan {monthlyFinance.monthLabel} setelah seluruh penerimaan dan pengeluaran diperhitungkan.
               </p>
             </div>
 
             <div className="mt-3 overflow-hidden rounded-xl border border-white/10 bg-brand-950/20">
               <div className="border-b border-white/10 px-4 py-3">
                 <p className="text-sm font-bold text-white">
-                  Bagaimana saldo ini terbentuk?
+                  Rekonsiliasi Saldo Kas
                 </p>
                 <p className="mt-0.5 text-xs text-brand-200">
-                  Rekonsiliasi seluruh komponen kas yang ditampilkan secara terbuka.
+                  Rekonsiliasi arus kas bulan {monthlyFinance.monthLabel}.
                 </p>
               </div>
 
               <div className="divide-y divide-white/10 px-4">
                 <div className="flex items-center justify-between gap-4 py-2.5 text-sm">
-                  <span className="text-brand-100">Saldo awal</span>
+                  <span className="text-brand-100">
+                    Saldo awal bulan {monthlyFinance.monthLabel}
+                  </span>
                   <span className="font-bold text-white">
-                    {formatCurrency(finance.openingBalance)}
+                    {formatCurrency(monthlyFinance.openingBalance)}
                   </span>
                 </div>
-                <div className="flex items-center justify-between gap-4 py-2.5 text-sm">
-                  <span className="text-brand-100">+ Penerimaan</span>
-                  <span className="font-bold text-emerald-300">
-                    {formatCurrency(finance.totalIncome)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between gap-4 py-2.5 text-sm">
-                  <span className="text-brand-100">+ Pengembalian pinjaman</span>
-                  <span className="font-bold text-emerald-300">
-                    {formatCurrency(finance.loanRepayment)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between gap-4 py-2.5 text-sm">
-                  <span className="text-brand-100">− Pengeluaran</span>
-                  <span className="font-bold text-citrus-300">
-                    {formatCurrency(finance.totalExpense)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between gap-4 py-2.5 text-sm">
-                  <span className="text-brand-100">− Pinjaman keluar</span>
-                  <span className="font-bold text-citrus-300">
-                    {formatCurrency(finance.loanOut)}
-                  </span>
-                </div>
-              </div>
 
-              <div className="flex items-center justify-between gap-4 border-t border-white/15 bg-white/[0.06] px-4 py-3">
-                <span className="text-sm font-bold text-white">
-                  = Saldo kas saat ini
-                </span>
-                <span className="text-lg font-extrabold text-white">
-                  {formatCurrency(finance.cashBalance)}
-                </span>
+                <div className="flex items-center justify-between gap-4 py-2.5 text-sm">
+                  <span className="text-brand-100">
+                    Penerimaan bulan {monthlyFinance.monthLabel}
+                  </span>
+                  <span className="font-bold text-emerald-300">
+                    {formatCurrency(monthlyFinance.cashIn)}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between gap-4 py-2.5 text-sm">
+                  <span className="text-brand-100">
+                    Pengeluaran bulan {monthlyFinance.monthLabel}
+                  </span>
+                  <span className="font-bold text-citrus-300">
+                    {formatCurrency(monthlyFinance.cashOut)}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between gap-4 py-3 text-sm">
+                  <span className="font-bold text-white">
+                    Sisa saldo bulan {monthlyFinance.monthLabel}
+                  </span>
+                  <span className="text-lg font-extrabold text-white">
+                    {formatCurrency(monthlyFinance.closingBalance)}
+                  </span>
+                </div>
               </div>
             </div>
 

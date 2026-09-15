@@ -8,6 +8,9 @@ import {
 import {
   getFinanceOpeningBalance,
 } from "@/lib/finance-opening-balance";
+import {
+  getJakartaDateStart,
+} from "@/lib/finance-monthly-summary";
 import { db } from "@/src/db";
 import {
   financialTransactions,
@@ -33,8 +36,8 @@ export async function getFinanceSummary(): Promise<FinanceSummary> {
 
   const openingDate =
     opening.date
-      ? new Date(
-          `${opening.date}T00:00:00.000Z`,
+      ? getJakartaDateStart(
+          opening.date,
         )
       : null;
 

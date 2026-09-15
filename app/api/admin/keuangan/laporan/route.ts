@@ -5,15 +5,18 @@ import {
   gte,
   isNull,
   lt,
-  sql,
 } from "drizzle-orm";
 
 import {
   getCurrentStaffUser,
 } from "@/lib/current-authz";
 import {
-  getFinanceOpeningBalance,
-} from "@/lib/finance-opening-balance";
+  getFinanceOpeningBalanceAt,
+  getJakartaDateStart,
+  getJakartaMonthBounds,
+  getJakartaNextDayStart,
+  getJakartaYearBounds,
+} from "@/lib/finance-monthly-summary";
 import {
   buildFinanceReportPdf,
 } from "@/lib/finance-report-pdf";
@@ -32,15 +35,7 @@ function isDateString(value: string) {
   return /^\d{4}-\d{2}-\d{2}$/.test(value);
 }
 
-function utcStart(value: string) {
-  return new Date(`${value}T00:00:00.000Z`);
-}
 
-function nextDay(value: string) {
-  const date = utcStart(value);
-  date.setUTCDate(date.getUTCDate() + 1);
-  return date;
-}
 
 function monthLabel(year: number, month: number) {
   return new Intl.DateTimeFormat("id-ID", {
@@ -71,12 +66,21 @@ function parsePeriod(url: URL) {
     const month = Number(match[2]);
     if (year < 2021 || year > 2100 || month < 1 || month > 12) return null;
 
-    const start = new Date(Date.UTC(year, month - 1, 1));
-    const endExclusive = new Date(Date.UTC(year, month, 1));
+    const bounds =
+      getJakartaMonthBounds(
+        year,
+        month,
+      );
+
+    if (!bounds) {
+      return null;
+    }
 
     return {
-      start,
-      endExclusive,
+      start:
+        bounds.start,
+      endExclusive:
+        bounds.endExclusive,
       label: monthLabel(year, month),
       filename: `laporan-keuangan-${year}-${String(month).padStart(2, "0")}.pdf`,
     };
@@ -86,9 +90,20 @@ function parsePeriod(url: URL) {
     const year = Number(url.searchParams.get("year"));
     if (!Number.isInteger(year) || year < 2021 || year > 2100) return null;
 
+    const bounds =
+      getJakartaYearBounds(
+        year,
+      );
+
+    if (!bounds) {
+      return null;
+    }
+
     return {
-      start: new Date(Date.UTC(year, 0, 1)),
-      endExclusive: new Date(Date.UTC(year + 1, 0, 1)),
+      start:
+        bounds.start,
+      endExclusive:
+        bounds.endExclusive,
       label: `1 Januari ${year} - 31 Desember ${year}`,
       filename: `laporan-keuangan-${year}.pdf`,
     };
@@ -99,9 +114,24 @@ function parsePeriod(url: URL) {
     const endRaw = url.searchParams.get("end") || "";
     if (!isDateString(startRaw) || !isDateString(endRaw)) return null;
 
-    const start = utcStart(startRaw);
-    const endExclusive = nextDay(endRaw);
-    if (start.getTime() >= endExclusive.getTime()) return null;
+    const start =
+      getJakartaDateStart(
+        startRaw,
+      );
+
+    const endExclusive =
+      getJakartaNextDayStart(
+        endRaw,
+      );
+
+    if (
+      !start ||
+      !endExclusive ||
+      start.getTime() >=
+        endExclusive.getTime()
+    ) {
+      return null;
+    }
 
     return {
       start,
@@ -114,13 +144,7 @@ function parsePeriod(url: URL) {
   return null;
 }
 
-function readAggregateRows(result: unknown) {
-  const candidate = result as {
-    rows?: Array<{ delta?: unknown }>;
-  };
 
-  return candidate.rows || (result as Array<{ delta?: unknown }>);
-}
 
 export async function GET(request: Request) {
   const staff = await getCurrentStaffUser();
@@ -139,36 +163,10 @@ export async function GET(request: Request) {
     });
   }
 
-  const openingConfig = await getFinanceOpeningBalance();
-  let openingBalance = 0;
-
-  if (openingConfig.date) {
-    const configuredDate = utcStart(openingConfig.date);
-    if (period.start.getTime() >= configuredDate.getTime()) {
-      openingBalance = openingConfig.amount;
-
-      const priorResult = await db.execute(sql`
-        SELECT COALESCE(
-          SUM(
-            CASE
-              WHEN type = 'IN' THEN amount
-              ELSE -amount
-            END
-          ),
-          0
-        ) AS delta
-        FROM financial_transactions
-        WHERE deleted_at IS NULL
-          AND date >= ${configuredDate}
-          AND date < ${period.start}
-      `);
-
-      const priorRows = readAggregateRows(priorResult);
-      openingBalance += Number(priorRows[0]?.delta || 0);
-    }
-  } else {
-    openingBalance = openingConfig.amount;
-  }
+  const openingBalance =
+    await getFinanceOpeningBalanceAt(
+      period.start,
+    );
 
   const rows = await db
     .select({

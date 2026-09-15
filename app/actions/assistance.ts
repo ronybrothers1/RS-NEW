@@ -293,13 +293,30 @@ async function parseApplication(
       ) || "",
     ).trim();
 
+  const normalizedTarget =
+    rawTarget.replace(
+      /\./g,
+      "",
+    );
+
+  if (
+    normalizedTarget &&
+    !/^\d+$/.test(
+      normalizedTarget,
+    )
+  ) {
+    throw new Error(
+      "Target bantuan tidak valid.",
+    );
+  }
+
   const targetValue =
-    rawTarget
-      ? Number(rawTarget)
+    normalizedTarget
+      ? Number(normalizedTarget)
       : 0;
 
   if (
-    !Number.isFinite(
+    !Number.isSafeInteger(
       targetValue,
     ) ||
     targetValue < 0 ||
