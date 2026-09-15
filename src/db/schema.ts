@@ -195,6 +195,11 @@ export const campaigns = pgTable('campaigns', {
 
 export const financialTransactions = pgTable('financial_transactions', {
   id: uuid('id').defaultRandom().primaryKey(),
+  receiptNumber: text('receipt_number')
+    .default(
+      sql`'RS-KAS-' || lpad(nextval('financial_transaction_receipt_seq')::text, 6, '0')`,
+    )
+    .notNull(),
   type: trxTypeEnum('type').notNull(),
   category: financialTransactionCategoryEnum('category').notNull(),
   amount: numeric('amount').notNull(),
@@ -212,6 +217,8 @@ export const financialTransactions = pgTable('financial_transactions', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
   deletedAt: timestamp('deleted_at'),
 }, (table) => [
+  uniqueIndex('financial_transactions_receipt_number_unique')
+    .on(table.receiptNumber),
   index('financial_transactions_active_date_created_idx')
     .on(
       table.date.desc(),
