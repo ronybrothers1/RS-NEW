@@ -449,11 +449,6 @@ export default async function HomePage() {
                 </div>
               </div>
             </div>
-
-            <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.05] px-4 py-3 text-xs leading-5 text-brand-100">
-              <span className="font-bold text-white">Pinjaman beredar {formatCurrency(finance.loanOutstanding)}</span>
-              {" "}berasal dari {formatCurrency(finance.loanOut)} pinjaman keluar dikurangi {formatCurrency(finance.loanRepayment)} yang sudah dikembalikan.
-            </div>
           </div>
         </div>
       </section>

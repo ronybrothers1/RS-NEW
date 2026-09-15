@@ -1,320 +1,758 @@
-import { db } from "@/src/db";
 import type { Metadata } from "next";
-import { createPageMetadata } from "@/lib/seo-metadata";
-import { getFinanceSummary } from "@/lib/finance-summary";
-import { getFinanceMonthlySummary } from "@/lib/finance-monthly-summary";
-import { financialTransactions, programs } from "@/src/db/schema";
-import { and, desc, eq, gte, isNull, lt } from "drizzle-orm";
+import Link from "next/link";
+import {
+  ArrowDownRight,
+  ArrowUpRight,
+  BookOpen,
+  ChevronLeft,
+  ChevronRight,
+  RotateCcw,
+  Search,
+  TrendingUp,
+  Wallet,
+} from "lucide-react";
 
-import { ArrowDownRight, ArrowUpRight, TrendingUp, Wallet, BookOpen } from "lucide-react";
+import {
+  createPageMetadata,
+} from "@/lib/seo-metadata";
+import {
+  getFinanceSummary,
+} from "@/lib/finance-summary";
+import {
+  getPublicCashbook,
+} from "@/lib/public-cashbook";
 
-export const dynamic = 'force-dynamic';
+export const dynamic =
+  "force-dynamic";
 
-export const metadata: Metadata = createPageMetadata({
-  title: "Transparansi Keuangan",
-  description:
-    "Pantau penerimaan, pengeluaran, saldo kas, dan riwayat transaksi Yayasan Ruang Sejahtera yang dipublikasikan secara terbuka dan terukur.",
-  path: "/transparansi",
-});
+export const metadata: Metadata =
+  createPageMetadata({
+    title:
+      "Transparansi Keuangan",
+    description:
+      "Pantau penerimaan, pengeluaran, saldo kas, dan riwayat transaksi Yayasan Ruang Sejahtera yang dipublikasikan secara terbuka dan terukur.",
+    path:
+      "/transparansi",
+  });
 
+type TransparencySearchParams = {
+  month?: string | string[];
+  q?: string | string[];
+  page?: string | string[];
+};
 
+const primary3dButton =
+  "inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-citrus-500 bg-citrus-400 px-5 py-2.5 text-sm font-bold text-brand-950 shadow-[0_4px_0_#65a30d] transition-[transform,box-shadow,background-color] hover:bg-citrus-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-citrus-300 focus-visible:ring-offset-2 active:translate-y-[2px] active:shadow-[0_2px_0_#65a30d]";
 
-type FinanceCategory =
-  | "INCOME"
-  | "EXPENSE"
-  | "LOAN_OUT"
-  | "LOAN_REPAYMENT";
+const secondary3dButton =
+  "inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-stone-300 bg-white px-5 py-2.5 text-sm font-semibold text-ink shadow-[0_4px_0_#d6d3d1] transition-[transform,box-shadow,background-color,border-color] hover:border-brand-300 hover:bg-brand-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-2 active:translate-y-[2px] active:shadow-[0_2px_0_#d6d3d1]";
 
-function effectiveTransactionCategory(
-  type: "IN" | "OUT",
-  category: FinanceCategory | null,
-): FinanceCategory {
-  return (
-    category ??
-    (
-      type === "IN"
-        ? "INCOME"
-        : "EXPENSE"
-    )
+function getFirstParam(
+  value:
+    | string
+    | string[]
+    | undefined,
+) {
+  return Array.isArray(
+    value,
+  )
+    ? value[0]
+    : value;
+}
+
+function formatCurrency(
+  value: number,
+) {
+  return new Intl.NumberFormat(
+    "id-ID",
+    {
+      style:
+        "currency",
+      currency:
+        "IDR",
+      maximumFractionDigits:
+        0,
+    },
+  ).format(
+    value,
   );
 }
 
-function transactionCategoryLabel(
-  type: "IN" | "OUT",
-  category: FinanceCategory | null,
+function formatDate(
+  value: Date,
 ) {
-  switch (
-    effectiveTransactionCategory(
-      type,
-      category,
-    )
-  ) {
-    case "LOAN_OUT":
-      return "Pinjaman Keluar";
-    case "LOAN_REPAYMENT":
-      return "Pengembalian Pinjaman";
-    case "EXPENSE":
-      return "Pengeluaran";
-    default:
-      return "Penerimaan";
-  }
+  return new Intl.DateTimeFormat(
+    "id-ID",
+    {
+      day:
+        "2-digit",
+      month:
+        "short",
+      year:
+        "numeric",
+      timeZone:
+        "Asia/Jakarta",
+    },
+  ).format(
+    value,
+  );
 }
 
-export default async function TransparansiPage() {
+function buildCashbookHref({
+  month,
+  query,
+  page,
+}: {
+  month: string;
+  query: string;
+  page: number;
+}) {
+  const params =
+    new URLSearchParams();
+
+  params.set(
+    "month",
+    month,
+  );
+
+  if (query) {
+    params.set(
+      "q",
+      query,
+    );
+  }
+
+  if (page > 1) {
+    params.set(
+      "page",
+      String(
+        page,
+      ),
+    );
+  }
+
+  return `/transparansi?${params.toString()}`;
+}
+
+export default async function TransparansiPage({
+  searchParams,
+}: {
+  searchParams:
+    Promise<TransparencySearchParams>;
+}) {
+  const params =
+    await searchParams;
+
   const [
+    cashbook,
     finance,
-    monthlyFinance,
   ] =
     await Promise.all([
+      getPublicCashbook({
+        month:
+          getFirstParam(
+            params.month,
+          ),
+        query:
+          getFirstParam(
+            params.q,
+          ),
+        page:
+          getFirstParam(
+            params.page,
+          ),
+      }),
       getFinanceSummary(),
-      getFinanceMonthlySummary(),
     ]);
 
-  // Seluruh transaksi bulan berjalan menggunakan batas kalender WIB.
-  const monthlyTransactions = await db
-    .select({
-      id: financialTransactions.id,
-      type: financialTransactions.type,
-      category: financialTransactions.category,
-      amount: financialTransactions.amount,
-      date: financialTransactions.date,
-      description: financialTransactions.description,
-      donorName: financialTransactions.donorName,
-      isAnonymous: financialTransactions.isAnonymous,
-      programName: programs.name,
-    })
-    .from(financialTransactions)
-    .leftJoin(programs, eq(financialTransactions.programId, programs.id))
-    .where(
-      and(
-        isNull(financialTransactions.deletedAt),
-        gte(financialTransactions.date, monthlyFinance.periodStart),
-        lt(financialTransactions.date, monthlyFinance.periodEndExclusive),
-      ),
-    )
-    .orderBy(
-      desc(financialTransactions.date),
-      desc(financialTransactions.createdAt),
+  const {
+    pagination,
+  } =
+    cashbook;
+
+  const firstVisible =
+    pagination.totalItems === 0
+      ? 0
+      : (
+          pagination.currentPage -
+          1
+        ) *
+          pagination.pageSize +
+        1;
+
+  const lastVisible =
+    Math.min(
+      pagination.currentPage *
+        pagination.pageSize,
+      pagination.totalItems,
     );
 
   return (
     <div className="min-h-screen bg-canvas text-ink">
-      
-      
-      <div className="relative overflow-hidden bg-brand-950 py-16 md:py-24">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-brand-700/45 via-brand-950 to-brand-950"></div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-          <h1 className="text-3xl md:text-5xl font-bold text-white mb-6">Transparansi Keuangan</h1>
-          <p className="mx-auto max-w-2xl text-lg leading-relaxed text-brand-100 md:text-xl">
-            Laporan terbuka mengenai arus kas donasi dan penyaluran dana. Kami berkomitmen untuk mengelola setiap amanah dengan penuh integritas.
-          </p>
-        </div>
-      </div>
+      <section className="border-b border-brand-900 bg-brand-950 text-white">
+        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
+          <div className="max-w-3xl">
+            <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-citrus-300 sm:text-sm">
+              Transparansi Keuangan
+            </p>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 -mt-10 relative z-20">
-        <section className="mb-8 grid gap-6 lg:grid-cols-[0.82fr_1.18fr]" aria-label="Rekonsiliasi saldo kas">
-          <div className="relative overflow-hidden rounded-2xl border border-brand-200 bg-brand-950 p-6 text-white shadow-lg">
-            <div className="absolute -right-5 -top-5 opacity-10">
-              <Wallet className="h-36 w-36" />
-            </div>
+            <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-white sm:text-4xl lg:text-5xl">
+              BUKU KAS
+              <span className="block text-citrus-300">
+                RUANG SEJAHTERA
+              </span>
+            </h1>
 
-            <div className="relative z-10">
-              <p className="text-sm font-bold uppercase tracking-[0.12em] text-brand-200">
-                Saldo Kas Saat Ini
-              </p>
-              <p className="mt-2 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-                Rp {monthlyFinance.closingBalance.toLocaleString('id-ID')}
-              </p>
-              <p className="mt-4 max-w-md text-sm leading-6 text-brand-100">
-                Posisi kas merupakan saldo awal bulan ditambah seluruh penerimaan dan dikurangi seluruh pengeluaran bulan {monthlyFinance.monthLabel}.
-              </p>
-            </div>
-          </div>
-
-          <div className="overflow-hidden rounded-2xl border border-frame bg-white shadow-lg">
-            <div className="border-b border-frame px-6 py-4">
-              <h2 className="text-lg font-bold text-ink">
-                Rekonsiliasi Saldo Kas
-              </h2>
-              <p className="mt-1 text-sm text-ink-muted">
-                Rekonsiliasi arus kas bulan {monthlyFinance.monthLabel}.
-              </p>
-            </div>
-
-            <div className="divide-y divide-frame px-6">
-              <div className="flex items-center justify-between gap-4 py-3">
-                <span className="text-sm text-ink-muted">
-                  Saldo awal bulan {monthlyFinance.monthLabel}
-                </span>
-                <span className="font-bold text-ink">
-                  Rp {monthlyFinance.openingBalance.toLocaleString('id-ID')}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between gap-4 py-3">
-                <span className="text-sm text-ink-muted">
-                  Penerimaan bulan {monthlyFinance.monthLabel}
-                </span>
-                <span className="font-bold text-emerald-700">
-                  Rp {monthlyFinance.cashIn.toLocaleString('id-ID')}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between gap-4 py-3">
-                <span className="text-sm text-ink-muted">
-                  Pengeluaran bulan {monthlyFinance.monthLabel}
-                </span>
-                <span className="font-bold text-rose-700">
-                  Rp {monthlyFinance.cashOut.toLocaleString('id-ID')}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between gap-4 bg-brand-50 py-4">
-                <span className="font-bold text-brand-900">
-                  Sisa saldo bulan {monthlyFinance.monthLabel}
-                </span>
-                <span className="text-xl font-extrabold text-brand-800">
-                  Rp {monthlyFinance.closingBalance.toLocaleString('id-ID')}
-                </span>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="mb-12 grid gap-4 md:grid-cols-3" aria-label="Ringkasan komponen keuangan">
-          <div className="flex items-center gap-4 rounded-2xl border border-frame bg-white p-5 shadow-sm">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-100">
-              <ArrowDownRight className="h-5 w-5 text-emerald-600" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-ink-muted">Total Penerimaan</p>
-              <p className="text-xl font-bold text-ink">
-                Rp {finance.totalIncome.toLocaleString('id-ID')}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4 rounded-2xl border border-frame bg-white p-5 shadow-sm">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-rose-100">
-              <ArrowUpRight className="h-5 w-5 text-rose-600" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-ink-muted">Total Pengeluaran</p>
-              <p className="text-xl font-bold text-ink">
-                Rp {finance.totalExpense.toLocaleString('id-ID')}
-              </p>
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-frame bg-white p-5 shadow-sm">
-            <div className="flex items-center gap-4">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-100">
-                <TrendingUp className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-ink-muted">Pinjaman Beredar</p>
-                <p className="text-xl font-bold text-ink">
-                  Rp {finance.loanOutstanding.toLocaleString('id-ID')}
-                </p>
-              </div>
-            </div>
-            <p className="mt-3 border-t border-frame pt-3 text-xs leading-5 text-ink-muted">
-              Rp {finance.loanOut.toLocaleString('id-ID')} telah dipinjamkan dan Rp {finance.loanRepayment.toLocaleString('id-ID')} sudah dikembalikan.
+            <p className="mt-4 max-w-2xl text-sm leading-7 text-brand-100 sm:text-base">
+              Catatan penerimaan, pengeluaran, dan posisi saldo kas yang disajikan berdasarkan transaksi yang tercatat di sistem.
             </p>
           </div>
-        </section>
+        </div>
+      </section>
 
-        <div className="overflow-hidden rounded-2xl border border-frame bg-white shadow-sm">
-          <div className="flex flex-col justify-between gap-4 border-b border-frame p-6 sm:flex-row sm:items-center">
-            <div>
-              <h2 className="text-lg font-bold text-ink">Riwayat Transaksi Bulan Ini</h2>
-              <p className="text-sm text-ink-muted">
-                Seluruh transaksi bulan {monthlyFinance.monthLabel} yang tercatat di sistem.
-              </p>
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+        <section
+          className="overflow-hidden rounded-3xl border border-frame bg-white shadow-sm"
+          aria-labelledby="cashbook-heading"
+        >
+          <div className="border-b border-frame bg-brand-50 px-5 py-5 sm:px-6 lg:px-8">
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand-700">
+                  Buku Kas Ruang Sejahtera
+                </p>
+
+                <h2
+                  id="cashbook-heading"
+                  className="mt-1 text-xl font-extrabold text-brand-950 sm:text-2xl"
+                >
+                  Periode {cashbook.period.label}
+                </h2>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 sm:min-w-[360px]">
+                <div className="rounded-2xl border border-brand-100 bg-white px-4 py-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                    Periode
+                  </p>
+                  <p className="mt-1 font-bold text-brand-950">
+                    {cashbook.period.label}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-brand-100 bg-white px-4 py-3 text-right">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                    Saldo Awal
+                  </p>
+                  <p className="mt-1 font-extrabold text-brand-950">
+                    {formatCurrency(
+                      cashbook.openingBalance,
+                    )}
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
-          
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-ink-muted">
+
+          <div className="p-5 sm:p-6 lg:p-8">
+            <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+              <div className="overflow-hidden rounded-2xl border border-frame bg-white">
+                <div className="border-b border-frame px-5 py-4 sm:px-6">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-100 text-brand-800">
+                      <Wallet className="h-5 w-5" />
+                    </div>
+
+                    <div>
+                      <h3 className="font-bold text-ink">
+                        Rekonsiliasi Saldo Kas
+                      </h3>
+                      <p className="mt-0.5 text-xs text-ink-muted sm:text-sm">
+                        Arus kas bulan {cashbook.period.label}.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <dl className="divide-y divide-frame">
+                  <div className="flex items-center justify-between gap-4 px-5 py-3.5 sm:px-6">
+                    <dt className="text-sm text-ink-muted">
+                      Saldo awal bulan {cashbook.period.label}
+                    </dt>
+                    <dd className="shrink-0 font-bold text-ink">
+                      {formatCurrency(
+                        cashbook.openingBalance,
+                      )}
+                    </dd>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-4 px-5 py-3.5 sm:px-6">
+                    <dt className="text-sm text-ink-muted">
+                      Penerimaan bulan {cashbook.period.label}
+                    </dt>
+                    <dd className="shrink-0 font-bold text-emerald-700">
+                      {formatCurrency(
+                        cashbook.cashIn,
+                      )}
+                    </dd>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-4 px-5 py-3.5 sm:px-6">
+                    <dt className="text-sm text-ink-muted">
+                      Pengeluaran bulan {cashbook.period.label}
+                    </dt>
+                    <dd className="shrink-0 font-bold text-rose-700">
+                      {formatCurrency(
+                        cashbook.cashOut,
+                      )}
+                    </dd>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-4 bg-brand-50 px-5 py-4 sm:px-6">
+                    <dt className="font-bold text-brand-950">
+                      Sisa saldo bulan {cashbook.period.label}
+                    </dt>
+                    <dd className="shrink-0 text-lg font-extrabold text-brand-800">
+                      {formatCurrency(
+                        cashbook.closingBalance,
+                      )}
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+                <div className="flex items-center gap-4 rounded-2xl border border-emerald-100 bg-emerald-50/60 p-4">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
+                    <ArrowDownRight className="h-5 w-5" />
+                  </div>
+
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800">
+                      Total Penerimaan
+                    </p>
+                    <p className="mt-1 truncate font-extrabold text-ink">
+                      {formatCurrency(
+                        finance.totalIncome,
+                      )}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4 rounded-2xl border border-rose-100 bg-rose-50/60 p-4">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-100 text-rose-700">
+                    <ArrowUpRight className="h-5 w-5" />
+                  </div>
+
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-rose-800">
+                      Total Pengeluaran
+                    </p>
+                    <p className="mt-1 truncate font-extrabold text-ink">
+                      {formatCurrency(
+                        finance.totalExpense,
+                      )}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4 rounded-2xl border border-brand-100 bg-brand-50 p-4">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-brand-800">
+                    <TrendingUp className="h-5 w-5" />
+                  </div>
+
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-brand-800">
+                      Pinjaman Beredar
+                    </p>
+                    <p className="mt-1 truncate font-extrabold text-ink">
+                      {formatCurrency(
+                        finance.loanOutstanding,
+                      )}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section
+          className="mt-6 rounded-3xl border border-frame bg-white p-5 shadow-sm sm:p-6"
+          aria-label="Filter Buku Kas"
+        >
+          <form
+            method="get"
+            action="/transparansi"
+            className="grid gap-4 lg:grid-cols-[190px_minmax(0,1fr)_auto]"
+          >
+            <div>
+              <label
+                htmlFor="cashbook-month"
+                className="mb-2 block text-sm font-semibold text-ink"
+              >
+                Periode
+              </label>
+
+              <input
+                id="cashbook-month"
+                type="month"
+                name="month"
+                min="2021-01"
+                max="2100-12"
+                defaultValue={
+                  cashbook.period.value
+                }
+                className="min-h-11 w-full rounded-xl border border-frame bg-white px-3 py-2.5 text-sm text-ink outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-200"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="cashbook-search"
+                className="mb-2 block text-sm font-semibold text-ink"
+              >
+                Cari transaksi
+              </label>
+
+              <div className="relative">
+                <Search
+                  aria-hidden="true"
+                  className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted"
+                />
+
+                <input
+                  id="cashbook-search"
+                  type="search"
+                  name="q"
+                  maxLength={120}
+                  defaultValue={
+                    cashbook.query
+                  }
+                  placeholder="Cari Nomor Bukti atau Uraian"
+                  className="min-h-11 w-full rounded-xl border border-frame bg-white py-2.5 pl-10 pr-4 text-sm text-ink outline-none transition placeholder:text-stone-400 focus:border-brand-400 focus:ring-2 focus:ring-brand-200"
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-end gap-3">
+              <button
+                type="submit"
+                className={
+                  primary3dButton
+                }
+              >
+                <Search className="h-4 w-4" />
+                Terapkan
+              </button>
+
+              <Link
+                href="/transparansi"
+                className={
+                  secondary3dButton
+                }
+              >
+                <RotateCcw className="h-4 w-4" />
+                Reset
+              </Link>
+            </div>
+          </form>
+        </section>
+
+        <section
+          className="mt-6 overflow-hidden rounded-3xl border border-frame bg-white shadow-sm"
+          aria-labelledby="ledger-heading"
+        >
+          <div className="flex flex-col gap-3 border-b border-frame px-5 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-6 lg:px-8">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand-700">
+                Ledger Kas
+              </p>
+
+              <h2
+                id="ledger-heading"
+                className="mt-1 text-xl font-extrabold text-ink"
+              >
+                Riwayat Transaksi
+              </h2>
+
+              <p className="mt-1 text-sm text-ink-muted">
+                Periode {cashbook.period.label}
+                {cashbook.query
+                  ? ` · Hasil pencarian “${cashbook.query}”`
+                  : ""}
+              </p>
+            </div>
+
+            <p className="text-sm font-medium text-ink-muted">
+              Menampilkan{" "}
+              <span className="font-bold text-ink">
+                {firstVisible}–{lastVisible}
+              </span>{" "}
+              dari{" "}
+              <span className="font-bold text-ink">
+                {pagination.totalItems}
+              </span>{" "}
+              transaksi
+            </p>
+          </div>
+
+          <div className="hidden overflow-x-auto md:block">
+            <table className="w-full min-w-[940px] text-left text-sm">
               <caption className="sr-only">
-                Riwayat transaksi keuangan bulan ini
+                Buku Kas Ruang Sejahtera periode {cashbook.period.label}
               </caption>
-              <thead className="border-b border-frame bg-surface-muted text-xs uppercase text-ink-muted">
+
+              <thead className="border-b border-brand-900 bg-brand-950 text-xs font-bold uppercase tracking-wide text-brand-100">
                 <tr>
-                  <th scope="col" className="px-6 py-4">Tanggal</th>
-                  <th scope="col" className="px-6 py-4">Keterangan</th>
-                  <th scope="col" className="px-6 py-4">Program</th>
-                  <th scope="col" className="px-6 py-4">Jenis</th>
-                  <th scope="col" className="px-6 py-4 text-right">Nominal</th>
+                  <th scope="col" className="whitespace-nowrap px-5 py-4 lg:px-6">
+                    Nomor Bukti
+                  </th>
+
+                  <th scope="col" className="whitespace-nowrap px-5 py-4">
+                    Tanggal
+                  </th>
+
+                  <th scope="col" className="min-w-[260px] px-5 py-4">
+                    Uraian
+                  </th>
+
+                  <th scope="col" className="whitespace-nowrap px-5 py-4 text-right">
+                    Penerimaan
+                  </th>
+
+                  <th scope="col" className="whitespace-nowrap px-5 py-4 text-right">
+                    Pengeluaran
+                  </th>
+
+                  <th scope="col" className="whitespace-nowrap px-5 py-4 text-right lg:px-6">
+                    Saldo
+                  </th>
                 </tr>
               </thead>
+
               <tbody className="divide-y divide-frame">
-                {monthlyTransactions.length === 0 ? (
+                {cashbook.rows.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-ink-muted">
-                      <BookOpen className="mx-auto mb-3 h-8 w-8 text-brand-200" />
-                      Belum ada transaksi pada bulan berjalan.
+                    <td
+                      colSpan={6}
+                      className="px-6 py-14 text-center"
+                    >
+                      <BookOpen className="mx-auto h-9 w-9 text-brand-200" />
+
+                      <p className="mt-3 font-semibold text-ink">
+                        Belum ada transaksi yang dapat ditampilkan.
+                      </p>
+
+                      <p className="mt-1 text-sm text-ink-muted">
+                        Ubah periode atau kata pencarian untuk melihat data lainnya.
+                      </p>
                     </td>
                   </tr>
                 ) : (
-                  monthlyTransactions.map((trx) => (
-                    <tr key={trx.id} className="transition-colors hover:bg-brand-50/60">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {new Date(trx.date).toLocaleDateString('id-ID', {
-                          day: '2-digit', month: 'short', year: 'numeric'
-                        })}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="font-medium text-ink">{trx.description}</div>
-                        {effectiveTransactionCategory(
-                          trx.type,
-                          trx.category,
-                        ) === "INCOME" && (
-                          <div className="mt-0.5 text-xs text-ink-muted">
-                            Donatur: {trx.isAnonymous ? 'Hamba Allah' : (trx.donorName || 'Anonim')}
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-6 py-4">
-                        {trx.programName ? (
-                          <span className="inline-flex items-center rounded bg-surface-muted px-2 py-1 text-xs font-medium text-ink-muted">
-                            {trx.programName}
-                          </span>
-                        ) : 'Umum'}
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="inline-flex items-center rounded-full bg-surface-muted px-2.5 py-1 text-xs font-semibold text-ink-muted">
-                          {transactionCategoryLabel(
-                            trx.type,
-                            trx.category,
+                  cashbook.rows.map(
+                    (row) => (
+                      <tr
+                        key={row.id}
+                        className="align-top transition-colors hover:bg-brand-50/60"
+                      >
+                        <td className="whitespace-nowrap px-5 py-4 font-mono text-xs font-bold text-brand-800 lg:px-6">
+                          {row.receiptNumber}
+                        </td>
+
+                        <td className="whitespace-nowrap px-5 py-4 text-ink-muted">
+                          {formatDate(
+                            row.date,
                           )}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-right font-medium">
-                        {trx.type === 'IN' ? (
-                          <span className="flex items-center justify-end gap-1 text-emerald-700">
-                            + Rp {Number(trx.amount).toLocaleString('id-ID')}
-                          </span>
-                        ) : (
-                          <span className="text-rose-600 flex items-center justify-end gap-1">
-                            - Rp {Number(trx.amount).toLocaleString('id-ID')}
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  ))
+                        </td>
+
+                        <td className="px-5 py-4">
+                          <p className="font-medium leading-6 text-ink">
+                            {row.uraian}
+                          </p>
+                        </td>
+
+                        <td className="whitespace-nowrap px-5 py-4 text-right font-semibold text-emerald-700">
+                          {row.income > 0
+                            ? formatCurrency(
+                                row.income,
+                              )
+                            : "—"}
+                        </td>
+
+                        <td className="whitespace-nowrap px-5 py-4 text-right font-semibold text-rose-700">
+                          {row.expense > 0
+                            ? formatCurrency(
+                                row.expense,
+                              )
+                            : "—"}
+                        </td>
+
+                        <td className="whitespace-nowrap px-5 py-4 text-right font-extrabold text-brand-950 lg:px-6">
+                          {formatCurrency(
+                            row.balance,
+                          )}
+                        </td>
+                      </tr>
+                    ),
+                  )
                 )}
               </tbody>
             </table>
           </div>
-          
-          <div className="border-t border-frame bg-surface-muted p-6 text-center">
-             <p className="text-sm text-ink-muted">
-               Catatan: Data diperbarui setiap kali pengurus mencatat atau memverifikasi transaksi di sistem.
-             </p>
+
+          <div className="divide-y divide-frame md:hidden">
+            {cashbook.rows.length === 0 ? (
+              <div className="px-5 py-12 text-center">
+                <BookOpen className="mx-auto h-9 w-9 text-brand-200" />
+
+                <p className="mt-3 font-semibold text-ink">
+                  Belum ada transaksi yang dapat ditampilkan.
+                </p>
+
+                <p className="mt-1 text-sm leading-6 text-ink-muted">
+                  Ubah periode atau kata pencarian untuk melihat data lainnya.
+                </p>
+              </div>
+            ) : (
+              cashbook.rows.map(
+                (row) => (
+                  <article
+                    key={row.id}
+                    className="p-5"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="font-mono text-xs font-bold text-brand-800">
+                          {row.receiptNumber}
+                        </p>
+
+                        <p className="mt-1 text-xs text-ink-muted">
+                          {formatDate(
+                            row.date,
+                          )}
+                        </p>
+                      </div>
+
+                      <div className="rounded-xl bg-brand-50 px-3 py-2 text-right">
+                        <p className="text-[10px] font-bold uppercase tracking-wide text-brand-700">
+                          Saldo
+                        </p>
+
+                        <p className="mt-0.5 text-sm font-extrabold text-brand-950">
+                          {formatCurrency(
+                            row.balance,
+                          )}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4">
+                      <p className="text-xs font-bold uppercase tracking-wide text-ink-muted">
+                        Uraian
+                      </p>
+
+                      <p className="mt-1 text-sm font-medium leading-6 text-ink">
+                        {row.uraian}
+                      </p>
+                    </div>
+
+                    <dl className="mt-4 grid grid-cols-2 gap-3">
+                      <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-3">
+                        <dt className="text-[10px] font-bold uppercase tracking-wide text-emerald-800">
+                          Penerimaan
+                        </dt>
+
+                        <dd className="mt-1 text-sm font-bold text-emerald-700">
+                          {row.income > 0
+                            ? formatCurrency(
+                                row.income,
+                              )
+                            : "—"}
+                        </dd>
+                      </div>
+
+                      <div className="rounded-xl border border-rose-100 bg-rose-50/60 p-3">
+                        <dt className="text-[10px] font-bold uppercase tracking-wide text-rose-800">
+                          Pengeluaran
+                        </dt>
+
+                        <dd className="mt-1 text-sm font-bold text-rose-700">
+                          {row.expense > 0
+                            ? formatCurrency(
+                                row.expense,
+                              )
+                            : "—"}
+                        </dd>
+                      </div>
+                    </dl>
+                  </article>
+                ),
+              )
+            )}
           </div>
-        </div>
-      </div>
+
+          <div className="border-t border-frame bg-surface-muted px-5 py-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-xs leading-5 text-ink-muted sm:text-sm">
+                Data diperbarui mengikuti transaksi yang telah tercatat di sistem.
+              </p>
+
+              {pagination.totalPages > 1 && (
+                <nav
+                  aria-label="Navigasi halaman Buku Kas"
+                  className="flex items-center gap-2"
+                >
+                  {pagination.currentPage > 1 ? (
+                    <Link
+                      href={buildCashbookHref({
+                        month:
+                          cashbook.period.value,
+                        query:
+                          cashbook.query,
+                        page:
+                          pagination.currentPage -
+                          1,
+                      })}
+                      prefetch={false}
+                      className="inline-flex min-h-10 items-center gap-1 rounded-xl border border-stone-300 bg-white px-3 py-2 text-sm font-semibold text-ink shadow-[0_3px_0_#d6d3d1] transition-[transform,box-shadow,background-color] hover:bg-brand-50 active:translate-y-[1px] active:shadow-[0_1px_0_#d6d3d1]"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      Sebelumnya
+                    </Link>
+                  ) : null}
+
+                  <span className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-xl bg-brand-950 px-3 py-2 text-sm font-bold text-white">
+                    {pagination.currentPage}
+                    <span className="sr-only">
+                      {" "}dari {pagination.totalPages}
+                    </span>
+                  </span>
+
+                  {pagination.currentPage < pagination.totalPages ? (
+                    <Link
+                      href={buildCashbookHref({
+                        month:
+                          cashbook.period.value,
+                        query:
+                          cashbook.query,
+                        page:
+                          pagination.currentPage +
+                          1,
+                      })}
+                      prefetch={false}
+                      className="inline-flex min-h-10 items-center gap-1 rounded-xl border border-stone-300 bg-white px-3 py-2 text-sm font-semibold text-ink shadow-[0_3px_0_#d6d3d1] transition-[transform,box-shadow,background-color] hover:bg-brand-50 active:translate-y-[1px] active:shadow-[0_1px_0_#d6d3d1]"
+                    >
+                      Berikutnya
+                      <ChevronRight className="h-4 w-4" />
+                    </Link>
+                  ) : null}
+                </nav>
+              )}
+            </div>
+          </div>
+        </section>
+      </main>
     </div>
   );
 }
