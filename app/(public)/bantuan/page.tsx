@@ -425,7 +425,7 @@ export default async function AssistanceCampaignsPage() {
             {canSubmitApplication ? (
               <Link
                 href="/akun/pengajuan/baru"
-                className="inline-flex min-h-11 items-center justify-center rounded-xl bg-teal-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-teal-800"
+                className="public-cta-3d inline-flex min-h-11 items-center justify-center px-5 py-3 text-sm font-bold"
               >
                 Ajukan Bantuan Sekarang
               </Link>
@@ -433,13 +433,13 @@ export default async function AssistanceCampaignsPage() {
               <>
                 <Link
                   href="/register"
-                  className="inline-flex min-h-11 items-center justify-center rounded-xl bg-teal-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-teal-800"
+                  className="public-cta-3d inline-flex min-h-11 items-center justify-center px-5 py-3 text-sm font-bold"
                 >
                   Daftar untuk Mengajukan
                 </Link>
                 <Link
                   href="/login"
-                  className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                  className="public-cta-3d-secondary inline-flex min-h-11 items-center justify-center px-5 py-3 text-sm font-semibold"
                 >
                   Sudah punya akun? Masuk
                 </Link>
@@ -597,7 +597,7 @@ export default async function AssistanceCampaignsPage() {
 
                       <Link
                         href={`/bantuan/${campaign.slug}`}
-                        className="mt-6 inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+                        className="public-cta-3d-secondary mt-6 inline-flex min-h-11 w-full items-center justify-center px-4 py-2.5 text-sm font-semibold"
                       >
                         Lihat Kampanye
                       </Link>

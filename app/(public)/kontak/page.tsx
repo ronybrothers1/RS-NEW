@@ -130,7 +130,7 @@ export default async function KontakPage() {
                     href={`https://wa.me/${whatsappNumber}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full flex items-center justify-center gap-3 py-3.5 px-5 bg-teal-700 text-white font-bold rounded-xl hover:bg-teal-800 transition-colors"
+                    className="public-cta-3d flex min-h-12 w-full items-center justify-center gap-3 px-5 py-3.5 font-bold"
                   >
                     <MessageCircle className="h-5 w-5" />
                     Hubungi via WhatsApp
@@ -140,7 +140,7 @@ export default async function KontakPage() {
                 {email && (
                   <a
                     href={emailHref}
-                    className="w-full flex items-center justify-center gap-3 py-3.5 px-5 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-colors"
+                    className="public-cta-3d-secondary flex min-h-12 w-full items-center justify-center gap-3 px-5 py-3.5 font-bold"
                   >
                     <Mail className="h-5 w-5" />
                     Kirim Email

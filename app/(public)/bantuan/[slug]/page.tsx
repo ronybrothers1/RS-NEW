@@ -341,7 +341,7 @@ export default async function CampaignDetailPage({
             "ACTIVE" ? (
               <Link
                 href={`/donasi?program=${campaign.programId}&campaign=${campaign.id}`}
-                className="mt-6 inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-amber-600 px-5 py-3 text-base font-bold text-white transition hover:bg-amber-500"
+                className="public-cta-3d mt-6 inline-flex min-h-12 w-full items-center justify-center px-5 py-3 text-base font-bold"
               >
                 Donasi untuk Kampanye Ini
               </Link>

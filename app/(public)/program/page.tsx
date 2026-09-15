@@ -73,7 +73,7 @@ export default async function ProgramPage() {
                   
                   <Link 
                     href={`/donasi?program=${program.id}`} 
-                    className="inline-flex items-center justify-center w-full py-3 px-4 bg-teal-50 text-teal-700 font-medium rounded-xl hover:bg-teal-600 hover:text-white transition-colors group/btn"
+                    className="public-cta-3d inline-flex min-h-11 w-full items-center justify-center px-4 py-3 font-bold group/btn"
                   >
                     Donasi Sekarang
                     <ArrowRight className="h-4 w-4 ml-2 group-hover/btn:translate-x-1 transition-transform" />
@@ -89,7 +89,7 @@ export default async function ProgramPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-2xl font-bold text-slate-900 mb-4">Punya Pertanyaan Seputar Program Kami?</h2>
           <p className="text-slate-600 mb-8">Tim kami siap membantu menjelaskan detail program dan penyaluran donasi Anda.</p>
-          <Link href="/kontak" className="inline-flex items-center justify-center px-6 py-3 border-2 border-slate-200 text-slate-700 font-medium rounded-full hover:border-teal-600 hover:text-teal-700 transition-colors">
+          <Link href="/kontak" className="public-cta-3d-secondary inline-flex min-h-11 items-center justify-center px-6 py-3 font-semibold">
             Hubungi Kami
           </Link>
         </div>

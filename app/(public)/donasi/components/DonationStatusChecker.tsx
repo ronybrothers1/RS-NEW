@@ -219,7 +219,7 @@ export default function DonationStatusChecker() {
           <button
             type="submit"
             disabled={pending}
-            className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl bg-teal-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-60"
+            className="public-cta-3d inline-flex min-h-11 shrink-0 items-center justify-center px-5 py-3 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-60"
           >
             <Search className="mr-2 h-4 w-4" />
             {pending

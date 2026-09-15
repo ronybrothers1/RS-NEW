@@ -162,7 +162,7 @@ export default async function Footer() {
             </ul>
             <Link
               href="/donasi"
-              className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-citrus-400 py-3 font-semibold text-brand-950 transition-colors hover:bg-citrus-300"
+              className="public-cta-3d mt-6 flex min-h-11 w-full items-center justify-center gap-2 px-5 py-3 font-bold"
             >
               <HeartHandshake className="h-4 w-4" />
               Donasi Sekarang

@@ -166,7 +166,7 @@ export default async function HomePage() {
           className="pointer-events-none absolute inset-x-0 top-0 z-0 h-auto w-full select-none opacity-70 sm:opacity-80"
         />
 
-        <div className="relative z-10 mx-auto flex min-h-[500px] max-w-7xl items-center px-4 py-12 sm:min-h-[540px] sm:px-6 sm:py-14 lg:min-h-[560px] lg:px-8 lg:py-12">
+        <div className="relative z-10 mx-auto flex min-h-[500px] max-w-7xl items-center px-4 py-12 sm:min-h-[540px] sm:px-6 sm:py-14 lg:min-h-[560px] lg:px-8 lg:pt-12 lg:pb-24">
           <div className="max-w-[660px]">
             <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-brand-50 backdrop-blur-md">
               <ShieldCheck className="h-3.5 w-3.5 text-citrus-300" />
@@ -188,10 +188,10 @@ export default async function HomePage() {
             </span>
 
             <div className="mt-7 flex flex-col-reverse gap-3 sm:flex-row">
-              <Link href="/program" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-white/35 bg-brand-950/25 px-7 py-3 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/10 sm:text-base">
+              <Link href="/program" className="public-cta-3d-secondary inline-flex min-h-12 items-center justify-center gap-2 px-7 py-3 text-sm font-semibold sm:text-base">
                 Lihat Program <ArrowRight className="h-4 w-4" />
               </Link>
-              <Link href="/donasi" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-citrus-400 px-7 py-3 text-sm font-bold text-brand-950 shadow-lg shadow-brand-950/20 transition hover:-translate-y-0.5 hover:bg-citrus-300 sm:text-base">
+              <Link href="/donasi" className="public-cta-3d inline-flex min-h-12 items-center justify-center gap-2 px-7 py-3 text-sm font-bold sm:text-base">
                 <HeartHandshake className="h-4 w-4" /> Donasi Sekarang
               </Link>
             </div>
@@ -379,7 +379,7 @@ export default async function HomePage() {
               <li className="flex gap-2.5"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-citrus-300" /> Transaksi terhubung ke program atau kampanye bila relevan</li>
               <li className="flex gap-2.5"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-citrus-300" /> Riwayat transaksi terbaru dapat dilihat oleh masyarakat</li>
             </ul>
-            <Link href="/transparansi" className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-full bg-citrus-400 px-5 py-2.5 text-sm font-bold text-brand-950 transition hover:bg-citrus-300">Buka Laporan Keuangan <ArrowRight className="h-4 w-4" /></Link>
+            <Link href="/transparansi" className="public-cta-3d mt-6 inline-flex min-h-11 items-center gap-2 px-5 py-2.5 text-sm font-bold">Buka Laporan Keuangan <ArrowRight className="h-4 w-4" /></Link>
           </div>
           <div className="overflow-hidden rounded-2xl border border-white/20 bg-brand-900/65 p-3 shadow-2xl backdrop-blur-md sm:p-4">
             <div className="rounded-xl border border-white/10 bg-white/[0.08] px-4 py-4 sm:px-5">

@@ -289,21 +289,21 @@ export default function DonasiClientForm({
         <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row sm:flex-wrap">
           <Link
             href="/donasi#cek-status"
-            className="inline-flex items-center justify-center rounded-xl bg-teal-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-teal-800"
+            className="public-cta-3d inline-flex min-h-11 items-center justify-center px-5 py-3 text-sm font-bold"
           >
             Cek Status Donasi
           </Link>
 
           <Link
             href="/"
-            className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            className="public-cta-3d-secondary inline-flex min-h-11 items-center justify-center px-5 py-3 text-sm font-semibold"
           >
             Kembali ke Beranda
           </Link>
 
           <Link
             href="/transparansi"
-            className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            className="public-cta-3d-secondary inline-flex min-h-11 items-center justify-center px-5 py-3 text-sm font-semibold"
           >
             Lihat Transparansi
           </Link>
@@ -680,7 +680,7 @@ export default function DonasiClientForm({
             availableBanks.length ===
               0
           }
-          className="w-full rounded-xl bg-amber-600 px-5 py-4 text-base font-bold text-white shadow-lg transition hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
+          className="public-cta-3d w-full px-5 py-4 text-base font-bold disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isPending
             ? "Mengirim Donasi..."

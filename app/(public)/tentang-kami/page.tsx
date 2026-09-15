@@ -95,7 +95,7 @@ export default function TentangKamiPage() {
         <div className="bg-teal-50 rounded-3xl p-8 md:p-12 text-center">
           <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-4">Mari Menjadi Bagian dari Perubahan</h2>
           <p className="text-slate-600 max-w-2xl mx-auto mb-8">Dukungan Anda sangat berarti bagi mereka yang membutuhkan. Mulailah berbagi kebaikan hari ini.</p>
-          <Link href="/donasi" className="inline-flex items-center justify-center px-8 py-3.5 bg-teal-700 text-white font-medium rounded-full hover:bg-teal-800 transition-colors shadow-lg hover:shadow-xl">
+          <Link href="/donasi" className="public-cta-3d inline-flex min-h-12 items-center justify-center px-8 py-3.5 font-bold">
             Donasi Sekarang
           </Link>
         </div>

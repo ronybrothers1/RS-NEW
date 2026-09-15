@@ -42,10 +42,10 @@ type TransparencySearchParams = {
 };
 
 const primary3dButton =
-  "inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-citrus-500 bg-citrus-400 px-5 py-2.5 text-sm font-bold text-brand-950 shadow-[0_4px_0_#65a30d] transition-[transform,box-shadow,background-color] hover:bg-citrus-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-citrus-300 focus-visible:ring-offset-2 active:translate-y-[2px] active:shadow-[0_2px_0_#65a30d]";
+  "public-cta-3d inline-flex min-h-11 items-center justify-center gap-2 px-5 py-2.5 text-sm font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-citrus-300 focus-visible:ring-offset-2";
 
 const secondary3dButton =
-  "inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-stone-300 bg-white px-5 py-2.5 text-sm font-semibold text-ink shadow-[0_4px_0_#d6d3d1] transition-[transform,box-shadow,background-color,border-color] hover:border-brand-300 hover:bg-brand-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-2 active:translate-y-[2px] active:shadow-[0_2px_0_#d6d3d1]";
+  "public-cta-3d-secondary inline-flex min-h-11 items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-2";
 
 function getFirstParam(
   value:
