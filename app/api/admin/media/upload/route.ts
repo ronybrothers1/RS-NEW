@@ -125,7 +125,7 @@ export async function POST(
   const {
     success,
     retryAfterMs,
-  } = rateLimit(
+  } = await rateLimit(
     `admin-media-upload-${staff.id}`,
     30,
     10 * 60 * 1000,

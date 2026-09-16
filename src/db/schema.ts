@@ -316,3 +316,38 @@ export const settings = pgTable('settings', {
   description: text('description'),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
+
+export const rateLimitBuckets = pgTable(
+  'rate_limit_buckets',
+  {
+    keyHash: text('key_hash')
+      .primaryKey(),
+
+    count: integer('count')
+      .default(0)
+      .notNull(),
+
+    expiresAt: timestamp(
+      'expires_at',
+      {
+        withTimezone: true,
+      },
+    ).notNull(),
+
+    updatedAt: timestamp(
+      'updated_at',
+      {
+        withTimezone: true,
+      },
+    )
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index(
+      'rate_limit_buckets_expires_at_idx',
+    ).on(
+      table.expiresAt,
+    ),
+  ],
+);

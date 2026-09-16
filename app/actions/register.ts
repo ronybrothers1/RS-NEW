@@ -79,7 +79,7 @@ export async function registerUser(
     success:
       registrationAllowed,
     retryAfterMs,
-  } = rateLimit(
+  } = await rateLimit(
     `register:${ip}`,
     5,
     15 * 60 * 1000,

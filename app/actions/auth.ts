@@ -79,7 +79,7 @@ export async function loginAction(
     success:
       loginAllowed,
     retryAfterMs,
-  } = rateLimit(
+  } = await rateLimit(
     `login:${ip}:${email}`,
     10,
     15 * 60 * 1000,

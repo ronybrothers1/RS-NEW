@@ -190,7 +190,7 @@ async function handleChunkUpload(
     success:
       rateLimitSuccess,
     retryAfterMs,
-  } = rateLimit(
+  } = await rateLimit(
     `donation-proof-upload-chunk-${ip}`,
     48,
     10 * 60 * 1000,
@@ -489,7 +489,7 @@ async function handleCleanup(
     success:
       rateLimitSuccess,
     retryAfterMs,
-  } = rateLimit(
+  } = await rateLimit(
     `donation-proof-cleanup-${ip}`,
     24,
     10 * 60 * 1000,
@@ -667,7 +667,7 @@ async function handleUploadSession(
     success:
       rateLimitSuccess,
     retryAfterMs,
-  } = rateLimit(
+  } = await rateLimit(
     `donation-proof-upload-${ip}`,
     8,
     10 * 60 * 1000,

@@ -109,7 +109,7 @@ export async function submitDonation(
   const {
     success:
       rateLimitSuccess,
-  } = rateLimit(
+  } = await rateLimit(
     `donation-submit-${ip}`,
     5,
     60 * 1000,
@@ -578,7 +578,7 @@ export async function checkDonationStatus(
   const {
     success:
       rateLimitSuccess,
-  } = rateLimit(
+  } = await rateLimit(
     `donation-status-${ip}`,
     15,
     10 * 60 * 1000,

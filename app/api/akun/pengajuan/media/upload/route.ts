@@ -66,7 +66,7 @@ export async function POST(
   const {
     success,
     retryAfterMs,
-  } = rateLimit(
+  } = await rateLimit(
     `assistance-photo-upload-${user.id}`,
     25,
     10 * 60 * 1000,

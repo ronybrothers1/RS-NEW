@@ -100,7 +100,7 @@ export async function requestPasswordReset(
   const {
     success: allowed,
     retryAfterMs,
-  } = rateLimit(
+  } = await rateLimit(
     `password-reset-request:${ip}:${email}`,
     5,
     15 * 60 * 1000,
@@ -213,7 +213,7 @@ export async function resendPasswordResetCode(
   const {
     success: allowed,
     retryAfterMs,
-  } = rateLimit(
+  } = await rateLimit(
     `password-reset-resend:${ip}:${email}`,
     5,
     15 * 60 * 1000,
@@ -390,7 +390,7 @@ export async function completePasswordReset(
   const {
     success: allowed,
     retryAfterMs,
-  } = rateLimit(
+  } = await rateLimit(
     `password-reset-verify:${ip}:${email}`,
     10,
     15 * 60 * 1000,
