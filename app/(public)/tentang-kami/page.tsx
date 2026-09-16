@@ -1,6 +1,6 @@
 export const revalidate = 60;
 
-import { HeartHandshake, ShieldCheck, Target, Users } from "lucide-react";
+import { HeartHandshake, Landmark, ShieldCheck, Target, Users } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { createPageMetadata } from "@/lib/seo-metadata";
@@ -8,9 +8,100 @@ import { createPageMetadata } from "@/lib/seo-metadata";
 export const metadata = createPageMetadata({
   title: "Tentang Kami",
   description:
-    "Kenali visi, misi, nilai, dan komitmen Yayasan Ruang Sejahtera dalam menjalankan program sosial dan kemanusiaan untuk masyarakat Sampang.",
+    "Kenali visi, misi, legalitas, maksud dan tujuan, nilai, serta komitmen Yayasan Ruang Sejahtera Indonesia di bidang sosial, kemanusiaan, dan keagamaan.",
   path: "/tentang-kami",
 });
+
+const legalDetails = [
+  {
+    label: "Nama Yayasan",
+    value: "Yayasan Ruang Sejahtera Indonesia",
+    featured: true,
+  },
+  {
+    label: "Nomor SK Menkumham",
+    value: "AHU-0032818.AH.01.04.Tahun 2025",
+  },
+  {
+    label: "Tanggal Pengesahan",
+    value: "31 Desember 2025",
+  },
+  {
+    label: "Nomor Akta Notaris",
+    value: "01",
+  },
+  {
+    label: "Tanggal Akta",
+    value: "29 Desember 2025",
+  },
+  {
+    label: "Notaris",
+    value: "Yuni Safitri, S.H., M.Kn. (Sampang)",
+  },
+  {
+    label: "Kedudukan",
+    value: "Kabupaten Sampang, Provinsi Jawa Timur",
+  },
+  {
+    label: "Kekayaan Awal",
+    value: "Rp 10.000.000",
+  },
+  {
+    label: "Nomor Daftar Yayasan",
+    value: "AHU-0050270.AH.01.12.Tahun 2025",
+  },
+];
+
+const purposeAreas = [
+  {
+    title: "Bidang Sosial",
+    icon: Users,
+    iconClass:
+      "bg-teal-50 text-teal-700 ring-teal-100",
+    bulletClass: "bg-teal-600",
+    items: [
+      "Kerja sama dengan lembaga atau Yayasan lainnya yang memiliki tujuan yang sama",
+      "Menyelenggarakan kegiatan sosial (bhakti sosial) membantu masyarakat sekitar",
+      "Lembaga formal dan non formal",
+      "Menyelenggarakan kegiatan sosial lainnya yang bermanfaat bagi masyarakat",
+      "Panti asuhan, panti jompo, dan panti wreda",
+      "Studi banding",
+    ],
+  },
+  {
+    title: "Bidang Kemanusiaan",
+    icon: HeartHandshake,
+    iconClass:
+      "bg-amber-50 text-amber-700 ring-amber-100",
+    bulletClass: "bg-amber-500",
+    items: [
+      "Memberi bantuan kepada korban bencana alam",
+      "Memberi bantuan kepada tunawisma, fakir miskin, dan gelandangan",
+      "Penghimpunan dana dan donasi untuk program sosial",
+      "Menyalurkan bantuan sosial (sandang, pangan, papan)",
+      "Memberikan bantuan kepada pengungsi akibat perang",
+      "Menyelenggarakan kegiatan di bidang jasa atau kewirausahaan",
+      "Mendirikan dan menyelenggarakan rumah singgah dan rumah duka",
+      "Melestarikan lingkungan hidup",
+    ],
+  },
+  {
+    title: "Bidang Keagamaan",
+    icon: Landmark,
+    iconClass:
+      "bg-indigo-50 text-indigo-700 ring-indigo-100",
+    bulletClass: "bg-indigo-500",
+    items: [
+      "Mendirikan sarana ibadah",
+      "Menyelenggarakan sarana peribadahan dan pendidikan keagamaan",
+      "Meningkatkan pemahaman keagamaan",
+      "Penyuluhan keagamaan",
+      "Menerima dan menyalurkan amal zakat, infaq, dan sedekah",
+      "Studi banding keagamaan",
+      "Santunan Yatim Piatu dan Dhuafa",
+    ],
+  },
+];
 
 export default function TentangKamiPage() {
   return (
@@ -62,6 +153,116 @@ export default function TentangKamiPage() {
             />
           </div>
         </div>
+
+        <section
+          className="mb-24"
+          aria-labelledby="legalitas-heading"
+        >
+          <div className="mx-auto max-w-3xl text-center">
+            <div className="inline-flex items-center gap-2 rounded-full border border-teal-200 bg-teal-50 px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-teal-800">
+              <ShieldCheck className="h-4 w-4" />
+              Legalitas Yayasan
+            </div>
+
+            <h2
+              id="legalitas-heading"
+              className="mt-5 text-3xl font-bold tracking-tight text-slate-900 md:text-4xl"
+            >
+              Identitas dan Legalitas
+            </h2>
+
+            <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-600">
+              Informasi pendirian dan pengesahan Yayasan Ruang Sejahtera Indonesia sebagai bagian dari keterbukaan informasi kepada masyarakat.
+            </p>
+          </div>
+
+          <dl className="mt-10 grid gap-4 sm:grid-cols-2">
+            {legalDetails.map((item) => (
+              <div
+                key={item.label}
+                className={`rounded-2xl border p-5 shadow-sm sm:p-6 ${
+                  item.featured
+                    ? "border-teal-200 bg-teal-50 sm:col-span-2"
+                    : "border-slate-200 bg-white"
+                }`}
+              >
+                <dt className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">
+                  {item.label}
+                </dt>
+
+                <dd
+                  className={`mt-2 break-words leading-7 ${
+                    item.featured
+                      ? "text-xl font-bold text-teal-950 sm:text-2xl"
+                      : "text-base font-semibold text-slate-900"
+                  }`}
+                >
+                  {item.value}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+
+        <section
+          className="mb-24 overflow-hidden rounded-3xl border border-slate-200 bg-white px-5 py-8 shadow-sm sm:px-8 sm:py-10 lg:px-10 lg:py-12"
+          aria-labelledby="maksud-tujuan-heading"
+        >
+          <div className="mx-auto max-w-3xl text-center">
+            <p className="text-sm font-bold uppercase tracking-[0.14em] text-teal-700">
+              Maksud & Tujuan
+            </p>
+
+            <h2
+              id="maksud-tujuan-heading"
+              className="mt-3 text-3xl font-bold tracking-tight text-slate-900 md:text-4xl"
+            >
+              Ruang Lingkup Kegiatan Yayasan
+            </h2>
+
+            <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
+              Bergerak di bidang sosial, kemanusiaan, dan keagamaan.
+            </p>
+          </div>
+
+          <div className="mt-10 grid gap-6 lg:grid-cols-3">
+            {purposeAreas.map((area) => {
+              const Icon = area.icon;
+
+              return (
+                <article
+                  key={area.title}
+                  className="flex h-full flex-col rounded-2xl border border-slate-200 bg-slate-50/70 p-5 sm:p-6"
+                >
+                  <div
+                    className={`flex h-12 w-12 items-center justify-center rounded-2xl ring-1 ${area.iconClass}`}
+                  >
+                    <Icon className="h-6 w-6" />
+                  </div>
+
+                  <h3 className="mt-5 text-xl font-bold text-slate-900">
+                    {area.title}
+                  </h3>
+
+                  <ul className="mt-5 space-y-3">
+                    {area.items.map((item) => (
+                      <li
+                        key={item}
+                        className="flex gap-3 text-sm leading-6 text-slate-600"
+                      >
+                        <span
+                          className={`mt-2 h-2 w-2 shrink-0 rounded-full ${area.bulletClass}`}
+                          aria-hidden="true"
+                        />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </article>
+              );
+            })}
+          </div>
+        </section>
 
         <div className="text-center mb-16">
           <h2 className="text-3xl font-bold text-slate-900 mb-4">Nilai Inti Kami</h2>
