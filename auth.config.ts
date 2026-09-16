@@ -88,9 +88,33 @@ export const authConfig = {
       const isRegisterPage =
         pathname === "/register";
 
+      /*
+       * When auth() wraps custom middleware, an explicit Response
+       * must short-circuit before the nonce middleware runs.
+       * Preserve the previous sign-in callback URL semantics.
+       */
+      const redirectToLogin =
+        () => {
+          const signInUrl =
+            new URL(
+              "/login",
+              nextUrl,
+            );
+
+          signInUrl.searchParams.set(
+            "callbackUrl",
+            nextUrl.href,
+          );
+
+          return Response.redirect(
+            signInUrl,
+            307,
+          );
+        };
+
       if (isAdminRoute) {
         if (!isLoggedIn) {
-          return false;
+          return redirectToLogin();
         }
 
         if (!isStaff) {
@@ -107,7 +131,7 @@ export const authConfig = {
 
       if (isAccountRoute) {
         if (!isLoggedIn) {
-          return false;
+          return redirectToLogin();
         }
 
         if (!isPublicUser) {
