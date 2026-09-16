@@ -70,8 +70,7 @@ function sanitizeFilename(
 }
 
 type UploadSessionResponse = {
-  uploadUrl?: string;
-  locatorPrefix?: string;
+  uploadTicket?: string;
   error?: string;
 };
 
@@ -116,8 +115,7 @@ async function createUploadSession(
   }
 
   if (
-    !result?.uploadUrl ||
-    !result.locatorPrefix
+    !result?.uploadTicket
   ) {
     throw new Error(
       "Sesi upload bukti transfer tidak valid.",
@@ -125,10 +123,8 @@ async function createUploadSession(
   }
 
   return {
-    uploadUrl:
-      result.uploadUrl,
-    locatorPrefix:
-      result.locatorPrefix,
+    uploadTicket:
+      result.uploadTicket,
   };
 }
 
@@ -140,6 +136,7 @@ type CleanupResponse = {
 
 async function cleanupDonationProof(
   locator: string,
+  cleanupTicket: string,
 ) {
   const response =
     await fetch(
@@ -153,6 +150,7 @@ async function cleanupDonationProof(
         body:
           JSON.stringify({
             locator,
+            cleanupTicket,
           }),
       },
     );
@@ -182,13 +180,14 @@ const DRIVE_CHUNK_SIZE =
 
 type UploadChunkResponse = {
   complete?: boolean;
-  fileId?: string;
+  locator?: string;
+  cleanupTicket?: string;
   nextStart?: number;
   error?: string;
 };
 
 function uploadChunkThroughServer(
-  uploadUrl: string,
+  uploadTicket: string,
   file: File,
   chunk: Blob,
   start: number,
@@ -215,25 +214,13 @@ function uploadChunkThroughServer(
       );
 
       request.setRequestHeader(
-        "X-Upload-Session",
-        uploadUrl,
-      );
-
-      request.setRequestHeader(
-        "X-Upload-Content-Type",
-        file.type,
+        "X-Upload-Ticket",
+        uploadTicket,
       );
 
       request.setRequestHeader(
         "X-Upload-Start",
         String(start),
-      );
-
-      request.setRequestHeader(
-        "X-Upload-Total",
-        String(
-          file.size,
-        ),
       );
 
       request.upload.onprogress =
@@ -322,7 +309,7 @@ function uploadChunkThroughServer(
 }
 
 async function uploadToGoogleDrive(
-  uploadUrl: string,
+  uploadTicket: string,
   file: File,
   onProgress: (
     percentage: number,
@@ -349,7 +336,7 @@ async function uploadToGoogleDrive(
 
     const result =
       await uploadChunkThroughServer(
-        uploadUrl,
+        uploadTicket,
         file,
         chunk,
         start,
@@ -360,11 +347,14 @@ async function uploadToGoogleDrive(
       result.complete
     ) {
       if (
-        typeof result.fileId !==
+        typeof result.locator !==
           "string" ||
-        !/^[A-Za-z0-9_-]+$/.test(
-          result.fileId,
+        !/^gdrive:[A-Za-z0-9_-]+$/.test(
+          result.locator,
         ) ||
+        typeof result.cleanupTicket !==
+          "string" ||
+        !result.cleanupTicket ||
         end !==
           file.size
       ) {
@@ -377,7 +367,12 @@ async function uploadToGoogleDrive(
         100,
       );
 
-      return result.fileId;
+      return {
+        locator:
+          result.locator,
+        cleanupTicket:
+          result.cleanupTicket,
+      };
     }
 
     const nextStart =
@@ -431,6 +426,11 @@ export default function DonationProofUploader({
   const [
     proofImageUrl,
     setProofImageUrl,
+  ] = useState("");
+
+  const [
+    proofCleanupTicket,
+    setProofCleanupTicket,
   ] = useState("");
 
   const [
@@ -519,6 +519,9 @@ export default function DonationProofUploader({
     const previousProof =
       proofImageUrl;
 
+    const previousCleanupTicket =
+      proofCleanupTicket;
+
     const previousPreview =
       previewUrl;
 
@@ -529,17 +532,20 @@ export default function DonationProofUploader({
         );
 
       const {
-        uploadUrl,
-        locatorPrefix,
+        uploadTicket,
       } =
         await createUploadSession(
           file,
           safeName,
         );
 
-      const fileId =
+      const {
+        locator:
+          nextProofImageUrl,
+        cleanupTicket,
+      } =
         await uploadToGoogleDrive(
-          uploadUrl,
+          uploadTicket,
           file,
           (
             percentage,
@@ -550,12 +556,12 @@ export default function DonationProofUploader({
           },
         );
 
-      const nextProofImageUrl =
-        locatorPrefix +
-        fileId;
-
       setProofImageUrl(
         nextProofImageUrl,
+      );
+
+      setProofCleanupTicket(
+        cleanupTicket,
       );
 
       setPreviewUrl(
@@ -577,13 +583,22 @@ export default function DonationProofUploader({
       if (
         previousProof
       ) {
-        try {
-          await cleanupDonationProof(
-            previousProof,
-          );
-        } catch {
+        if (
+          previousCleanupTicket
+        ) {
+          try {
+            await cleanupDonationProof(
+              previousProof,
+              previousCleanupTicket,
+            );
+          } catch {
+            setError(
+              "Bukti baru berhasil diunggah, tetapi bukti lama belum dapat dibersihkan otomatis.",
+            );
+          }
+        } else {
           setError(
-            "Bukti baru berhasil diunggah, tetapi bukti lama belum dapat dibersihkan otomatis.",
+            "Bukti baru berhasil diunggah, tetapi izin untuk membersihkan bukti lama tidak tersedia.",
           );
         }
       }
@@ -630,6 +645,15 @@ export default function DonationProofUploader({
       return;
     }
 
+    if (
+      !proofCleanupTicket
+    ) {
+      setError(
+        "Izin untuk menghapus bukti transfer tidak tersedia.",
+      );
+      return;
+    }
+
     setIsCleaning(
       true,
     );
@@ -643,12 +667,14 @@ export default function DonationProofUploader({
     try {
       await cleanupDonationProof(
         proofImageUrl,
+        proofCleanupTicket,
       );
 
       const localPreview =
         previewUrl;
 
       setProofImageUrl("");
+      setProofCleanupTicket("");
       setPreviewUrl("");
       setProgress(0);
 

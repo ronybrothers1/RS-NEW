@@ -15,6 +15,13 @@ import {
   isGoogleDriveDonationProofLocator,
 } from "@/lib/donation-proof-media";
 import {
+  createDonationProofCleanupTicket,
+  createDonationProofUploadTicket,
+  DONATION_PROOF_UPLOAD_TICKET_TTL_MS,
+  verifyDonationProofCleanupTicket,
+  verifyDonationProofUploadTicket,
+} from "@/lib/donation-proof-capability";
+import {
   GOOGLE_DRIVE_LOCATOR_PREFIX,
 } from "@/lib/storage/providers/google-drive";
 import {
@@ -241,32 +248,80 @@ async function handleChunkUpload(
   }
 
   try {
+    const uploadTicket =
+      request.headers
+        .get(
+          "x-upload-ticket",
+        )
+        ?.trim() ||
+      "";
+
+    const capability =
+      verifyDonationProofUploadTicket(
+        uploadTicket,
+      );
+
+    if (!capability) {
+      throw new Error(
+        "Sesi upload bukti transfer tidak valid atau sudah kedaluwarsa.",
+      );
+    }
+
     const uploadUrl =
       normalizeUploadSessionUrl(
-        request.headers.get(
-          "x-upload-session",
-        ),
+        capability.uploadUrl,
       );
 
     const contentType =
-      request.headers
-        .get(
-          "x-upload-content-type",
-        )
-        ?.trim()
-        .toLowerCase() ||
-      "";
+      capability.contentType;
+
+    const total =
+      capability.size;
+
+    const {
+      success:
+        ticketRateLimitSuccess,
+      retryAfterMs:
+        ticketRetryAfterMs,
+    } = await rateLimit(
+      "donation-proof-upload-ticket-" +
+        capability.jti,
+      12,
+      DONATION_PROOF_UPLOAD_TICKET_TTL_MS,
+    );
+
+    if (
+      !ticketRateLimitSuccess
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Sesi upload terlalu sering digunakan. Silakan mulai ulang unggahan.",
+        },
+        {
+          status: 429,
+          headers: {
+            "Cache-Control":
+              "no-store",
+            "Retry-After":
+              String(
+                Math.max(
+                  1,
+                  Math.ceil(
+                    ticketRetryAfterMs /
+                      1000,
+                  ),
+                ),
+              ),
+          },
+        },
+      );
+    }
 
     const start =
       parseIntegerHeader(
         request,
         "x-upload-start",
-      );
-
-    const total =
-      parseIntegerHeader(
-        request,
-        "x-upload-total",
       );
 
     if (
@@ -441,12 +496,21 @@ async function handleChunkUpload(
       );
     }
 
+    const locator =
+      GOOGLE_DRIVE_LOCATOR_PREFIX +
+      result.id;
+
+    const cleanupTicket =
+      createDonationProofCleanupTicket(
+        locator,
+      );
+
     return NextResponse.json(
       {
         complete:
           true,
-        fileId:
-          result.id,
+        locator,
+        cleanupTicket,
       },
       {
         headers: {
@@ -479,6 +543,7 @@ async function handleChunkUpload(
 
 type CleanupBody = {
   locator?: unknown;
+  cleanupTicket?: unknown;
 };
 
 async function handleCleanup(
@@ -550,6 +615,12 @@ async function handleCleanup(
         ? body.locator.trim()
         : "";
 
+    const cleanupTicket =
+      typeof body.cleanupTicket ===
+        "string"
+        ? body.cleanupTicket.trim()
+        : "";
+
     if (
       !isGoogleDriveDonationProofLocator(
         locator,
@@ -557,6 +628,21 @@ async function handleCleanup(
     ) {
       throw new Error(
         "Bukti transfer yang akan dihapus tidak valid.",
+      );
+    }
+
+    const cleanupCapability =
+      verifyDonationProofCleanupTicket(
+        cleanupTicket,
+      );
+
+    if (
+      !cleanupCapability ||
+      cleanupCapability.locator !==
+        locator
+    ) {
+      throw new Error(
+        "Izin cleanup bukti transfer tidak valid atau sudah kedaluwarsa.",
       );
     }
 
@@ -786,11 +872,16 @@ async function handleUploadSession(
         size,
       });
 
+    const uploadTicket =
+      createDonationProofUploadTicket({
+        uploadUrl,
+        contentType,
+        size,
+      });
+
     return NextResponse.json(
       {
-        uploadUrl,
-        locatorPrefix:
-          GOOGLE_DRIVE_LOCATOR_PREFIX,
+        uploadTicket,
       },
       {
         headers: {
