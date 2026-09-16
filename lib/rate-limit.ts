@@ -42,8 +42,15 @@ let lastDatabaseErrorLogAt =
 function hashIdentifier(
   identifier: string,
 ) {
+  const environment =
+    process.env.VERCEL_ENV
+      ?.trim() ||
+    process.env.NODE_ENV
+      ?.trim() ||
+    "local";
+
   const value =
-    `rate-limit:v1:${identifier}`;
+    `rate-limit:v1:${environment}:${identifier}`;
 
   const secret =
     process.env.AUTH_SECRET
