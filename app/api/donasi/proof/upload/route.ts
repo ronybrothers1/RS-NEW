@@ -229,23 +229,6 @@ async function handleChunkUpload(
     );
   }
 
-  if (
-    !isDonationProofGoogleDriveConfigured()
-  ) {
-    return NextResponse.json(
-      {
-        error:
-          "Penyimpanan bukti transfer belum dikonfigurasi.",
-      },
-      {
-        status: 503,
-        headers: {
-          "Cache-Control":
-            "no-store",
-        },
-      },
-    );
-  }
 
   try {
     const uploadTicket =
@@ -267,6 +250,23 @@ async function handleChunkUpload(
       );
     }
 
+    if (
+      !isDonationProofGoogleDriveConfigured()
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Penyimpanan bukti transfer belum dikonfigurasi.",
+        },
+        {
+          status: 503,
+          headers: {
+            "Cache-Control":
+              "no-store",
+          },
+        },
+      );
+    }
     const uploadUrl =
       normalizeUploadSessionUrl(
         capability.uploadUrl,
@@ -586,23 +586,6 @@ async function handleCleanup(
     );
   }
 
-  if (
-    !isDonationProofGoogleDriveConfigured()
-  ) {
-    return NextResponse.json(
-      {
-        error:
-          "Penyimpanan bukti transfer belum dikonfigurasi.",
-      },
-      {
-        status: 503,
-        headers: {
-          "Cache-Control":
-            "no-store",
-        },
-      },
-    );
-  }
 
   try {
     const body =
@@ -646,6 +629,23 @@ async function handleCleanup(
       );
     }
 
+    if (
+      !isDonationProofGoogleDriveConfigured()
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Penyimpanan bukti transfer belum dikonfigurasi.",
+        },
+        {
+          status: 503,
+          headers: {
+            "Cache-Control":
+              "no-store",
+          },
+        },
+      );
+    }
     const outcome =
       await db.transaction(
         async (tx) => {
