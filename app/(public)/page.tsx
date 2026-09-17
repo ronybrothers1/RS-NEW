@@ -18,12 +18,10 @@ import {
   BarChart3,
   ShieldCheck,
 } from "lucide-react";
-import { db } from "@/src/db";
-import { articles } from "@/src/db/schema";
-import { sql, eq } from "drizzle-orm";
 import { formatCurrency } from "@/lib/utils";
 import { getCachedPublicFinance } from "@/lib/public-finance";
 import { getCachedActivePrograms } from "@/lib/public-programs";
+import { getCachedLatestPublishedArticle } from "@/lib/public-articles";
 import { createPageMetadata, SITE_DESCRIPTION, SITE_NAME } from "@/lib/seo-metadata";
 
 export const metadata = createPageMetadata({
@@ -53,40 +51,22 @@ export default async function HomePage() {
   const activePrograms =
     await getCachedActivePrograms();
     
-  let latestArticle: {
-    title: string;
-    slug: string;
-    excerpt: string | null;
-    imageUrl: string | null;
-    imageAlt: string | null;
-    publishedAt: Date | null;
-    createdAt: Date;
-  } | undefined;
+  let latestArticle:
+    Awaited<
+      ReturnType<
+        typeof getCachedLatestPublishedArticle
+      >
+    > = null;
 
   try {
-    [latestArticle] = await db
-      .select({
-        title: articles.title,
-        slug: articles.slug,
-        excerpt: articles.excerpt,
-        imageUrl: articles.imageUrl,
-        imageAlt: articles.imageAlt,
-        publishedAt: articles.publishedAt,
-        createdAt: articles.createdAt,
-      })
-      .from(articles)
-      .where(eq(articles.status, "PUBLISHED"))
-      .orderBy(
-        sql`${articles.publishedAt} DESC NULLS LAST, ${articles.createdAt} DESC`,
-      )
-      .limit(1);
+    latestArticle =
+      await getCachedLatestPublishedArticle();
   } catch (error) {
     console.error(
       "home: failed to fetch latest published article",
       error,
     );
   }
-
   const latestArticleDate = latestArticle
     ? new Intl.DateTimeFormat("id-ID", {
         day: "numeric",

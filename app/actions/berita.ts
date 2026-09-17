@@ -4,8 +4,11 @@ import { getCurrentStaffUser } from "@/lib/current-authz";
 import { db } from "@/src/db";
 import { articles, auditLogs } from "@/src/db/schema";
 import { and, eq, ne } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { hasMeaningfulArticleContent } from "@/lib/article-content";
+import {
+  PUBLIC_ARTICLES_CACHE_TAG,
+} from "@/lib/public-articles";
 import { createVercelBlobStorage } from "@/lib/storage/providers/vercel-blob";
 
 type ArticleStatus = "DRAFT" | "SCHEDULED" | "PUBLISHED" | "ARCHIVED";
@@ -327,6 +330,7 @@ export async function createBerita(
       newData: newArticle,
     });
 
+    revalidateTag(PUBLIC_ARTICLES_CACHE_TAG);
     revalidatePath("/admin/berita");
     revalidatePath("/admin/dashboard");
     revalidatePath("/berita");
@@ -475,6 +479,7 @@ export async function updateBerita(
       await deleteUnusedNewsBlob(oldArticle.imageUrl);
     }
 
+    revalidateTag(PUBLIC_ARTICLES_CACHE_TAG);
     revalidatePath("/admin/berita");
     revalidatePath("/admin/dashboard");
     revalidatePath(`/admin/berita/${id}/edit`);
@@ -550,6 +555,7 @@ export async function archiveBerita(
     newData: updatedArticle,
   });
 
+  revalidateTag(PUBLIC_ARTICLES_CACHE_TAG);
   revalidatePath("/admin/berita");
   revalidatePath("/berita");
   revalidatePath(`/berita/${oldArticle.slug}`);
@@ -612,6 +618,7 @@ export async function deleteBerita(
 
     await deleteUnusedNewsBlob(oldArticle.imageUrl);
 
+    revalidateTag(PUBLIC_ARTICLES_CACHE_TAG);
     revalidatePath("/admin/berita");
     revalidatePath("/admin/dashboard");
     revalidatePath("/berita");
