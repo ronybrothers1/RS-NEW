@@ -9,19 +9,15 @@ import {
   Music2,
   HeartHandshake,
 } from "lucide-react";
-import { db } from "@/src/db";
-import { settings } from "@/src/db/schema";
+import { getCachedPublicSettings } from "@/lib/public-settings";
 import SiteLogo from "@/components/SiteLogo";
 
 export default async function Footer() {
   let settingsMap: Record<string, string> = {};
 
   try {
-    const settingsData = await db.select().from(settings);
-    settingsMap = settingsData.reduce((acc, curr) => {
-      acc[curr.key] = curr.value;
-      return acc;
-    }, {} as Record<string, string>);
+    settingsMap =
+      await getCachedPublicSettings();
   } catch (error) {
     console.error('Footer: failed to fetch settings', error);
   }

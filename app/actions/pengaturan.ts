@@ -3,7 +3,8 @@
 import { db } from "@/src/db";
 import { settings, auditLogs } from "@/src/db/schema";
 import { getCurrentDbUser } from "@/lib/current-authz";
-import { revalidatePath } from "next/cache";
+import { PUBLIC_SETTINGS_CACHE_TAG } from "@/lib/public-settings";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 export async function saveSettings(prevState: any, formData: FormData) {
   const user = await getCurrentDbUser();
@@ -59,7 +60,14 @@ export async function saveSettings(prevState: any, formData: FormData) {
       newData: { updatedKeys: keys },
     });
 
-    revalidatePath('/', 'layout');
+    revalidateTag(
+      PUBLIC_SETTINGS_CACHE_TAG,
+    );
+
+    revalidatePath(
+      '/',
+      'layout',
+    );
 
     return {
       success: true,
