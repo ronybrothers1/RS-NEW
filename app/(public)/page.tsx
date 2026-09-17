@@ -22,8 +22,7 @@ import { db } from "@/src/db";
 import { programs, articles } from "@/src/db/schema";
 import { sql, eq } from "drizzle-orm";
 import { formatCurrency } from "@/lib/utils";
-import { getFinanceSummary } from "@/lib/finance-summary";
-import { getFinanceMonthlySummary } from "@/lib/finance-monthly-summary";
+import { getCachedPublicFinance } from "@/lib/public-finance";
 import { createPageMetadata, SITE_DESCRIPTION, SITE_NAME } from "@/lib/seo-metadata";
 
 export const metadata = createPageMetadata({
@@ -44,14 +43,11 @@ const iconMap: Record<string, React.ElementType> = {
 };
 
 export default async function HomePage() {
-  const [
+  const {
     finance,
     monthlyFinance,
-  ] =
-    await Promise.all([
-      getFinanceSummary(),
-      getFinanceMonthlySummary(),
-    ]);
+  } =
+    await getCachedPublicFinance();
 
   const activePrograms = await db
     .select()

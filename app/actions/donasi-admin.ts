@@ -3,6 +3,9 @@
 import {
   getCurrentStaffUser,
 } from "@/lib/current-authz";
+import {
+  PUBLIC_FINANCE_CACHE_TAG,
+} from "@/lib/public-finance";
 import { db } from "@/src/db";
 import {
   auditLogs,
@@ -14,7 +17,7 @@ import {
   and,
   eq,
 } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 function isUuid(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
@@ -43,6 +46,9 @@ function revalidateDonationPages() {
 }
 
 function revalidateVerifiedDonationPages() {
+  revalidateTag(
+    PUBLIC_FINANCE_CACHE_TAG,
+  );
   revalidateDonationPages();
   revalidatePath(
     "/admin/keuangan/masuk",

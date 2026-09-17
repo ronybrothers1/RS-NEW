@@ -3,6 +3,9 @@
 import {
   getCurrentStaffUser,
 } from "@/lib/current-authz";
+import {
+  PUBLIC_FINANCE_CACHE_TAG,
+} from "@/lib/public-finance";
 import { db } from "@/src/db";
 import {
   auditLogs,
@@ -16,7 +19,7 @@ import {
   isNull,
   sql,
 } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 export type KeuanganActionResult = {
   success: boolean;
@@ -182,6 +185,9 @@ async function getFinanceSession() {
 function revalidateFinancePages(
   campaignId?: string | null,
 ) {
+  revalidateTag(
+    PUBLIC_FINANCE_CACHE_TAG,
+  );
   revalidatePath("/");
   revalidatePath("/admin/dashboard");
   revalidatePath(
