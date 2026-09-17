@@ -17,8 +17,8 @@ import {
   createPageMetadata,
 } from "@/lib/seo-metadata";
 import {
-  getFinanceSummary,
-} from "@/lib/finance-summary";
+  getCachedPublicFinance,
+} from "@/lib/public-finance";
 import {
   getPublicCashbook,
 } from "@/lib/public-cashbook";
@@ -151,7 +151,10 @@ export default async function TransparansiPage({
             params.page,
           ),
       }),
-      getFinanceSummary(),
+      getCachedPublicFinance().then(
+        (cached) =>
+          cached.finance,
+      ),
     ]);
 
   const {
