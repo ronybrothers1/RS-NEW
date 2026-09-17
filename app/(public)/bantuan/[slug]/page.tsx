@@ -5,12 +5,6 @@ import {
   ShieldCheck,
   Target,
 } from "lucide-react";
-import {
-  and,
-  eq,
-  inArray,
-  isNull,
-} from "drizzle-orm";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { cache } from "react";
@@ -21,16 +15,11 @@ import {
 import {
   formatRupiah,
 } from "@/lib/assistance";
+import {
+  getCachedPublicCampaign,
+  getCachedPublicCampaignTotals,
+} from "@/lib/public-assistance";
 import { createPageMetadata, createSeoDescription } from "@/lib/seo-metadata";
-import {
-  db,
-} from "@/src/db";
-import {
-  campaigns,
-  financialTransactions,
-  programs,
-} from "@/src/db/schema";
-
 export const dynamic =
   "force-dynamic";
 
@@ -40,37 +29,8 @@ type Props = {
   }>;
 };
 
-const getPublicCampaign = cache(async (slug: string) => {
-  const [campaign] = await db
-    .select({
-      id: campaigns.id,
-      programId: campaigns.programId,
-      slug: campaigns.slug,
-      title: campaigns.title,
-      summary: campaigns.summary,
-      story: campaigns.story,
-      beneficiaryDisplayName: campaigns.beneficiaryDisplayName,
-      publicLocation: campaigns.publicLocation,
-      targetAmount: campaigns.targetAmount,
-      coverPhotoId: campaigns.coverPhotoId,
-      status: campaigns.status,
-      programName: programs.name,
-    })
-    .from(campaigns)
-    .innerJoin(
-      programs,
-      eq(campaigns.programId, programs.id),
-    )
-    .where(
-      and(
-        eq(campaigns.slug, slug),
-        inArray(campaigns.status, ["ACTIVE", "COMPLETED"]),
-      ),
-    )
-    .limit(1);
-
-  return campaign;
-});
+const getPublicCampaign =
+  cache(getCachedPublicCampaign);
 
 export async function generateMetadata({
   params,
@@ -121,48 +81,13 @@ export default async function CampaignDetailPage({
     notFound();
   }
 
-  const ledgerRows =
-    await db
-      .select({
-        type:
-          financialTransactions.type,
-        amount:
-          financialTransactions.amount,
-      })
-      .from(
-        financialTransactions,
-      )
-      .where(
-        and(
-          eq(
-            financialTransactions.campaignId,
-            campaign.id,
-          ),
-          isNull(
-            financialTransactions.deletedAt,
-          ),
-        ),
-      );
-
-  let collected = 0;
-  let spent = 0;
-
-  for (const row of ledgerRows) {
-    const amount =
-      Number(row.amount);
-
-    if (
-      !Number.isFinite(amount)
-    ) {
-      continue;
-    }
-
-    if (row.type === "IN") {
-      collected += amount;
-    } else {
-      spent += amount;
-    }
-  }
+  const {
+    collected,
+    spent,
+  } =
+    await getCachedPublicCampaignTotals(
+      campaign.id,
+    );
 
   const available =
     collected - spent;

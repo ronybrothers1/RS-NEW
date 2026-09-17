@@ -2,6 +2,7 @@ import {
   unstable_cache,
 } from "next/cache";
 import {
+  and,
   asc,
   desc,
   eq,
@@ -230,4 +231,181 @@ export async function getCachedPublicAssistanceIndex() {
         cached.totalsEntries,
       ),
   };
+}
+
+async function loadPublicCampaign(
+  slug: string,
+) {
+  const [
+    campaign,
+  ] =
+    await db
+      .select({
+        id:
+          campaigns.id,
+        programId:
+          campaigns.programId,
+        slug:
+          campaigns.slug,
+        title:
+          campaigns.title,
+        summary:
+          campaigns.summary,
+        story:
+          campaigns.story,
+        beneficiaryDisplayName:
+          campaigns.beneficiaryDisplayName,
+        publicLocation:
+          campaigns.publicLocation,
+        targetAmount:
+          campaigns.targetAmount,
+        coverPhotoId:
+          campaigns.coverPhotoId,
+        status:
+          campaigns.status,
+        programName:
+          programs.name,
+      })
+      .from(
+        campaigns,
+      )
+      .innerJoin(
+        programs,
+        eq(
+          campaigns.programId,
+          programs.id,
+        ),
+      )
+      .where(
+        and(
+          eq(
+            campaigns.slug,
+            slug,
+          ),
+          inArray(
+            campaigns.status,
+            [
+              "ACTIVE",
+              "COMPLETED",
+            ],
+          ),
+        ),
+      )
+      .limit(1);
+
+  return campaign ?? null;
+}
+
+const getCachedPublicCampaignData =
+  unstable_cache(
+    loadPublicCampaign,
+    [
+      "public-assistance-detail-v1",
+    ],
+    {
+      revalidate:
+        PUBLIC_ASSISTANCE_REVALIDATE_SECONDS,
+      tags: [
+        PUBLIC_ASSISTANCE_CACHE_TAG,
+        PUBLIC_FINANCE_CACHE_TAG,
+        PUBLIC_PROGRAMS_CACHE_TAG,
+      ],
+    },
+  );
+
+export async function getCachedPublicCampaign(
+  slug: string,
+) {
+  return getCachedPublicCampaignData(
+    slug,
+  );
+}
+
+async function loadPublicCampaignTotals(
+  campaignId: string,
+): Promise<CampaignTotals> {
+  const ledgerRows =
+    await db
+      .select({
+        type:
+          financialTransactions.type,
+        amount:
+          financialTransactions.amount,
+      })
+      .from(
+        financialTransactions,
+      )
+      .where(
+        and(
+          eq(
+            financialTransactions.campaignId,
+            campaignId,
+          ),
+          isNull(
+            financialTransactions.deletedAt,
+          ),
+        ),
+      );
+
+  let collected = 0;
+  let spent = 0;
+
+  for (
+    const row of
+      ledgerRows
+  ) {
+    const amount =
+      Number(
+        row.amount,
+      );
+
+    if (
+      !Number.isFinite(
+        amount,
+      )
+    ) {
+      continue;
+    }
+
+    if (
+      row.type ===
+      "IN"
+    ) {
+      collected +=
+        amount;
+    } else {
+      spent +=
+        amount;
+    }
+  }
+
+  return {
+    collected,
+    spent,
+  };
+}
+
+const getCachedPublicCampaignTotalsData =
+  unstable_cache(
+    loadPublicCampaignTotals,
+    [
+      "public-assistance-campaign-totals-v1",
+    ],
+    {
+      revalidate:
+        PUBLIC_ASSISTANCE_REVALIDATE_SECONDS,
+      tags: [
+        PUBLIC_ASSISTANCE_CACHE_TAG,
+        PUBLIC_FINANCE_CACHE_TAG,
+        PUBLIC_PROGRAMS_CACHE_TAG,
+      ],
+    },
+  );
+
+export async function getCachedPublicCampaignTotals(
+  campaignId: string,
+) {
+  return getCachedPublicCampaignTotalsData(
+    campaignId,
+  );
 }
