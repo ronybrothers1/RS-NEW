@@ -73,7 +73,10 @@ export default async function HomePage() {
         month: "long",
         year: "numeric",
       }).format(
-        latestArticle.publishedAt ?? latestArticle.createdAt,
+        new Date(
+          latestArticle.publishedAt ??
+            latestArticle.createdAt,
+        ),
       )
     : null;
 

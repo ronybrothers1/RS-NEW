@@ -22,8 +22,8 @@ type LatestPublishedArticle = {
   excerpt: string | null;
   imageUrl: string | null;
   imageAlt: string | null;
-  publishedAt: Date | null;
-  createdAt: Date;
+  publishedAt: string | null;
+  createdAt: string;
 };
 
 async function loadLatestPublishedArticle(): Promise<
@@ -63,14 +63,25 @@ async function loadLatestPublishedArticle(): Promise<
       )
       .limit(1);
 
-  return latestArticle ?? null;
+  if (!latestArticle) {
+    return null;
+  }
+
+  return {
+    ...latestArticle,
+    publishedAt:
+      latestArticle.publishedAt?.toISOString() ??
+      null,
+    createdAt:
+      latestArticle.createdAt.toISOString(),
+  };
 }
 
 export const getCachedLatestPublishedArticle =
   unstable_cache(
     loadLatestPublishedArticle,
     [
-      "public-latest-published-article-v1",
+      "public-latest-published-article-v2",
     ],
     {
       revalidate:
