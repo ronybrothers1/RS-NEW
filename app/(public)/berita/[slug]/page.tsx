@@ -1,6 +1,10 @@
-// Rendered on-demand because this page reads directly from the database.
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
+export const dynamicParams = true;
+
+export function generateStaticParams() {
+  return [];
+}
 import { notFound } from "next/navigation";
 import { ArrowLeft, Calendar, User } from "lucide-react";
 import Link from "next/link";
