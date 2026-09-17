@@ -1,10 +1,11 @@
 "use server";
 
 import { getCurrentDbUser } from "@/lib/current-authz";
+import { PUBLIC_PROGRAMS_CACHE_TAG } from "@/lib/public-programs";
 import { db } from "@/src/db";
 import { auditLogs, programs } from "@/src/db/schema";
 import { eq } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 const ALLOWED_ICONS = new Set([
   "HeartHandshake",
@@ -32,6 +33,9 @@ function isUuid(value: string) {
 }
 
 function revalidateProgramPages() {
+  revalidateTag(
+    PUBLIC_PROGRAMS_CACHE_TAG,
+  );
   revalidatePath("/admin/program");
   revalidatePath("/admin/dashboard");
   revalidatePath("/program");

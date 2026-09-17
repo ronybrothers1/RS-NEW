@@ -19,10 +19,11 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { db } from "@/src/db";
-import { programs, articles } from "@/src/db/schema";
+import { articles } from "@/src/db/schema";
 import { sql, eq } from "drizzle-orm";
 import { formatCurrency } from "@/lib/utils";
 import { getCachedPublicFinance } from "@/lib/public-finance";
+import { getCachedActivePrograms } from "@/lib/public-programs";
 import { createPageMetadata, SITE_DESCRIPTION, SITE_NAME } from "@/lib/seo-metadata";
 
 export const metadata = createPageMetadata({
@@ -49,12 +50,8 @@ export default async function HomePage() {
   } =
     await getCachedPublicFinance();
 
-  const activePrograms = await db
-    .select()
-    .from(programs)
-    .where(eq(programs.status, 'ACTIVE'))
-    .orderBy(programs.createdAt)
-    .limit(6);
+  const activePrograms =
+    await getCachedActivePrograms();
     
   let latestArticle: {
     title: string;
