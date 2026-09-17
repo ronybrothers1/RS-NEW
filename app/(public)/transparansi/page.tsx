@@ -20,8 +20,8 @@ import {
   getCachedPublicFinance,
 } from "@/lib/public-finance";
 import {
-  getPublicCashbook,
-} from "@/lib/public-cashbook";
+  getCachedPublicCashbook,
+} from "@/lib/public-cashbook-cache";
 
 export const dynamic =
   "force-dynamic";
@@ -141,7 +141,7 @@ export default async function TransparansiPage({
     finance,
   ] =
     await Promise.all([
-      getPublicCashbook({
+      getCachedPublicCashbook({
         query:
           getFirstParam(
             params.q,
