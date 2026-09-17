@@ -1,15 +1,16 @@
 // Rendered on-demand because this page reads directly from the database.
 export const dynamic = "force-dynamic";
 
-import { db } from "@/src/db";
-import { articles, users } from "@/src/db/schema";
-import { and, eq, sql } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Calendar, User } from "lucide-react";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { cache } from "react";
 import { sanitizeArticleHtml } from "@/lib/article-content";
+import {
+  getCachedPreviousPublishedArticle,
+  getCachedPublishedArticle,
+} from "@/lib/public-articles";
 import { createPageMetadata, createSeoDescription } from "@/lib/seo-metadata";
 import { getSiteUrl } from "@/lib/site-url";
 import { ShareActions } from "@/components/ShareActions";
@@ -18,25 +19,8 @@ type Props = {
   params: Promise<{ slug: string }>;
 };
 
-const getPublishedArticle = cache(async (slug: string) => {
-
-  const [articleData] = await db
-    .select({
-      article: articles,
-      authorName: users.name,
-    })
-    .from(articles)
-    .leftJoin(users, eq(articles.authorId, users.id))
-    .where(
-      and(
-        eq(articles.slug, slug),
-        eq(articles.status, "PUBLISHED"),
-      ),
-    )
-    .limit(1);
-
-  return articleData;
-});
+const getPublishedArticle =
+  cache(getCachedPublishedArticle);
 
 export async function generateMetadata(
   props: Props,
@@ -91,29 +75,11 @@ export default async function BeritaDetailPage(props: Props) {
   const articleUrl = `${getSiteUrl()}/berita/${slug}`;
   const currentArticleDate = article.publishedAt ?? article.createdAt;
 
-  const [previousArticle] = await db
-    .select({
-      title: articles.title,
-      slug: articles.slug,
-    })
-    .from(articles)
-    .where(
-      and(
-        eq(articles.status, "PUBLISHED"),
-        sql`(
-          COALESCE(${articles.publishedAt}, ${articles.createdAt}) < ${currentArticleDate}
-          OR (
-            COALESCE(${articles.publishedAt}, ${articles.createdAt}) = ${currentArticleDate}
-            AND ${articles.createdAt} < ${article.createdAt}
-          )
-        )`,
-      ),
-    )
-    .orderBy(
-      sql`COALESCE(${articles.publishedAt}, ${articles.createdAt}) DESC`,
-      sql`${articles.createdAt} DESC`,
-    )
-    .limit(1);
+  const previousArticle =
+    await getCachedPreviousPublishedArticle(
+      currentArticleDate,
+      article.createdAt,
+    );
 
   const sanitizedContent = sanitizeArticleHtml(article.content);
   const paragraphEnds = [...sanitizedContent.matchAll(/<\/p>/gi)];

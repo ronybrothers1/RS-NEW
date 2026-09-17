@@ -1,12 +1,10 @@
 // Rendered on-demand instead of prerendered at build time: this page
 // queries the database, which is not reachable from the build machine.
 export const dynamic = 'force-dynamic';
-import { db } from "@/src/db";
-import { articles, users } from "@/src/db/schema";
-import { desc, eq, sql } from "drizzle-orm";
 import Link from "next/link";
 import { ArrowRight, Image as ImageIcon } from "lucide-react";
 import { createPageMetadata } from "@/lib/seo-metadata";
+import { getCachedPublishedArticles } from "@/lib/public-articles";
 
 export const metadata = createPageMetadata({
   title: "Berita dan Artikel",
@@ -16,22 +14,8 @@ export const metadata = createPageMetadata({
 });
 
 export default async function PublicBeritaPage() {
-  const allArticles = await db
-    .select({
-      id: articles.id,
-      title: articles.title,
-      slug: articles.slug,
-      excerpt: articles.excerpt,
-      imageUrl: articles.imageUrl,
-      imageAlt: articles.imageAlt,
-      createdAt: articles.createdAt,
-      publishedAt: articles.publishedAt,
-      authorName: users.name,
-    })
-    .from(articles)
-    .leftJoin(users, eq(articles.authorId, users.id))
-    .where(eq(articles.status, 'PUBLISHED'))
-    .orderBy(desc(sql`COALESCE(${articles.publishedAt}, ${articles.createdAt})`));
+  const allArticles =
+    await getCachedPublishedArticles();
 
   return (
     <div className="min-h-screen bg-slate-50">
