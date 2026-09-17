@@ -2,6 +2,7 @@ import {
   unstable_cache,
 } from "next/cache";
 import {
+  asc,
   eq,
 } from "drizzle-orm";
 
@@ -47,6 +48,45 @@ export const getCachedActivePrograms =
     loadActivePrograms,
     [
       "public-active-programs-v1",
+    ],
+    {
+      revalidate:
+        300,
+      tags: [
+        PUBLIC_PROGRAMS_CACHE_TAG,
+      ],
+    },
+  );
+
+async function loadActiveDonationPrograms() {
+  return db
+    .select({
+      id:
+        programs.id,
+      name:
+        programs.name,
+    })
+    .from(
+      programs,
+    )
+    .where(
+      eq(
+        programs.status,
+        "ACTIVE",
+      ),
+    )
+    .orderBy(
+      asc(
+        programs.name,
+      ),
+    );
+}
+
+export const getCachedActiveDonationPrograms =
+  unstable_cache(
+    loadActiveDonationPrograms,
+    [
+      "public-active-donation-programs-v1",
     ],
     {
       revalidate:

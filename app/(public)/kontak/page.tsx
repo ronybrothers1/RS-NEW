@@ -1,8 +1,7 @@
 import { Mail, MapPin, Phone, MessageCircle } from "lucide-react";
 import type { Metadata } from "next";
 import { createPageMetadata } from "@/lib/seo-metadata";
-import { db } from "@/src/db";
-import { settings } from "@/src/db/schema";
+import { getCachedPublicSettings } from "@/lib/public-settings";
 
 export const dynamic = 'force-dynamic';
 
@@ -25,11 +24,8 @@ function normalizeWhatsappNumber(value: string) {
 }
 
 export default async function KontakPage() {
-  const settingsData = await db.select().from(settings);
-  const settingsMap = settingsData.reduce((acc, curr) => {
-    acc[curr.key] = curr.value;
-    return acc;
-  }, {} as Record<string, string>);
+  const settingsMap =
+    await getCachedPublicSettings();
 
   const address = settingsMap.yayasan_address?.trim() || "";
   const phone = settingsMap.yayasan_phone?.trim() || "";

@@ -1,13 +1,12 @@
-import { asc, eq } from "drizzle-orm";
 import type { Metadata } from "next";
 
-import { db } from "@/src/db";
 import { createPageMetadata } from "@/lib/seo-metadata";
 import {
-  programs,
-  settings,
-} from "@/src/db/schema";
-
+  getCachedActiveDonationPrograms,
+} from "@/lib/public-programs";
+import {
+  getCachedPublicSettings,
+} from "@/lib/public-settings";
 import DonasiClientForm from "./components/DonasiClientForm";
 import DonationStatusChecker from "./components/DonationStatusChecker";
 
@@ -23,39 +22,12 @@ export const metadata: Metadata = createPageMetadata({
 export default async function DonasiPage() {
   const [
     activePrograms,
-    settingsData,
-  ] = await Promise.all([
-    db
-      .select({
-        id: programs.id,
-        name: programs.name,
-      })
-      .from(programs)
-      .where(
-        eq(
-          programs.status,
-          "ACTIVE",
-        ),
-      )
-      .orderBy(asc(programs.name)),
-
-    db
-      .select({
-        key: settings.key,
-        value: settings.value,
-      })
-      .from(settings),
-  ]);
-
-  const settingsMap =
-    settingsData.reduce(
-      (acc, item) => {
-        acc[item.key] =
-          item.value;
-        return acc;
-      },
-      {} as Record<string, string>,
-    );
+    settingsMap,
+  ] =
+    await Promise.all([
+      getCachedActiveDonationPrograms(),
+      getCachedPublicSettings(),
+    ]);
 
   const bankAccounts = {
     BCA:
