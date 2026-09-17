@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 
 import { createPageMetadata } from "@/lib/seo-metadata";
 import {
@@ -10,7 +11,7 @@ import {
 import DonasiClientForm from "./components/DonasiClientForm";
 import DonationStatusChecker from "./components/DonationStatusChecker";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export const metadata: Metadata = createPageMetadata({
   title: "Donasi",
@@ -62,13 +63,24 @@ export default async function DonasiPage() {
 
       <section className="relative z-10 mx-auto -mt-10 max-w-3xl px-4 pb-16 sm:px-6 lg:px-8">
         <div className="space-y-6">
-          <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-xl md:p-10">
-            <DonasiClientForm
-              programs={activePrograms}
-              bankAccounts={
-                bankAccounts
+          <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-xl md:p-10">            <Suspense
+              fallback={
+                <div
+                  role="status"
+                  aria-live="polite"
+                  className="py-10 text-center text-sm text-slate-500"
+                >
+                  Memuat formulir donasi...
+                </div>
               }
-            />
+            >
+              <DonasiClientForm
+                programs={activePrograms}
+                bankAccounts={
+                  bankAccounts
+                }
+              />
+            </Suspense>
           </div>
 
           <div
