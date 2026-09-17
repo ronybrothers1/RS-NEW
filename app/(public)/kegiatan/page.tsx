@@ -1,5 +1,4 @@
-// Rendered on-demand because this page reads directly from the database.
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 import {
   ArrowRight,

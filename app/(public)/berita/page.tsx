@@ -1,6 +1,5 @@
-// Rendered on-demand instead of prerendered at build time: this page
-// queries the database, which is not reachable from the build machine.
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
+
 import Link from "next/link";
 import { ArrowRight, Image as ImageIcon } from "lucide-react";
 import { createPageMetadata } from "@/lib/seo-metadata";
