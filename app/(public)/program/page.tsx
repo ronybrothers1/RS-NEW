@@ -1,11 +1,11 @@
-export const revalidate = 60;
+export const revalidate = 300;
 
-import { db } from "@/src/db";
-import { programs } from "@/src/db/schema";
-import { eq, desc } from "drizzle-orm";
 import { HeartHandshake, BookOpen, Stethoscope, Leaf, Users, Activity, FileText, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { createPageMetadata } from "@/lib/seo-metadata";
+import {
+  getCachedAllActivePrograms,
+} from "@/lib/public-programs";
 
 export const metadata = createPageMetadata({
   title: "Program Sosial",
@@ -22,14 +22,9 @@ const iconMap: Record<string, React.ElementType> = {
   'HeartHandshake': HeartHandshake,
 };
 
-export const dynamic = 'force-dynamic';
-
 export default async function ProgramPage() {
-  const activePrograms = await db
-    .select()
-    .from(programs)
-    .where(eq(programs.status, 'ACTIVE'))
-    .orderBy(desc(programs.createdAt));
+  const activePrograms =
+    await getCachedAllActivePrograms();
 
   return (
     <div className="min-h-screen bg-slate-50">
