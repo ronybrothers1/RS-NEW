@@ -1,10 +1,11 @@
 "use server";
 
 import { getCurrentStaffUser } from "@/lib/current-authz";
+import { PUBLIC_ACTIVITIES_CACHE_TAG } from "@/lib/public-activities";
 import { db } from "@/src/db";
 import { activities, auditLogs } from "@/src/db/schema";
 import { eq } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 export type KegiatanActionState = {
   success: boolean;
@@ -42,6 +43,7 @@ function makeSlug(title: string) {
 }
 
 function revalidateKegiatan(slug?: string | null) {
+  revalidateTag(PUBLIC_ACTIVITIES_CACHE_TAG);
   revalidatePath("/admin/kegiatan");
   revalidatePath("/admin/dashboard");
   revalidatePath("/kegiatan");

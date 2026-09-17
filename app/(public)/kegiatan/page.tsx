@@ -1,9 +1,6 @@
 // Rendered on-demand because this page reads directly from the database.
 export const dynamic = "force-dynamic";
 
-import { db } from "@/src/db";
-import { activities, programs } from "@/src/db/schema";
-import { and, desc, eq, isNull } from "drizzle-orm";
 import {
   ArrowRight,
   CalendarDays,
@@ -15,6 +12,7 @@ import {
 import type { Metadata } from "next";
 import Link from "next/link";
 import { createPageMetadata } from "@/lib/seo-metadata";
+import { getCachedPublishedActivities } from "@/lib/public-activities";
 
 export const metadata: Metadata = createPageMetadata({
   title: "Dokumentasi Kegiatan",
@@ -24,26 +22,8 @@ export const metadata: Metadata = createPageMetadata({
 });
 
 export default async function PublicKegiatanPage() {
-  const allActivities = await db
-    .select({
-      activity: activities,
-      programName: programs.name,
-    })
-    .from(activities)
-    .leftJoin(
-      programs,
-      eq(activities.programId, programs.id),
-    )
-    .where(
-      and(
-        eq(activities.isPublished, true),
-        isNull(activities.archivedAt),
-      ),
-    )
-    .orderBy(
-      desc(activities.date),
-      desc(activities.createdAt),
-    );
+  const allActivities =
+    await getCachedPublishedActivities();
 
   return (
     <div className="min-h-screen bg-slate-50">

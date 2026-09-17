@@ -1,9 +1,6 @@
-﻿// Rendered on-demand because this page reads directly from the database.
+// Rendered on-demand because this page reads directly from the database.
 export const dynamic = "force-dynamic";
 
-import { db } from "@/src/db";
-import { activities, programs } from "@/src/db/schema";
-import { and, eq, isNull } from "drizzle-orm";
 import {
   ArrowLeft,
   CalendarDays,
@@ -17,34 +14,15 @@ import { cache } from "react";
 import { createPageMetadata, createSeoDescription } from "@/lib/seo-metadata";
 import { getSiteUrl } from "@/lib/site-url";
 import { ShareActions } from "@/components/ShareActions";
+import { getCachedPublishedActivity } from "@/lib/public-activities";
 import TikTokEmbed from "./components/TikTokEmbed";
 
 type Props = {
   params: Promise<{ slug: string }>;
 };
 
-const getPublishedActivity = cache(async (slug: string) => {
-  const [data] = await db
-    .select({
-      activity: activities,
-      programName: programs.name,
-    })
-    .from(activities)
-    .leftJoin(
-      programs,
-      eq(activities.programId, programs.id),
-    )
-    .where(
-      and(
-        eq(activities.slug, slug),
-        eq(activities.isPublished, true),
-        isNull(activities.archivedAt),
-      ),
-    )
-    .limit(1);
-
-  return data;
-});
+const getPublishedActivity =
+  cache(getCachedPublishedActivity);
 
 export async function generateMetadata(
   props: Props,
