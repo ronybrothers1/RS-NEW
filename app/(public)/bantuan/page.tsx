@@ -8,13 +8,6 @@ import {
   Target,
   UserPlus,
 } from "lucide-react";
-import {
-  asc,
-  desc,
-  eq,
-  inArray,
-  isNull,
-} from "drizzle-orm";
 import Link from "next/link";
 import type { Metadata } from "next";
 
@@ -22,19 +15,13 @@ import {
   getCurrentDbUser,
 } from "@/lib/current-authz";
 import {
+  getCachedPublicAssistanceIndex,
+} from "@/lib/public-assistance";
+import {
   formatRupiah,
   getProgramQuestions,
 } from "@/lib/assistance";
 import { createPageMetadata } from "@/lib/seo-metadata";
-import {
-  db,
-} from "@/src/db";
-import {
-  campaigns,
-  financialTransactions,
-  programs,
-} from "@/src/db/schema";
-
 export const dynamic =
   "force-dynamic";
 
@@ -52,151 +39,12 @@ export default async function AssistanceCampaignsPage() {
   const canSubmitApplication =
     currentUser?.role === "USER";
 
-  const [
+  const {
     rows,
-    ledgerRows,
+    totals,
     activePrograms,
-  ] =
-    await Promise.all([
-      db
-        .select({
-          id:
-            campaigns.id,
-          slug:
-            campaigns.slug,
-          title:
-            campaigns.title,
-          summary:
-            campaigns.summary,
-          publicLocation:
-            campaigns.publicLocation,
-          beneficiaryDisplayName:
-            campaigns.beneficiaryDisplayName,
-          targetAmount:
-            campaigns.targetAmount,
-          coverPhotoId:
-            campaigns.coverPhotoId,
-          status:
-            campaigns.status,
-          activatedAt:
-            campaigns.activatedAt,
-          createdAt:
-            campaigns.createdAt,
-          programName:
-            programs.name,
-        })
-        .from(campaigns)
-        .innerJoin(
-          programs,
-          eq(
-            campaigns.programId,
-            programs.id,
-          ),
-        )
-        .where(
-          inArray(
-            campaigns.status,
-            [
-              "ACTIVE",
-              "COMPLETED",
-            ],
-          ),
-        )
-        .orderBy(
-          desc(
-            campaigns.activatedAt,
-          ),
-          desc(
-            campaigns.createdAt,
-          ),
-        ),
-
-      db
-        .select({
-          campaignId:
-            financialTransactions.campaignId,
-          type:
-            financialTransactions.type,
-          amount:
-            financialTransactions.amount,
-        })
-        .from(
-          financialTransactions,
-        )
-        .where(
-          isNull(
-            financialTransactions.deletedAt,
-          ),
-        ),
-
-      db
-        .select({
-          id:
-            programs.id,
-          name:
-            programs.name,
-          description:
-            programs.description,
-        })
-        .from(programs)
-        .where(
-          eq(
-            programs.status,
-            "ACTIVE",
-          ),
-        )
-        .orderBy(
-          asc(
-            programs.name,
-          ),
-        ),
-    ]);
-
-  const totals =
-    new Map<
-      string,
-      {
-        collected: number;
-        spent: number;
-      }
-    >();
-
-  for (
-    const row of
-      ledgerRows
-  ) {
-    if (!row.campaignId) {
-      continue;
-    }
-
-    const current =
-      totals.get(
-        row.campaignId,
-      ) || {
-        collected: 0,
-        spent: 0,
-      };
-
-    const amount =
-      Number(row.amount);
-
-    if (
-      Number.isFinite(amount)
-    ) {
-      if (row.type === "IN") {
-        current.collected +=
-          amount;
-      } else {
-        current.spent +=
-          amount;
-      }
-    }
-
-    totals.set(
-      row.campaignId,
-      current,
-    );
-  }
+  } =
+    await getCachedPublicAssistanceIndex();
 
   return (
     <div className="min-h-screen bg-slate-50">

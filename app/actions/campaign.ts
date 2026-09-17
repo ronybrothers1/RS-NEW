@@ -6,6 +6,7 @@ import {
 } from "drizzle-orm";
 import {
   revalidatePath,
+  revalidateTag,
 } from "next/cache";
 import {
   redirect,
@@ -14,6 +15,9 @@ import {
 import {
   getCurrentStaffUser,
 } from "@/lib/current-authz";
+import {
+  PUBLIC_ASSISTANCE_CACHE_TAG,
+} from "@/lib/public-assistance";
 import {
   db,
 } from "@/src/db";
@@ -59,6 +63,7 @@ function refreshCampaignPaths(
   applicationId: string,
   slug: string,
 ) {
+  revalidateTag(PUBLIC_ASSISTANCE_CACHE_TAG);
   revalidatePath(
     `/admin/pengajuan/${applicationId}`,
   );
