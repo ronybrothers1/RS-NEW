@@ -2,6 +2,49 @@ import type {
   NextConfig,
 } from "next";
 
+const publicContentSecurityPolicyReportOnly = [
+  "default-src 'self'",
+  "base-uri 'self'",
+  "object-src 'none'",
+  "frame-ancestors 'none'",
+  "form-action 'self'",
+  "script-src 'self' 'unsafe-inline'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https:",
+  "font-src 'self' data:",
+  "connect-src 'self' https://vercel-storage.com https://*.vercel-storage.com",
+  "frame-src https://www.tiktok.com https://www.youtube.com https://youtube.com https://www.youtube-nocookie.com https://youtube-nocookie.com https://player.vimeo.com",
+  "media-src 'self' blob:",
+  "worker-src 'self' blob:",
+  "manifest-src 'self'",
+].join("; ");
+
+const publicCspHeaders = [
+  {
+    key:
+      "Content-Security-Policy-Report-Only",
+    value:
+      publicContentSecurityPolicyReportOnly,
+  },
+];
+
+const publicCspSources = [
+  "/",
+  "/tentang-kami",
+  "/program",
+  "/kegiatan",
+  "/kegiatan/:path*",
+  "/berita",
+  "/berita/:path*",
+  "/bantuan",
+  "/bantuan/:path*",
+  "/donasi",
+  "/transparansi",
+  "/kontak",
+  "/kebijakan-privasi",
+  "/ketentuan-donasi",
+  "/galeri",
+];
 const securityHeaders = [
   {
     key:
@@ -102,6 +145,13 @@ const nextConfig: NextConfig = {
         headers:
           securityHeaders,
       },
+      ...publicCspSources.map(
+        (source) => ({
+          source,
+          headers:
+            publicCspHeaders,
+        }),
+      ),
       {
         source: "/login",
         headers:
