@@ -1,7 +1,3 @@
-// Rendered on-demand instead of prerendered at build time: this page
-// queries the database, which is not reachable from the build machine.
-export const dynamic = 'force-dynamic';
-
 import Image from "next/image";
 import Link from "next/link";
 import {

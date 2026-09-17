@@ -3,8 +3,6 @@ import type { Metadata } from "next";
 import { createPageMetadata } from "@/lib/seo-metadata";
 import { getCachedPublicSettings } from "@/lib/public-settings";
 
-export const dynamic = 'force-dynamic';
-
 export const metadata: Metadata = createPageMetadata({
   title: "Kontak",
   description:
