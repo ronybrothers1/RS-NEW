@@ -10,7 +10,6 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { cache } from "react";
 import { sanitizeArticleHtml } from "@/lib/article-content";
-import { publishDueArticles } from "@/lib/article-publication";
 import { createPageMetadata, createSeoDescription } from "@/lib/seo-metadata";
 import { getSiteUrl } from "@/lib/site-url";
 import { ShareActions } from "@/components/ShareActions";
@@ -20,7 +19,6 @@ type Props = {
 };
 
 const getPublishedArticle = cache(async (slug: string) => {
-  await publishDueArticles();
 
   const [articleData] = await db
     .select({

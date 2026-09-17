@@ -6,7 +6,6 @@ import { articles, users } from "@/src/db/schema";
 import { desc, eq, sql } from "drizzle-orm";
 import Link from "next/link";
 import { ArrowRight, Image as ImageIcon } from "lucide-react";
-import { publishDueArticles } from "@/lib/article-publication";
 import { createPageMetadata } from "@/lib/seo-metadata";
 
 export const metadata = createPageMetadata({
@@ -17,7 +16,6 @@ export const metadata = createPageMetadata({
 });
 
 export default async function PublicBeritaPage() {
-  await publishDueArticles();
   const allArticles = await db
     .select({
       id: articles.id,

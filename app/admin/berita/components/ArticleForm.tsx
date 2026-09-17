@@ -73,7 +73,9 @@ export default function ArticleForm({ article }: Props) {
 
   const [content, setContent] = useState(article?.content ?? "");
   const [status, setStatus] = useState<ArticleStatus>(
-    article?.status ?? "PUBLISHED",
+    article?.status === "SCHEDULED"
+      ? "DRAFT"
+      : article?.status ?? "PUBLISHED",
   );
   const [scheduledLocal, setScheduledLocal] = useState(
     () =>
@@ -322,20 +324,6 @@ export default function ArticleForm({ article }: Props) {
                   />
                   <span className="ml-2 text-sm text-slate-700">
                     Publikasikan Sekarang
-                  </span>
-                </label>
-
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    name="status"
-                    value="SCHEDULED"
-                    checked={status === "SCHEDULED"}
-                    onChange={() => setStatus("SCHEDULED")}
-                    className="h-4 w-4 border-slate-300 text-teal-600"
-                  />
-                  <span className="ml-2 text-sm text-slate-700">
-                    Jadwalkan
                   </span>
                 </label>
 

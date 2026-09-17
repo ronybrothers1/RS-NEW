@@ -19,13 +19,11 @@ type ActionResult = {
 
 const CREATE_STATUSES: ArticleStatus[] = [
   "DRAFT",
-  "SCHEDULED",
   "PUBLISHED",
 ];
 
 const UPDATE_STATUSES: ArticleStatus[] = [
   "DRAFT",
-  "SCHEDULED",
   "PUBLISHED",
   "ARCHIVED",
 ];

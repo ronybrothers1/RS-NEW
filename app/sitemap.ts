@@ -7,9 +7,6 @@ import {
 } from "drizzle-orm";
 
 import {
-  publishDueArticles,
-} from "@/lib/article-publication";
-import {
   getSiteUrl,
 } from "@/lib/site-url";
 import {
@@ -27,8 +24,6 @@ export const dynamic =
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl =
     getSiteUrl();
-
-  await publishDueArticles();
 
   let articleUrls:
     MetadataRoute.Sitemap = [];

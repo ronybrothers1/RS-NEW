@@ -7,10 +7,8 @@ import Link from "next/link";
 import { FileText, Plus, ExternalLink, Image as ImageIcon, Pencil } from "lucide-react";
 import DeleteBeritaButton from "./components/DeleteBeritaButton";
 import ArchiveBeritaButton from "./components/ArchiveBeritaButton";
-import { publishDueArticles } from "@/lib/article-publication";
 
 export default async function BeritaPage() {
-  await publishDueArticles();
   const allArticles = await db
     .select({
       id: articles.id,
