@@ -80,16 +80,30 @@ export default async function HomePage() {
     finance.totalIncome > 0 ||
     activePrograms.length > 0;
 
+  const formatImpactCurrency = (
+    value: number,
+  ) => {
+    if (
+      Math.abs(value) <
+      1_000_000
+    ) {
+      return formatCurrency(
+        value,
+      );
+    }
+
+    return `Rp ${(value / 1_000_000).toFixed(1)} Jt`;
+  };
   const impactItems = [
     { label: "Program Sosial", value: activePrograms.length, icon: Users },
     {
       label: "Total Pengeluaran",
-      value: `Rp ${(finance.totalExpense / 1000000).toFixed(1)} Jt`,
+      value: formatImpactCurrency(finance.totalExpense),
       icon: WalletCards,
     },
     {
       label: "Total Penerimaan",
-      value: `Rp ${(finance.totalIncome / 1000000).toFixed(1)} Jt`,
+      value: formatImpactCurrency(finance.totalIncome),
       icon: BarChart3,
     },
     { label: "Laporan Keuangan", value: "Terbuka", icon: FileText },
