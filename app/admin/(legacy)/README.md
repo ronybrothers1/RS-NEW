@@ -4,21 +4,26 @@ Route group `(legacy)` digunakan untuk subsystem internal lama yang masih dipert
 
 ## Galeri
 
-URL internal tetap:
+URL internal arsip tetap:
 
 `/admin/galeri`
 
-dan:
+Route lama:
 
 `/admin/galeri/tambah`
 
-Gallery Admin dipertahankan untuk compatibility dan maintenance data yang sudah ada.
+tetap dikenali untuk compatibility, tetapi diarahkan kembali ke halaman arsip Galeri.
+
+Galeri telah dinonaktifkan sebagai fitur operasional. Data lama dipertahankan sebagai arsip read-only dan dokumentasi baru harus dikelola melalui modul Kegiatan.
 
 Aturan:
 
-- route tetap tersedia;
-- action Galeri tetap dipertahankan;
-- database dan tabel Gallery tidak diubah;
+- database dan tabel `gallery` tidak dihapus;
+- data Galeri lama tidak dimodifikasi atau dihapus oleh proses retirement;
+- `/admin/galeri` hanya menampilkan data lama secara read-only;
+- `/admin/galeri/tambah` tidak lagi menyediakan form input;
+- server action Galeri menolak create, delete, dan perubahan status publikasi;
+- `/galeri` publik tetap mengikuti redirect yang sudah ada ke `/kegiatan`;
 - Galeri tidak menjadi bagian dari navigasi Admin utama;
-- jangan memperluas subsystem ini sebagai feature baru tanpa keputusan arsitektural tersendiri;
+- dokumentasi baru dikelola melalui modul Kegiatan;
 - route group `(legacy)` tidak menjadi bagian dari URL Next.js.
