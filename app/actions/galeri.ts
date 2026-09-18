@@ -1,109 +1,60 @@
 "use server";
 
-import { db } from "@/src/db";
-import { gallery, auditLogs } from "@/src/db/schema";
-import { getCurrentStaffUser } from "@/lib/current-authz";
-import { revalidatePath } from "next/cache";
-import { eq } from "drizzle-orm";
+import {
+  getCurrentStaffUser,
+} from "@/lib/current-authz";
 
-export async function createGaleri(prevState: any, formData: FormData) {
-  const staff = await getCurrentStaffUser();
+type GalleryActionResult = {
+  success: boolean;
+  error: string | null;
+};
+
+const GALLERY_DISABLED_MESSAGE =
+  "Galeri lama telah dinonaktifkan. Gunakan modul Kegiatan untuk dokumentasi baru.";
+
+async function rejectGalleryMutation(): Promise<GalleryActionResult> {
+  const staff =
+    await getCurrentStaffUser();
 
   if (!staff) {
-    return { success: false, error: "Unauthorized" };
+    return {
+      success: false,
+      error:
+        "Unauthorized",
+    };
   }
 
-  const title = formData.get("title") as string;
-  const description = formData.get("description") as string;
-  const imageUrl = formData.get("imageUrl") as string;
-  const videoUrl = formData.get("videoUrl") as string;
-  const isPublishedStr = formData.get("isPublished") as string;
-
-  if (!imageUrl && !videoUrl) {
-    return { success: false, error: "URL Gambar atau URL Video wajib diisi salah satu." };
-  }
-
-  try {
-    const [newGallery] = await db.insert(gallery).values({
-      title: title || null,
-      description: description || null,
-      imageUrl: imageUrl || null,
-      videoUrl: videoUrl || null,
-      isPublished: isPublishedStr === 'true',
-    }).returning();
-
-    await db.insert(auditLogs).values({
-      userId: staff.id,
-      action: 'CREATE',
-      tableName: 'gallery',
-      recordId: newGallery.id,
-      newData: newGallery,
-    });
-
-    revalidatePath('/admin/galeri');
-    revalidatePath('/galeri');
-    return { success: true, error: null };
-  } catch (err: any) {
-    return { success: false, error: "Gagal menyimpan galeri." };
-  }
+  return {
+    success: false,
+    error:
+      GALLERY_DISABLED_MESSAGE,
+  };
 }
 
-export async function deleteGaleri(id: string) {
-  const staff = await getCurrentStaffUser();
+export async function createGaleri(
+  prevState: GalleryActionResult,
+  formData: FormData,
+) {
+  void prevState;
+  void formData;
 
-  if (!staff) {
-    return { success: false, error: "Unauthorized" };
-  }
-
-  try {
-    const [oldData] = await db.select().from(gallery).where(eq(gallery.id, id));
-    if (!oldData) {
-      return { success: false, error: "Data galeri tidak ditemukan." };
-    }
-
-    await db.delete(gallery).where(eq(gallery.id, id));
-
-    await db.insert(auditLogs).values({
-      userId: staff.id,
-      action: 'DELETE',
-      tableName: 'gallery',
-      recordId: id,
-      oldData,
-    });
-
-    revalidatePath('/admin/galeri');
-    revalidatePath('/galeri');
-    return { success: true, error: null };
-  } catch (err: any) {
-    return { success: false, error: "Gagal menghapus data galeri." };
-  }
+  return rejectGalleryMutation();
 }
 
-export async function togglePublishGaleri(id: string, currentStatus: boolean) {
-  const staff = await getCurrentStaffUser();
+export async function deleteGaleri(
+  id: string,
+) {
+  void id;
 
-  if (!staff) {
-    return { success: false, error: "Unauthorized" };
-  }
+  return rejectGalleryMutation();
+}
 
-  try {
-    const [updated] = await db.update(gallery)
-      .set({ isPublished: !currentStatus })
-      .where(eq(gallery.id, id))
-      .returning();
+export async function togglePublishGaleri(
+  id: string,
+  currentStatus: boolean,
+) {
+  void id;
+  void currentStatus;
 
-    await db.insert(auditLogs).values({
-      userId: staff.id,
-      action: 'UPDATE',
-      tableName: 'gallery',
-      recordId: id,
-      newData: updated,
-    });
-
-    revalidatePath('/admin/galeri');
-    revalidatePath('/galeri');
-    return { success: true, error: null };
-  } catch (err: any) {
-    return { success: false, error: "Gagal mengubah status publikasi." };
-  }
+  return rejectGalleryMutation();
 }
