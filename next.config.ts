@@ -22,7 +22,7 @@ const publicContentSecurityPolicyReportOnly = [
 const publicCspHeaders = [
   {
     key:
-      "Content-Security-Policy-Report-Only",
+      "Content-Security-Policy",
     value:
       publicContentSecurityPolicyReportOnly,
   },
