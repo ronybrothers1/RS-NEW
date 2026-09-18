@@ -134,6 +134,42 @@ const nextConfig: NextConfig = {
     ],
   },
 
+  async rewrites() {
+    return {
+      beforeFiles: [
+        {
+          source:
+            "/transparansi",
+          has: [
+            {
+              type:
+                "query" as const,
+              key:
+                "q",
+            },
+          ],
+          destination:
+            "/transparansi/query",
+        },
+        {
+          source:
+            "/transparansi",
+          has: [
+            {
+              type:
+                "query" as const,
+              key:
+                "page",
+            },
+          ],
+          destination:
+            "/transparansi/query",
+        },
+      ],
+      afterFiles: [],
+      fallback: [],
+    };
+  },
   async redirects() {
     return [
       {
