@@ -1,4 +1,4 @@
-import type {
+﻿import type {
   NextConfig,
 } from "next";
 
@@ -9,7 +9,10 @@ const publicContentSecurityPolicyReportOnly = [
   "frame-ancestors 'none'",
   "form-action 'self'",
   "script-src 'self' 'unsafe-inline'",
+  "script-src-attr 'none'",
   "style-src 'self' 'unsafe-inline'",
+  "style-src-elem 'self'",
+  "style-src-attr 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
   "connect-src 'self' https://vercel-storage.com https://*.vercel-storage.com",
