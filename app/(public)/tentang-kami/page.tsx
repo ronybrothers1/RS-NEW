@@ -1,7 +1,6 @@
 export const revalidate = 60;
 
 import { HeartHandshake, Landmark, ShieldCheck, Target, Users } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { createPageMetadata } from "@/lib/seo-metadata";
 
@@ -119,7 +118,7 @@ export default function TentangKamiPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
-        <div className="grid md:grid-cols-2 gap-12 items-center mb-24">
+        <div className="mx-auto max-w-4xl mb-24">
           <div>
             <h2 className="text-3xl font-bold text-slate-900 mb-6">Visi & Misi</h2>
             <div className="space-y-6 text-slate-600 leading-relaxed text-lg">
@@ -141,16 +140,6 @@ export default function TentangKamiPage() {
                 </li>
               </ul>
             </div>
-          </div>
-          <div className="relative aspect-[3/2] overflow-hidden rounded-3xl bg-slate-200">
-            <Image
-              src="/images/tentang-kami/tim-ruang-sejahtera.jpg"
-              alt="Tim Yayasan Ruang Sejahtera"
-              fill
-              priority
-              sizes="(max-width: 767px) calc(100vw - 2rem), 50vw"
-              className="object-cover"
-            />
           </div>
         </div>
 
