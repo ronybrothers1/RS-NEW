@@ -5,12 +5,8 @@ import {
 import {
   NextResponse,
 } from "next/server";
-import {
-  checkBotId,
-} from "botid/server";
 
 import {
-  createDonationProofUploadSession,
   deleteGoogleDriveDonationProof,
   DONATION_PROOF_MAX_SIZE,
   DONATION_PROOF_TYPES,
@@ -19,7 +15,6 @@ import {
 } from "@/lib/donation-proof-media";
 import {
   createDonationProofCleanupTicket,
-  createDonationProofUploadTicket,
   DONATION_PROOF_UPLOAD_TICKET_TTL_MS,
   verifyDonationProofCleanupTicket,
   verifyDonationProofUploadTicket,
@@ -59,48 +54,6 @@ const CHUNK_SIZE =
 
 const CHUNK_ALIGNMENT =
   256 * 1024;
-
-function sanitizeFilename(
-  filename: string,
-) {
-  const extension =
-    filename.includes(".")
-      ? `.${filename
-          .split(".")
-          .pop()
-          ?.toLowerCase()}`
-      : "";
-
-  const base =
-    filename
-      .replace(
-        /\.[^/.]+$/,
-        "",
-      )
-      .toLowerCase()
-      .normalize("NFKD")
-      .replace(
-        /[\u0300-\u036f]/g,
-        "",
-      )
-      .replace(
-        /[^a-z0-9]+/g,
-        "-",
-      )
-      .replace(
-        /^-+|-+$/g,
-        "",
-      )
-      .slice(
-        0,
-        80,
-      );
-
-  return `${
-    base ||
-    "bukti-transfer"
-  }${extension}`;
-}
 
 function parseIntegerHeader(
   request: Request,
@@ -821,178 +774,6 @@ async function handleCleanup(
   }
 }
 
-type UploadSessionBody = {
-  filename?: unknown;
-  contentType?: unknown;
-  size?: unknown;
-};
-
-async function handleUploadSession(
-  request: Request,
-  ip: string,
-) {
-  const {
-    success:
-      rateLimitSuccess,
-    retryAfterMs,
-  } = await rateLimit(
-    `donation-proof-upload-${ip}`,
-    8,
-    10 * 60 * 1000,
-  );
-
-  if (
-    !rateLimitSuccess
-  ) {
-    return NextResponse.json(
-      {
-        error:
-          "Terlalu banyak permintaan upload. Silakan coba beberapa saat lagi.",
-      },
-      {
-        status: 429,
-        headers: {
-          "Cache-Control":
-            "no-store",
-          "Retry-After":
-            String(
-              Math.max(
-                1,
-                Math.ceil(
-                  retryAfterMs /
-                    1000,
-                ),
-              ),
-            ),
-        },
-      },
-    );
-  }
-
-  if (
-    !isDonationProofGoogleDriveConfigured()
-  ) {
-    return NextResponse.json(
-      {
-        error:
-          "Penyimpanan bukti transfer belum dikonfigurasi.",
-      },
-      {
-        status: 503,
-        headers: {
-          "Cache-Control":
-            "no-store",
-        },
-      },
-    );
-  }
-
-  try {
-    const body =
-      (await request.json()) as
-        UploadSessionBody;
-
-    const filename =
-      typeof body.filename ===
-        "string"
-        ? body.filename.trim()
-        : "";
-
-    const contentType =
-      typeof body.contentType ===
-        "string"
-        ? body.contentType
-            .trim()
-            .toLowerCase()
-        : "";
-
-    const size =
-      typeof body.size ===
-        "number"
-        ? body.size
-        : Number.NaN;
-
-    if (!filename) {
-      throw new Error(
-        "Nama file bukti transfer tidak valid.",
-      );
-    }
-
-    if (
-      !allowedTypes.has(
-        contentType,
-      )
-    ) {
-      throw new Error(
-        "Bukti transfer harus berformat JPG atau PNG.",
-      );
-    }
-
-    if (
-      !Number.isSafeInteger(
-        size,
-      ) ||
-      size <= 0 ||
-      size >
-        DONATION_PROOF_MAX_SIZE
-    ) {
-      throw new Error(
-        "Ukuran bukti transfer maksimal 5 MB.",
-      );
-    }
-
-    const safeName =
-      sanitizeFilename(
-        filename,
-      );
-
-    const uploadUrl =
-      await createDonationProofUploadSession({
-        filename:
-          `${Date.now()}-${safeName}`,
-        contentType,
-        size,
-      });
-
-    const uploadTicket =
-      createDonationProofUploadTicket({
-        uploadUrl,
-        contentType,
-        size,
-      });
-
-    return NextResponse.json(
-      {
-        uploadTicket,
-      },
-      {
-        headers: {
-          "Cache-Control":
-            "no-store",
-        },
-      },
-    );
-  } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Gagal menyiapkan upload bukti transfer.";
-
-    return NextResponse.json(
-      {
-        error: message,
-      },
-      {
-        status: 400,
-        headers: {
-          "Cache-Control":
-            "no-store",
-        },
-      },
-    );
-  }
-}
-
 export async function POST(
   request: Request,
 ): Promise<NextResponse> {
@@ -1016,16 +797,35 @@ export async function POST(
     );
   }
 
-  const ip =
-    getClientIp(
-      request.headers,
-    );
-
   const mode =
     new URL(
       request.url,
     ).searchParams.get(
       "mode",
+    );
+
+  if (
+    mode !== "cleanup" &&
+    mode !== "chunk"
+  ) {
+    return NextResponse.json(
+      {
+        error:
+          "Mode upload bukti transfer tidak valid.",
+      },
+      {
+        status: 400,
+        headers: {
+          "Cache-Control":
+            "no-store",
+        },
+      },
+    );
+  }
+
+  const ip =
+    getClientIp(
+      request.headers,
     );
 
   if (
@@ -1038,43 +838,7 @@ export async function POST(
     );
   }
 
-  if (
-    mode ===
-    "chunk"
-  ) {
-    return handleChunkUpload(
-      request,
-      ip,
-    );
-  }
-
-  const botVerification =
-    await checkBotId({
-      advancedOptions: {
-        checkLevel:
-          "basic",
-      },
-    });
-
-  if (
-    botVerification.isBot
-  ) {
-    return NextResponse.json(
-      {
-        error:
-          "Permintaan otomatis tidak diizinkan.",
-      },
-      {
-        status: 403,
-        headers: {
-          "Cache-Control":
-            "no-store",
-        },
-      },
-    );
-  }
-
-  return handleUploadSession(
+  return handleChunkUpload(
     request,
     ip,
   );

@@ -6,7 +6,7 @@ initBotId({
   protect: [
     {
       path:
-        "/api/donasi/proof/upload",
+        "/api/donasi/proof/session",
       method:
         "POST",
       advancedOptions: {

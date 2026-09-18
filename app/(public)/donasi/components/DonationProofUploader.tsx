@@ -80,7 +80,7 @@ async function createUploadSession(
 ) {
   const response =
     await fetch(
-      "/api/donasi/proof/upload",
+      "/api/donasi/proof/session",
       {
         method: "POST",
         headers: {
