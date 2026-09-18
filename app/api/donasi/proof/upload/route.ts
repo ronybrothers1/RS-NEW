@@ -5,6 +5,9 @@ import {
 import {
   NextResponse,
 } from "next/server";
+import {
+  checkBotId,
+} from "botid/server";
 
 import {
   createDonationProofUploadSession,
@@ -1042,6 +1045,32 @@ export async function POST(
     return handleChunkUpload(
       request,
       ip,
+    );
+  }
+
+  const botVerification =
+    await checkBotId({
+      advancedOptions: {
+        checkLevel:
+          "basic",
+      },
+    });
+
+  if (
+    botVerification.isBot
+  ) {
+    return NextResponse.json(
+      {
+        error:
+          "Permintaan otomatis tidak diizinkan.",
+      },
+      {
+        status: 403,
+        headers: {
+          "Cache-Control":
+            "no-store",
+        },
+      },
     );
   }
 

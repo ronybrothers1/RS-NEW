@@ -7,6 +7,9 @@ import {
 } from "drizzle-orm";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
+import {
+  checkBotId,
+} from "botid/server";
 
 import { rateLimit } from "@/lib/rate-limit";
 import {
@@ -99,6 +102,24 @@ export async function submitDonation(
   _prevState: unknown,
   formData: FormData,
 ) {
+  const botVerification =
+    await checkBotId({
+      advancedOptions: {
+        checkLevel:
+          "basic",
+      },
+    });
+
+  if (
+    botVerification.isBot
+  ) {
+    return {
+      success: false,
+      error:
+        "Permintaan otomatis tidak diizinkan.",
+    };
+  }
+
   const headersList =
     await headers();
 
