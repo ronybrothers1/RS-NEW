@@ -209,6 +209,10 @@ function revalidateFinancePages(
     revalidatePath(
       `/admin/keuangan/kampanye/${campaignId}`,
     );
+    revalidatePath(
+      "/bantuan/[slug]",
+      "page",
+    );
   }
 }
 

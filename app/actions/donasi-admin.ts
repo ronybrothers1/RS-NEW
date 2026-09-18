@@ -63,6 +63,10 @@ function revalidateVerifiedDonationPages() {
   revalidatePath(
     "/bantuan",
   );
+  revalidatePath(
+    "/bantuan/[slug]",
+    "page",
+  );
 }
 
 export async function verifyDonation(

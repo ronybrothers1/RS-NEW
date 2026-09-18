@@ -20,8 +20,15 @@ import {
   getCachedPublicCampaignTotals,
 } from "@/lib/public-assistance";
 import { createPageMetadata, createSeoDescription } from "@/lib/seo-metadata";
-export const dynamic =
-  "force-dynamic";
+export const revalidate =
+  300;
+
+export const dynamicParams =
+  true;
+
+export function generateStaticParams() {
+  return [];
+}
 
 type Props = {
   params: Promise<{

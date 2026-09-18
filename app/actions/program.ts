@@ -44,6 +44,10 @@ function revalidateProgramPages() {
   revalidatePath("/admin/kegiatan/tambah");
   revalidatePath("/admin/kegiatan");
   revalidatePath("/kegiatan");
+  revalidatePath(
+    "/bantuan/[slug]",
+    "page",
+  );
 }
 
 async function requireAdminUserId() {
