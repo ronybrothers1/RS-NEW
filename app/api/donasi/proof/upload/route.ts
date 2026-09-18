@@ -189,6 +189,73 @@ function readAcknowledgedEnd(
     : null;
 }
 
+function isSameOriginRequest(
+  request: Request,
+) {
+  const origin =
+    request.headers
+      .get(
+        "origin",
+      )
+      ?.trim();
+
+  if (!origin) {
+    return false;
+  }
+
+  try {
+    return (
+      new URL(origin).origin ===
+      new URL(
+        request.url,
+      ).origin
+    );
+  } catch {
+    return false;
+  }
+}
+
+function hasExpectedImageSignature(
+  bytes: ArrayBuffer,
+  contentType: string,
+) {
+  const data =
+    new Uint8Array(
+      bytes,
+    );
+
+  if (
+    contentType ===
+    "image/jpeg"
+  ) {
+    return (
+      data.length >= 3 &&
+      data[0] === 0xff &&
+      data[1] === 0xd8 &&
+      data[2] === 0xff
+    );
+  }
+
+  if (
+    contentType ===
+    "image/png"
+  ) {
+    return (
+      data.length >= 8 &&
+      data[0] === 0x89 &&
+      data[1] === 0x50 &&
+      data[2] === 0x4e &&
+      data[3] === 0x47 &&
+      data[4] === 0x0d &&
+      data[5] === 0x0a &&
+      data[6] === 0x1a &&
+      data[7] === 0x0a
+    );
+  }
+
+  return false;
+}
+
 async function handleChunkUpload(
   request: Request,
   ip: string,
@@ -363,6 +430,18 @@ async function handleChunkUpload(
     ) {
       throw new Error(
         "Ukuran potongan upload tidak valid.",
+      );
+    }
+
+    if (
+      start === 0 &&
+      !hasExpectedImageSignature(
+        bytes,
+        contentType,
+      )
+    ) {
+      throw new Error(
+        "Isi bukti transfer tidak sesuai dengan format JPG atau PNG.",
       );
     }
 
@@ -914,6 +993,26 @@ async function handleUploadSession(
 export async function POST(
   request: Request,
 ): Promise<NextResponse> {
+  if (
+    !isSameOriginRequest(
+      request,
+    )
+  ) {
+    return NextResponse.json(
+      {
+        error:
+          "Permintaan upload bukti transfer tidak diizinkan.",
+      },
+      {
+        status: 403,
+        headers: {
+          "Cache-Control":
+            "no-store",
+        },
+      },
+    );
+  }
+
   const ip =
     getClientIp(
       request.headers,
