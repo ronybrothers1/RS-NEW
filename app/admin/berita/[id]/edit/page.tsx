@@ -1,4 +1,5 @@
 import ArticleForm from "../../components/ArticleForm";
+import { sanitizeArticleHtml } from "@/lib/article-content";
 import { db } from "@/src/db";
 import { articles } from "@/src/db/schema";
 import { eq } from "drizzle-orm";
@@ -27,7 +28,7 @@ export default async function EditBeritaPage({
         id: article.id,
         title: article.title,
         slug: article.slug,
-        content: article.content,
+        content: sanitizeArticleHtml(article.content),
         excerpt: article.excerpt,
         imageUrl: article.imageUrl,
         imageAlt: article.imageAlt,
