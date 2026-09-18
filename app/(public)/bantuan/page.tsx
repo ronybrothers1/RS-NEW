@@ -12,9 +12,6 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 import {
-  getCurrentDbUser,
-} from "@/lib/current-authz";
-import {
   getCachedPublicAssistanceIndex,
 } from "@/lib/public-assistance";
 import {
@@ -22,8 +19,7 @@ import {
   getProgramQuestions,
 } from "@/lib/assistance";
 import { createPageMetadata } from "@/lib/seo-metadata";
-export const dynamic =
-  "force-dynamic";
+export const revalidate = 300;
 
 export const metadata: Metadata = createPageMetadata({
   title: "Kampanye Bantuan",
@@ -33,12 +29,6 @@ export const metadata: Metadata = createPageMetadata({
 });
 
 export default async function AssistanceCampaignsPage() {
-  const currentUser =
-    await getCurrentDbUser();
-
-  const canSubmitApplication =
-    currentUser?.role === "USER";
-
   const {
     rows,
     totals,
@@ -270,29 +260,26 @@ export default async function AssistanceCampaignsPage() {
           </div>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            {canSubmitApplication ? (
-              <Link
-                href="/akun/pengajuan/baru"
-                className="public-cta-3d inline-flex min-h-11 items-center justify-center px-5 py-3 text-sm font-bold"
-              >
-                Ajukan Bantuan Sekarang
-              </Link>
-            ) : (
-              <>
-                <Link
-                  href="/register"
-                  className="public-cta-3d inline-flex min-h-11 items-center justify-center px-5 py-3 text-sm font-bold"
-                >
-                  Daftar untuk Mengajukan
-                </Link>
-                <Link
-                  href="/login"
-                  className="public-cta-3d-secondary inline-flex min-h-11 items-center justify-center px-5 py-3 text-sm font-semibold"
-                >
-                  Sudah punya akun? Masuk
-                </Link>
-              </>
-            )}
+            <Link
+              href="/akun/pengajuan/baru"
+              className="public-cta-3d inline-flex min-h-11 items-center justify-center px-5 py-3 text-sm font-bold"
+            >
+              Ajukan Bantuan Sekarang
+            </Link>
+
+            <Link
+              href="/register"
+              className="public-cta-3d-secondary inline-flex min-h-11 items-center justify-center px-5 py-3 text-sm font-semibold"
+            >
+              Belum punya akun? Daftar
+            </Link>
+
+            <Link
+              href="/login"
+              className="public-cta-3d-secondary inline-flex min-h-11 items-center justify-center px-5 py-3 text-sm font-semibold"
+            >
+              Sudah punya akun? Masuk
+            </Link>
           </div>
         </div>
       </section>
