@@ -135,7 +135,18 @@ export const assistanceApplications = pgTable('assistance_applications', {
   updatedAt: timestamp('updated_at')
     .defaultNow()
     .notNull(),
-});
+}, (table) => [
+  index('assistance_applications_applicant_updated_idx')
+    .on(
+      table.applicantId,
+      table.updatedAt.desc(),
+    ),
+  index('assistance_applications_program_updated_idx')
+    .on(
+      table.programId,
+      table.updatedAt.desc(),
+    ),
+]);
 
 export const assistanceApplicationPhotos = pgTable('assistance_application_photos', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -154,7 +165,13 @@ export const assistanceApplicationPhotos = pgTable('assistance_application_photo
   createdAt: timestamp('created_at')
     .defaultNow()
     .notNull(),
-});
+}, (table) => [
+  index('assistance_application_photos_application_sort_idx')
+    .on(
+      table.applicationId,
+      table.sortOrder,
+    ),
+]);
 
 export const campaigns = pgTable('campaigns', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -219,6 +236,22 @@ export const financialTransactions = pgTable('financial_transactions', {
 }, (table) => [
   uniqueIndex('financial_transactions_receipt_number_unique')
     .on(table.receiptNumber),
+  index('financial_transactions_campaign_deleted_date_idx')
+    .on(
+      table.campaignId,
+      table.deletedAt,
+      table.date.desc(),
+      table.createdAt.desc(),
+      table.id.desc(),
+    ),
+  index('financial_transactions_program_deleted_date_idx')
+    .on(
+      table.programId,
+      table.deletedAt,
+      table.date.desc(),
+      table.createdAt.desc(),
+      table.id.desc(),
+    ),
   index('financial_transactions_active_date_created_idx')
     .on(
       table.date.desc(),
