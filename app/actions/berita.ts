@@ -2,8 +2,8 @@
 
 import { getCurrentStaffUser } from "@/lib/current-authz";
 import { db } from "@/src/db";
-import { articles, auditLogs } from "@/src/db/schema";
-import { and, eq, ne } from "drizzle-orm";
+import { articles, auditLogs, programs } from "@/src/db/schema";
+import { and, eq, isNull, ne } from "drizzle-orm";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { hasMeaningfulArticleContent } from "@/lib/article-content";
 import {
@@ -520,6 +520,251 @@ export async function updateBerita(
     return {
       success: false,
       error: "Gagal memperbarui artikel.",
+    };
+  }
+}
+
+export async function updateBeritaProgram(
+  id: string,
+  programId: string | null,
+): Promise<ActionResult> {
+  const staff =
+    await getEditorUser();
+
+  if (!staff) {
+    return {
+      success: false,
+      error:
+        "Anda tidak memiliki akses untuk mengubah program berita.",
+    };
+  }
+
+  if (!isUuid(id)) {
+    return {
+      success: false,
+      error: "Artikel tidak valid.",
+    };
+  }
+
+  const normalizedProgramId =
+    typeof programId === "string" &&
+    programId.trim()
+      ? programId.trim()
+      : null;
+
+  if (
+    normalizedProgramId &&
+    !isUuid(normalizedProgramId)
+  ) {
+    return {
+      success: false,
+      error:
+        "Program berita yang dipilih tidak valid.",
+    };
+  }
+
+  try {
+    const outcome =
+      await db.transaction(
+        async (
+          tx,
+        ): Promise<{
+          result: ActionResult;
+          slug: string | null;
+          changed: boolean;
+        }> => {
+          const [oldArticle] =
+            await tx
+              .select()
+              .from(articles)
+              .where(
+                eq(
+                  articles.id,
+                  id,
+                ),
+              )
+              .limit(1);
+
+          if (!oldArticle) {
+            return {
+              result: {
+                success: false,
+                error:
+                  "Artikel tidak ditemukan.",
+              },
+              slug: null,
+              changed: false,
+            };
+          }
+
+          if (
+            oldArticle.programId ===
+            normalizedProgramId
+          ) {
+            return {
+              result: {
+                success: true,
+                error: null,
+                id,
+                slug:
+                  oldArticle.slug,
+              },
+              slug:
+                oldArticle.slug,
+              changed: false,
+            };
+          }
+
+          if (
+            normalizedProgramId
+          ) {
+            const [
+              selectedProgram,
+            ] =
+              await tx
+                .select({
+                  id:
+                    programs.id,
+                  status:
+                    programs.status,
+                })
+                .from(programs)
+                .where(
+                  eq(
+                    programs.id,
+                    normalizedProgramId,
+                  ),
+                )
+                .limit(1);
+
+            if (
+              !selectedProgram ||
+              selectedProgram.status !==
+                "ACTIVE"
+            ) {
+              return {
+                result: {
+                  success: false,
+                  error:
+                    "Program tidak ditemukan atau sudah tidak aktif.",
+                },
+                slug:
+                  oldArticle.slug,
+                changed: false,
+              };
+            }
+          }
+
+          const currentProgramGuard =
+            oldArticle.programId
+              ? eq(
+                  articles.programId,
+                  oldArticle.programId,
+                )
+              : isNull(
+                  articles.programId,
+                );
+
+          const [
+            updatedArticle,
+          ] =
+            await tx
+              .update(articles)
+              .set({
+                programId:
+                  normalizedProgramId,
+              })
+              .where(
+                and(
+                  eq(
+                    articles.id,
+                    id,
+                  ),
+                  currentProgramGuard,
+                ),
+              )
+              .returning();
+
+          if (!updatedArticle) {
+            return {
+              result: {
+                success: false,
+                error:
+                  "Label program berubah dari sesi lain. Muat ulang halaman lalu coba kembali.",
+              },
+              slug:
+                oldArticle.slug,
+              changed: false,
+            };
+          }
+
+          await tx
+            .insert(auditLogs)
+            .values({
+              userId:
+                staff.id,
+              action:
+                "UPDATE",
+              tableName:
+                "articles",
+              recordId:
+                id,
+              oldData:
+                oldArticle,
+              newData:
+                updatedArticle,
+            });
+
+          return {
+            result: {
+              success: true,
+              error: null,
+              id,
+              slug:
+                updatedArticle.slug,
+            },
+            slug:
+              updatedArticle.slug,
+            changed: true,
+          };
+        },
+      );
+
+    if (
+      !outcome.result.success ||
+      !outcome.changed
+    ) {
+      return outcome.result;
+    }
+
+    revalidateTag(
+      PUBLIC_ARTICLES_CACHE_TAG,
+    );
+
+    revalidatePath(
+      "/admin/berita",
+    );
+
+    revalidatePath(
+      `/admin/berita/${id}/edit`,
+    );
+
+    revalidatePath(
+      "/berita",
+    );
+
+    if (outcome.slug) {
+      revalidatePath(
+        `/berita/${outcome.slug}`,
+      );
+    }
+
+    return outcome.result;
+  } catch {
+    return {
+      success: false,
+      error:
+        "Gagal memperbarui label program berita.",
     };
   }
 }

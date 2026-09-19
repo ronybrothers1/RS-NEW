@@ -1,27 +1,70 @@
 export const dynamic = "force-dynamic";
 
 import { db } from "@/src/db";
-import { articles, users } from "@/src/db/schema";
-import { desc, eq } from "drizzle-orm";
+import { articles, programs, users } from "@/src/db/schema";
+import { asc, desc, eq } from "drizzle-orm";
 import Link from "next/link";
 import { FileText, Plus, ExternalLink, Image as ImageIcon, Pencil } from "lucide-react";
 import DeleteBeritaButton from "./components/DeleteBeritaButton";
 import ArchiveBeritaButton from "./components/ArchiveBeritaButton";
+import ArticleProgramSelect from "./components/ArticleProgramSelect";
 
 export default async function BeritaPage() {
-  const allArticles = await db
-    .select({
-      id: articles.id,
-      title: articles.title,
-      slug: articles.slug,
-      status: articles.status,
-      createdAt: articles.createdAt,
-      imageUrl: articles.imageUrl,
-      authorName: users.name,
-    })
-    .from(articles)
-    .leftJoin(users, eq(articles.authorId, users.id))
-    .orderBy(desc(articles.createdAt));
+  const [
+    allArticles,
+    activePrograms,
+  ] = await Promise.all([
+    db
+      .select({
+        id: articles.id,
+        title: articles.title,
+        slug: articles.slug,
+        status: articles.status,
+        createdAt: articles.createdAt,
+        imageUrl: articles.imageUrl,
+        authorName: users.name,
+        programId: articles.programId,
+        programName: programs.name,
+      })
+      .from(articles)
+      .leftJoin(
+        users,
+        eq(
+          articles.authorId,
+          users.id,
+        ),
+      )
+      .leftJoin(
+        programs,
+        eq(
+          articles.programId,
+          programs.id,
+        ),
+      )
+      .orderBy(
+        desc(
+          articles.createdAt,
+        ),
+      ),
+
+    db
+      .select({
+        id: programs.id,
+        name: programs.name,
+      })
+      .from(programs)
+      .where(
+        eq(
+          programs.status,
+          "ACTIVE",
+        ),
+      )
+      .orderBy(
+        asc(
+          programs.name,
+        ),
+      ),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -45,6 +88,7 @@ export default async function BeritaPage() {
             <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-200">
               <tr>
                 <th scope="col" className="px-6 py-3">Judul Berita</th>
+                <th scope="col" className="px-6 py-3">Program</th>
                 <th scope="col" className="px-6 py-3">Tanggal & Penulis</th>
                 <th scope="col" className="px-6 py-3 text-center">Status</th>
                 <th scope="col" className="px-6 py-3">Aksi</th>
@@ -53,7 +97,7 @@ export default async function BeritaPage() {
             <tbody>
               {allArticles.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-6 py-8 text-center text-slate-500">
+                  <td colSpan={5} className="px-6 py-8 text-center text-slate-500">
                     Belum ada berita yang ditulis.
                   </td>
                 </tr>
@@ -73,6 +117,17 @@ export default async function BeritaPage() {
                         <div className="font-medium text-slate-900 line-clamp-2">{art.title}</div>
                       </div>
                     </td>
+
+                    <td className="px-6 py-4">
+                      <ArticleProgramSelect
+                        articleId={art.id}
+                        articleTitle={art.title}
+                        currentProgramId={art.programId}
+                        currentProgramName={art.programName}
+                        programs={activePrograms}
+                      />
+                    </td>
+
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-slate-900 font-medium">
                         {new Date(art.createdAt).toLocaleDateString('id-ID', {
