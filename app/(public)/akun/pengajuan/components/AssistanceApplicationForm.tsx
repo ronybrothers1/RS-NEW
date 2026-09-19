@@ -17,6 +17,13 @@ import type {
 import {
   getProgramQuestions,
 } from "@/lib/assistance";
+import {
+  getSampangVillages,
+  isValidSampangSubdistrict,
+  isValidSampangVillage,
+  SAMPANG_REGENCY,
+  SAMPANG_REGIONS,
+} from "@/lib/sampang-regions";
 
 import AssistancePhotoUploader from "./AssistancePhotoUploader";
 
@@ -138,6 +145,46 @@ export default function AssistanceApplicationForm({
         ?.targetAmount ||
         "",
     ),
+  );
+
+  const initialSubdistrict =
+    initialApplication?.subdistrict &&
+    isValidSampangSubdistrict(
+      initialApplication.subdistrict,
+    )
+      ? initialApplication.subdistrict
+      : "";
+
+  const [
+    subdistrict,
+    setSubdistrict,
+  ] = useState(
+    initialSubdistrict,
+  );
+
+  const availableVillages =
+    useMemo(
+      () =>
+        getSampangVillages(
+          subdistrict,
+        ),
+      [subdistrict],
+    );
+
+  const initialVillage =
+    initialApplication?.village &&
+    isValidSampangVillage(
+      initialSubdistrict,
+      initialApplication.village,
+    )
+      ? initialApplication.village
+      : "";
+
+  const [
+    village,
+    setVillage,
+  ] = useState(
+    initialVillage,
   );
 
   const [
@@ -419,23 +466,16 @@ export default function AssistanceApplicationForm({
         <div className="mt-6 grid gap-5 md:grid-cols-2">
           <label>
             <span className={labelClass}>
-              Desa/kelurahan
+              Kabupaten/kota
             </span>
             <input
-              name="village"
+              name="regency"
               type="text"
-              maxLength={
-                120
+              value={
+                SAMPANG_REGENCY
               }
-              required
-              defaultValue={
-                initialApplication
-                  ?.village ||
-                ""
-              }
-              className={
-                inputClass
-              }
+              readOnly
+              className={`${inputClass} cursor-not-allowed bg-slate-50 text-slate-600`}
             />
           </label>
 
@@ -443,46 +483,79 @@ export default function AssistanceApplicationForm({
             <span className={labelClass}>
               Kecamatan
             </span>
-            <input
+            <select
               name="subdistrict"
-              type="text"
-              maxLength={
-                120
-              }
+              value={subdistrict}
+              onChange={(
+                event,
+              ) => {
+                setSubdistrict(
+                  event.target.value,
+                );
+                setVillage("");
+              }}
               required
-              defaultValue={
-                initialApplication
-                  ?.subdistrict ||
-                ""
-              }
               className={
                 inputClass
               }
-            />
+            >
+              <option value="">
+                Pilih kecamatan
+              </option>
+              {SAMPANG_REGIONS.map(
+                (region) => (
+                  <option
+                    key={
+                      region.subdistrict
+                    }
+                    value={
+                      region.subdistrict
+                    }
+                  >
+                    {
+                      region.subdistrict
+                    }
+                  </option>
+                ),
+              )}
+            </select>
           </label>
 
           <label>
             <span className={labelClass}>
-              Kabupaten/kota
+              Desa/kelurahan
             </span>
-            <input
-              name="regency"
-              type="text"
-              maxLength={
-                120
+            <select
+              name="village"
+              value={village}
+              onChange={(
+                event,
+              ) =>
+                setVillage(
+                  event.target.value,
+                )
               }
               required
-              defaultValue={
-                initialApplication
-                  ?.regency ||
-                "Sampang"
-              }
-              className={
-                inputClass
-              }
-            />
+              disabled={!subdistrict}
+              className={`${inputClass} disabled:cursor-not-allowed disabled:bg-slate-100`}
+            >
+              <option value="">
+                {subdistrict
+                  ? "Pilih desa/kelurahan"
+                  : "Pilih kecamatan terlebih dahulu"}
+              </option>
+              {availableVillages.map(
+                (option) => (
+                  <option
+                    key={option}
+                    value={option}
+                  >
+                    {option}
+                  </option>
+                ),
+              )}
+            </select>
           </label>
-
           <label className="md:col-span-2">
             <span className={labelClass}>
               Alamat lengkap

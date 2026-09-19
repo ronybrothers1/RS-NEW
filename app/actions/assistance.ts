@@ -18,6 +18,11 @@ import {
   getProgramQuestions,
 } from "@/lib/assistance";
 import {
+  isValidSampangSubdistrict,
+  isValidSampangVillage,
+  SAMPANG_REGENCY,
+} from "@/lib/sampang-regions";
+import {
   getAssistanceBlobToken,
   isAllowedAssistanceUserPath,
   isPrivateAssistanceBlobUrl,
@@ -414,6 +419,90 @@ async function parseApplication(
     }
   }
 
+  const village =
+    getField(
+      formData,
+      "village",
+      "Desa/kelurahan",
+      120,
+      isSubmit,
+    );
+
+  const subdistrict =
+    getField(
+      formData,
+      "subdistrict",
+      "Kecamatan",
+      120,
+      isSubmit,
+    );
+
+  const regency =
+    getField(
+      formData,
+      "regency",
+      "Kabupaten/kota",
+      120,
+      isSubmit,
+    );
+
+  if (
+    regency &&
+    regency !==
+      SAMPANG_REGENCY
+  ) {
+    throw new Error(
+      "Pengajuan hanya tersedia untuk wilayah Kabupaten Sampang.",
+    );
+  }
+
+  if (
+    subdistrict &&
+    !isValidSampangSubdistrict(
+      subdistrict,
+    )
+  ) {
+    throw new Error(
+      "Kecamatan tidak valid untuk Kabupaten Sampang.",
+    );
+  }
+
+  if (
+    village &&
+    (
+      !subdistrict ||
+      !isValidSampangVillage(
+        subdistrict,
+        village,
+      )
+    )
+  ) {
+    throw new Error(
+      "Desa/kelurahan tidak sesuai dengan kecamatan yang dipilih.",
+    );
+  }
+
+  if (
+    isSubmit &&
+    (
+      regency !==
+        SAMPANG_REGENCY ||
+      !subdistrict ||
+      !village ||
+      !isValidSampangSubdistrict(
+        subdistrict,
+      ) ||
+      !isValidSampangVillage(
+        subdistrict,
+        village,
+      )
+    )
+  ) {
+    throw new Error(
+      "Pilih kecamatan dan desa/kelurahan yang valid di Kabupaten Sampang.",
+    );
+  }
+
   return {
     programId:
       program.id,
@@ -442,30 +531,9 @@ async function parseApplication(
         isSubmit,
       ),
     contactWhatsapp,
-    village:
-      getField(
-        formData,
-        "village",
-        "Desa/kelurahan",
-        120,
-        isSubmit,
-      ),
-    subdistrict:
-      getField(
-        formData,
-        "subdistrict",
-        "Kecamatan",
-        120,
-        isSubmit,
-      ),
-    regency:
-      getField(
-        formData,
-        "regency",
-        "Kabupaten/kota",
-        120,
-        isSubmit,
-      ),
+    village,
+    subdistrict,
+    regency,
     detailedAddress:
       getField(
         formData,

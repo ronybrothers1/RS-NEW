@@ -2,7 +2,9 @@ import {
   config,
 } from "dotenv";
 import {
+  and,
   eq,
+  isNull,
 } from "drizzle-orm";
 
 config({
@@ -82,9 +84,14 @@ const approved =
       assistanceApplications,
     )
     .where(
-      eq(
-        assistanceApplications.status,
-        "APPROVED",
+      and(
+        eq(
+          assistanceApplications.status,
+          "APPROVED",
+        ),
+        isNull(
+          assistanceApplications.approvedAmount,
+        ),
       ),
     );
 

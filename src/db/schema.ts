@@ -128,6 +128,11 @@ export const assistanceApplications = pgTable('assistance_applications', {
   submittedAt: timestamp('submitted_at'),
   reviewedAt: timestamp('reviewed_at'),
 
+  approvedAmount: numeric('approved_amount'),
+  operationalAmount: numeric('operational_amount'),
+  scheduledAt: timestamp('scheduled_at'),
+  completedAt: timestamp('completed_at'),
+
   createdAt: timestamp('created_at')
     .defaultNow()
     .notNull(),

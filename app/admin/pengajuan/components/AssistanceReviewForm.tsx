@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import {
   useActionState,
+  useState,
 } from "react";
 
 import {
@@ -26,6 +27,13 @@ export default function AssistanceReviewForm({
   applicationId: string;
 }) {
   const [
+    fundingSource,
+    setFundingSource,
+  ] = useState<
+    "cash" | "campaign"
+  >("cash");
+
+  const [
     state,
     formAction,
     pending,
@@ -37,7 +45,7 @@ export default function AssistanceReviewForm({
   return (
     <form
       action={formAction}
-      className="space-y-4"
+      className="space-y-5"
     >
       <input
         type="hidden"
@@ -65,6 +73,135 @@ export default function AssistanceReviewForm({
         <p className="mt-2 text-xs leading-5 text-slate-500">
           Catatan akan terlihat oleh pemohon pada halaman detail pengajuan.
         </p>
+      </div>
+
+      <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4">
+        <p className="text-sm font-bold text-emerald-950">
+          Jika pengajuan disetujui
+        </p>
+
+        <p className="mt-1 text-xs leading-5 text-emerald-800">
+          Tentukan sumber pendanaan dan nominal berdasarkan hasil verifikasi pengurus.
+        </p>
+
+        <fieldset className="mt-4">
+          <legend className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Sumber Pendanaan
+          </legend>
+
+          <div className="mt-2 grid gap-2 sm:grid-cols-2">
+            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-white p-3">
+              <input
+                type="radio"
+                name="fundingSource"
+                value="cash"
+                checked={fundingSource === "cash"}
+                onChange={() =>
+                  setFundingSource(
+                    "cash",
+                  )
+                }
+                className="mt-1"
+              />
+              <span>
+                <span className="block text-sm font-semibold text-slate-800">
+                  Kas Ruang Sejahtera
+                </span>
+                <span className="mt-1 block text-xs leading-5 text-slate-500">
+                  Tidak membuat kampanye publik.
+                </span>
+              </span>
+            </label>
+
+            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-white p-3">
+              <input
+                type="radio"
+                name="fundingSource"
+                value="campaign"
+                checked={fundingSource === "campaign"}
+                onChange={() =>
+                  setFundingSource(
+                    "campaign",
+                  )
+                }
+                className="mt-1"
+              />
+              <span>
+                <span className="block text-sm font-semibold text-slate-800">
+                  Kampanye
+                </span>
+                <span className="mt-1 block text-xs leading-5 text-slate-500">
+                  Membuat draft kampanye Bantu Mereka.
+                </span>
+              </span>
+            </label>
+          </div>
+        </fieldset>
+
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <div>
+            <label
+              htmlFor="approvedAmount"
+              className="text-xs font-semibold uppercase tracking-wide text-slate-500"
+            >
+              Bantuan Disetujui
+            </label>
+            <input
+              id="approvedAmount"
+              name="approvedAmount"
+              type="number"
+              min="1"
+              step="1"
+              inputMode="numeric"
+              placeholder="Contoh: 5000000"
+              className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-3 text-sm text-slate-900 outline-none focus:border-teal-600 focus:ring-4 focus:ring-teal-50"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="operationalAmount"
+              className="text-xs font-semibold uppercase tracking-wide text-slate-500"
+            >
+              Biaya Operasional
+            </label>
+            <input
+              id="operationalAmount"
+              name="operationalAmount"
+              type="number"
+              min="0"
+              step="1"
+              inputMode="numeric"
+              defaultValue="0"
+              className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-3 text-sm text-slate-900 outline-none focus:border-teal-600 focus:ring-4 focus:ring-teal-50"
+            />
+          </div>
+        </div>
+
+        {fundingSource ===
+          "campaign" && (
+          <div className="mt-4">
+            <label
+              htmlFor="campaignTarget"
+              className="text-xs font-semibold uppercase tracking-wide text-slate-500"
+            >
+              Target Kampanye
+            </label>
+            <input
+              id="campaignTarget"
+              name="campaignTarget"
+              type="number"
+              min="1"
+              step="1"
+              inputMode="numeric"
+              placeholder="Nominal target penggalangan dana"
+              className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-3 text-sm text-slate-900 outline-none focus:border-teal-600 focus:ring-4 focus:ring-teal-50"
+            />
+            <p className="mt-2 text-xs leading-5 text-slate-500">
+              Target kampanye ditetapkan pengurus dan tidak otomatis mengikuti nominal yang diajukan pemohon.
+            </p>
+          </div>
+        )}
       </div>
 
       {state.error && (

@@ -37,6 +37,8 @@ import {
   users,
 } from "@/src/db/schema";
 
+import AssistanceProgressPanel from "../components/AssistanceProgressPanel";
+
 export const dynamic =
   "force-dynamic";
 
@@ -325,6 +327,12 @@ export default async function AssistanceApplicationDetailPage({
             </p>
           </section>
         )}
+
+        <AssistanceProgressPanel
+          applicationId={application.id}
+          applicantId={user.id}
+          status={status}
+        />
 
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(260px,0.65fr)]">
           <div className="space-y-6">
