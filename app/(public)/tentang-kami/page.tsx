@@ -1,5 +1,3 @@
-export const revalidate = 60;
-
 import { HeartHandshake, Landmark, ShieldCheck, Target, Users } from "lucide-react";
 import Link from "next/link";
 import { createPageMetadata } from "@/lib/seo-metadata";
