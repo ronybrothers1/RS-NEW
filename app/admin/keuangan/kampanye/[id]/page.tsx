@@ -9,9 +9,11 @@ import {
 } from "lucide-react";
 import {
   and,
+  count,
   desc,
   eq,
   isNull,
+  sql,
 } from "drizzle-orm";
 import Link from "next/link";
 import {
@@ -31,6 +33,38 @@ import {
 
 export const dynamic =
   "force-dynamic";
+
+const PAGE_SIZE = 50;
+
+type CampaignFinanceSearchParams = {
+  page?: string | string[];
+};
+
+function getFirstParam(
+  value:
+    | string
+    | string[]
+    | undefined,
+) {
+  return Array.isArray(value)
+    ? value[0]
+    : value;
+}
+
+function parsePositiveInteger(
+  value: string | undefined,
+) {
+  const parsed =
+    Number.parseInt(
+      value ?? "1",
+      10,
+    );
+
+  return Number.isSafeInteger(parsed) &&
+    parsed > 0
+    ? parsed
+    : 1;
+}
 
 function formatDate(
   value: Date,
@@ -73,123 +107,233 @@ const statusMeta = {
 
 export default async function CampaignFinanceDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{
     id: string;
   }>;
+  searchParams:
+    Promise<CampaignFinanceSearchParams>;
 }) {
-  const {
-    id,
-  } = await params;
+  const [
+    {
+      id,
+    },
+    rawSearchParams,
+  ] = await Promise.all([
+    params,
+    searchParams,
+  ]);
 
-  const [campaign] = await db
-    .select({
-      id: campaigns.id,
-      applicationId:
-        campaigns.applicationId,
-      slug: campaigns.slug,
-      title: campaigns.title,
-      status: campaigns.status,
-      targetAmount:
-        campaigns.targetAmount,
-      programId:
-        campaigns.programId,
-      programName:
-        programs.name,
-    })
-    .from(campaigns)
-    .innerJoin(
-      programs,
-      eq(
-        campaigns.programId,
-        programs.id,
+  const requestedPage =
+    parsePositiveInteger(
+      getFirstParam(
+        rawSearchParams.page,
       ),
-    )
-    .where(
-      eq(campaigns.id, id),
-    )
-    .limit(1);
+    );
+
+  const [
+    campaignRows,
+    summaryRows,
+  ] = await Promise.all([
+    db
+      .select({
+        id: campaigns.id,
+        applicationId:
+          campaigns.applicationId,
+        slug: campaigns.slug,
+        title: campaigns.title,
+        status: campaigns.status,
+        targetAmount:
+          campaigns.targetAmount,
+        programId:
+          campaigns.programId,
+        programName:
+          programs.name,
+      })
+      .from(campaigns)
+      .innerJoin(
+        programs,
+        eq(
+          campaigns.programId,
+          programs.id,
+        ),
+      )
+      .where(
+        eq(campaigns.id, id),
+      )
+      .limit(1),
+
+    db
+      .select({
+        total:
+          count(),
+        collected:
+          sql<string>`
+            COALESCE(
+              SUM(
+                CASE
+                  WHEN ${financialTransactions.type} = 'IN'
+                  THEN ${financialTransactions.amount}
+                  ELSE 0
+                END
+              ),
+              0
+            )::text
+          `,
+        spent:
+          sql<string>`
+            COALESCE(
+              SUM(
+                CASE
+                  WHEN ${financialTransactions.type} = 'IN'
+                  THEN 0
+                  ELSE ${financialTransactions.amount}
+                END
+              ),
+              0
+            )::text
+          `,
+      })
+      .from(
+        financialTransactions,
+      )
+      .where(
+        and(
+          eq(
+            financialTransactions.campaignId,
+            id,
+          ),
+          isNull(
+            financialTransactions.deletedAt,
+          ),
+        ),
+      ),
+  ]);
+
+  const campaign =
+    campaignRows[0] ?? null;
 
   if (!campaign) {
     notFound();
   }
 
-  const transactions = await db
-    .select({
-      id:
-        financialTransactions.id,
-      type:
-        financialTransactions.type,
-      amount:
-        financialTransactions.amount,
-      date:
-        financialTransactions.date,
-      description:
-        financialTransactions.description,
-      donationId:
-        financialTransactions.donationId,
-      donorName:
-        financialTransactions.donorName,
-      isAnonymous:
-        financialTransactions.isAnonymous,
-      userName: users.name,
-    })
-    .from(
-      financialTransactions,
+  const summary =
+    summaryRows[0];
+
+  const totalTransactions =
+    Number(
+      summary?.total ?? 0,
+    );
+
+  const rawCollected =
+    Number(
+      summary?.collected ?? 0,
+    );
+
+  const rawSpent =
+    Number(
+      summary?.spent ?? 0,
+    );
+
+  const collected =
+    Number.isFinite(
+      rawCollected,
     )
-    .leftJoin(
-      users,
-      eq(
-        financialTransactions.userId,
-        users.id,
-      ),
+      ? rawCollected
+      : 0;
+
+  const spent =
+    Number.isFinite(
+      rawSpent,
     )
-    .where(
-      and(
-        eq(
-          financialTransactions.campaignId,
-          campaign.id,
-        ),
-        isNull(
-          financialTransactions.deletedAt,
-        ),
-      ),
-    )
-    .orderBy(
-      desc(
-        financialTransactions.date,
-      ),
-      desc(
-        financialTransactions.createdAt,
+      ? rawSpent
+      : 0;
+
+  const totalPages =
+    Math.max(
+      1,
+      Math.ceil(
+        totalTransactions /
+          PAGE_SIZE,
       ),
     );
 
-  let collected = 0;
-  let spent = 0;
+  const currentPage =
+    Math.min(
+      requestedPage,
+      totalPages,
+    );
 
-  for (
-    const transaction of
-      transactions
-  ) {
-    const amount =
-      Number(
-        transaction.amount,
+  const offset =
+    (currentPage - 1) *
+    PAGE_SIZE;
+
+  const transactions =
+    await db
+      .select({
+        id:
+          financialTransactions.id,
+        type:
+          financialTransactions.type,
+        amount:
+          financialTransactions.amount,
+        date:
+          financialTransactions.date,
+        description:
+          financialTransactions.description,
+        donationId:
+          financialTransactions.donationId,
+        donorName:
+          financialTransactions.donorName,
+        isAnonymous:
+          financialTransactions.isAnonymous,
+        userName:
+          users.name,
+      })
+      .from(
+        financialTransactions,
+      )
+      .leftJoin(
+        users,
+        eq(
+          financialTransactions.userId,
+          users.id,
+        ),
+      )
+      .where(
+        and(
+          eq(
+            financialTransactions.campaignId,
+            campaign.id,
+          ),
+          isNull(
+            financialTransactions.deletedAt,
+          ),
+        ),
+      )
+      .orderBy(
+        desc(
+          financialTransactions.date,
+        ),
+        desc(
+          financialTransactions.createdAt,
+        ),
+        desc(
+          financialTransactions.id,
+        ),
+      )
+      .limit(
+        PAGE_SIZE,
+      )
+      .offset(
+        offset,
       );
 
-    if (
-      !Number.isFinite(amount)
-    ) {
-      continue;
-    }
-
-    if (
-      transaction.type === "IN"
-    ) {
-      collected += amount;
-    } else {
-      spent += amount;
-    }
-  }
+  const pageHref = (
+    page: number,
+  ) =>
+    `/admin/keuangan/kampanye/${campaign.id}?page=${page}`;
 
   const available =
     collected - spent;
@@ -407,7 +551,7 @@ export default async function CampaignFinanceDetailPage({
                 Riwayat Kampanye
               </h2>
               <p className="mt-0.5 text-xs text-slate-500">
-                {transactions.length.toLocaleString(
+                {totalTransactions.toLocaleString(
                   "id-ID",
                 )} transaksi aktif
               </p>
@@ -515,6 +659,54 @@ export default async function CampaignFinanceDetailPage({
                 )}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {totalPages > 1 && (
+          <div className="flex flex-col gap-3 border-t border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+            <p className="text-xs text-slate-500">
+              Halaman{" "}
+              <span className="font-semibold text-slate-700">
+                {currentPage}
+              </span>{" "}
+              dari{" "}
+              <span className="font-semibold text-slate-700">
+                {totalPages}
+              </span>
+            </p>
+
+            <div className="flex items-center gap-2">
+              {currentPage > 1 ? (
+                <Link
+                  href={pageHref(
+                    currentPage - 1,
+                  )}
+                  className="inline-flex min-h-10 items-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                >
+                  Sebelumnya
+                </Link>
+              ) : (
+                <span className="inline-flex min-h-10 cursor-not-allowed items-center rounded-xl border border-slate-100 bg-slate-50 px-4 text-sm font-semibold text-slate-300">
+                  Sebelumnya
+                </span>
+              )}
+
+              {currentPage <
+              totalPages ? (
+                <Link
+                  href={pageHref(
+                    currentPage + 1,
+                  )}
+                  className="inline-flex min-h-10 items-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                >
+                  Berikutnya
+                </Link>
+              ) : (
+                <span className="inline-flex min-h-10 cursor-not-allowed items-center rounded-xl border border-slate-100 bg-slate-50 px-4 text-sm font-semibold text-slate-300">
+                  Berikutnya
+                </span>
+              )}
+            </div>
           </div>
         )}
       </div>

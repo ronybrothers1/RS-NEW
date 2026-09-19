@@ -6,9 +6,12 @@ import {
   WalletCards,
 } from "lucide-react";
 import {
+  and,
   desc,
   eq,
+  isNotNull,
   isNull,
+  sql,
 } from "drizzle-orm";
 import Link from "next/link";
 
@@ -91,18 +94,48 @@ export default async function CampaignFinancePage() {
       .select({
         campaignId:
           financialTransactions.campaignId,
-        type:
-          financialTransactions.type,
-        amount:
-          financialTransactions.amount,
+        collected:
+          sql<string>`
+            COALESCE(
+              SUM(
+                CASE
+                  WHEN ${financialTransactions.type} = 'IN'
+                  THEN ${financialTransactions.amount}
+                  ELSE 0
+                END
+              ),
+              0
+            )::text
+          `,
+        spent:
+          sql<string>`
+            COALESCE(
+              SUM(
+                CASE
+                  WHEN ${financialTransactions.type} = 'IN'
+                  THEN 0
+                  ELSE ${financialTransactions.amount}
+                END
+              ),
+              0
+            )::text
+          `,
       })
       .from(
         financialTransactions,
       )
       .where(
-        isNull(
-          financialTransactions.deletedAt,
+        and(
+          isNull(
+            financialTransactions.deletedAt,
+          ),
+          isNotNull(
+            financialTransactions.campaignId,
+          ),
         ),
+      )
+      .groupBy(
+        financialTransactions.campaignId,
       ),
   ]);
 
@@ -120,32 +153,28 @@ export default async function CampaignFinancePage() {
       continue;
     }
 
-    const current =
-      totals.get(
-        row.campaignId,
-      ) || {
-        collected: 0,
-        spent: 0,
-      };
+    const collected =
+      Number(
+        row.collected || 0,
+      );
 
-    const value =
-      Number(row.amount);
-
-    if (
-      Number.isFinite(value)
-    ) {
-      if (row.type === "IN") {
-        current.collected +=
-          value;
-      } else {
-        current.spent +=
-          value;
-      }
-    }
+    const spent =
+      Number(
+        row.spent || 0,
+      );
 
     totals.set(
       row.campaignId,
-      current,
+      {
+        collected:
+          Number.isFinite(collected)
+            ? collected
+            : 0,
+        spent:
+          Number.isFinite(spent)
+            ? spent
+            : 0,
+      },
     );
   }
 
