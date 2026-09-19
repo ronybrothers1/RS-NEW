@@ -1,3 +1,7 @@
+import type {
+  Session,
+} from "next-auth";
+
 import {
   eq,
 } from "drizzle-orm";
@@ -24,10 +28,16 @@ export type CurrentDbUser = {
     number;
 };
 
-export async function getCurrentDbUser():
+export async function getCurrentDbUser(
+  sessionOverride?:
+    | Session
+    | null,
+):
 Promise<CurrentDbUser | null> {
   const session =
-    await auth();
+    sessionOverride === undefined
+      ? await auth()
+      : sessionOverride;
 
   const userId =
     session?.user?.id;

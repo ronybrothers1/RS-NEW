@@ -25,7 +25,9 @@ export default async function AdminLayout({
   }
 
   const currentUser =
-    await getCurrentDbUser();
+    await getCurrentDbUser(
+      session,
+    );
 
   if (
     !currentUser ||
