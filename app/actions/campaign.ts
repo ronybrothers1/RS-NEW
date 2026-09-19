@@ -511,6 +511,15 @@ export async function saveCampaign(
     record.slug,
   );
 
+  if (
+    record.status === "ACTIVE" ||
+    record.status === "COMPLETED" ||
+    nextStatus === "ACTIVE" ||
+    nextStatus === "COMPLETED"
+  ) {
+    revalidatePath("/sitemap.xml");
+  }
+
   redirect(
     `/admin/pengajuan/${applicationId}/kampanye?saved=${intent}`,
   );

@@ -42,7 +42,10 @@ function makeSlug(title: string) {
   return `${base || "kegiatan"}-${Date.now()}`;
 }
 
-function revalidateKegiatan(slug?: string | null) {
+function revalidateKegiatan(
+  slug?: string | null,
+  revalidateSitemap = false,
+) {
   revalidateTag(PUBLIC_ACTIVITIES_CACHE_TAG);
   revalidatePath("/admin/kegiatan");
   revalidatePath("/admin/dashboard");
@@ -50,6 +53,10 @@ function revalidateKegiatan(slug?: string | null) {
 
   if (slug) {
     revalidatePath(`/kegiatan/${slug}`);
+  }
+
+  if (revalidateSitemap) {
+    revalidatePath("/sitemap.xml");
   }
 }
 
@@ -190,7 +197,7 @@ export async function saveKegiatan(
         newData: updated,
       });
 
-      revalidateKegiatan(oldData.slug);
+      revalidateKegiatan(oldData.slug, oldData.isPublished || isPublished);
 
       return {
         success: true,
@@ -223,7 +230,7 @@ export async function saveKegiatan(
       newData: created,
     });
 
-    revalidateKegiatan(created.slug);
+    revalidateKegiatan(created.slug, isPublished);
 
     return {
       success: true,
@@ -295,7 +302,7 @@ export async function archiveKegiatan(id: string) {
       newData: updated,
     });
 
-    revalidateKegiatan(oldData.slug);
+    revalidateKegiatan(oldData.slug, oldData.isPublished);
 
     return {
       success: true,
@@ -360,7 +367,7 @@ export async function deleteKegiatan(id: string) {
       oldData,
     });
 
-    revalidateKegiatan(oldData.slug);
+    revalidateKegiatan(oldData.slug, oldData.isPublished);
 
     return {
       success: true,
@@ -429,7 +436,7 @@ export async function togglePublishKegiatan(
       newData: updated,
     });
 
-    revalidateKegiatan(oldData.slug);
+    revalidateKegiatan(oldData.slug, true);
 
     return {
       success: true,
