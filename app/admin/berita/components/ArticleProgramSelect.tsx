@@ -4,9 +4,6 @@ import {
   updateBeritaProgram,
 } from "@/app/actions/berita";
 import {
-  useRouter,
-} from "next/navigation";
-import {
   useEffect,
   useState,
   useTransition,
@@ -32,9 +29,6 @@ export default function ArticleProgramSelect({
   currentProgramName,
   programs,
 }: Props) {
-  const router =
-    useRouter();
-
   const [
     selected,
     setSelected,
@@ -52,6 +46,12 @@ export default function ArticleProgramSelect({
     );
 
   const [
+    saved,
+    setSaved,
+  ] =
+    useState(false);
+
+  const [
     isPending,
     startTransition,
   ] =
@@ -64,6 +64,10 @@ export default function ArticleProgramSelect({
 
     setError(
       null,
+    );
+
+    setSaved(
+      false,
     );
   }, [
     currentProgramId,
@@ -92,6 +96,10 @@ export default function ArticleProgramSelect({
       null,
     );
 
+    setSaved(
+      false,
+    );
+
     startTransition(
       async () => {
         const result =
@@ -115,7 +123,9 @@ export default function ArticleProgramSelect({
           return;
         }
 
-        router.refresh();
+        setSaved(
+          true,
+        );
       },
     );
   }
@@ -186,6 +196,10 @@ export default function ArticleProgramSelect({
         ) : error ? (
           <span className="text-red-600">
             {error}
+          </span>
+        ) : saved ? (
+          <span className="text-emerald-600">
+            Tersimpan
           </span>
         ) : null}
       </div>

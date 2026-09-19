@@ -542,7 +542,8 @@ export async function updateBeritaProgram(
   if (!isUuid(id)) {
     return {
       success: false,
-      error: "Artikel tidak valid.",
+      error:
+        "Artikel tidak valid.",
     };
   }
 
@@ -566,16 +567,19 @@ export async function updateBeritaProgram(
   try {
     const outcome =
       await db.transaction(
-        async (
-          tx,
-        ): Promise<{
-          result: ActionResult;
-          slug: string | null;
-          changed: boolean;
-        }> => {
-          const [oldArticle] =
+        async (tx) => {
+          const [
+            oldArticle,
+          ] =
             await tx
-              .select()
+              .select({
+                id:
+                  articles.id,
+                slug:
+                  articles.slug,
+                programId:
+                  articles.programId,
+              })
               .from(articles)
               .where(
                 eq(
@@ -591,8 +595,7 @@ export async function updateBeritaProgram(
                 success: false,
                 error:
                   "Artikel tidak ditemukan.",
-              },
-              slug: null,
+              } satisfies ActionResult,
               changed: false,
             };
           }
@@ -608,9 +611,7 @@ export async function updateBeritaProgram(
                 id,
                 slug:
                   oldArticle.slug,
-              },
-              slug:
-                oldArticle.slug,
+              } satisfies ActionResult,
               changed: false,
             };
           }
@@ -625,31 +626,31 @@ export async function updateBeritaProgram(
                 .select({
                   id:
                     programs.id,
-                  status:
-                    programs.status,
                 })
                 .from(programs)
                 .where(
-                  eq(
-                    programs.id,
-                    normalizedProgramId,
+                  and(
+                    eq(
+                      programs.id,
+                      normalizedProgramId,
+                    ),
+                    eq(
+                      programs.status,
+                      "ACTIVE",
+                    ),
                   ),
                 )
                 .limit(1);
 
             if (
-              !selectedProgram ||
-              selectedProgram.status !==
-                "ACTIVE"
+              !selectedProgram
             ) {
               return {
                 result: {
                   success: false,
                   error:
                     "Program tidak ditemukan atau sudah tidak aktif.",
-                },
-                slug:
-                  oldArticle.slug,
+                } satisfies ActionResult,
                 changed: false,
               };
             }
@@ -683,7 +684,14 @@ export async function updateBeritaProgram(
                   currentProgramGuard,
                 ),
               )
-              .returning();
+              .returning({
+                id:
+                  articles.id,
+                slug:
+                  articles.slug,
+                programId:
+                  articles.programId,
+              });
 
           if (!updatedArticle) {
             return {
@@ -691,9 +699,7 @@ export async function updateBeritaProgram(
                 success: false,
                 error:
                   "Label program berubah dari sesi lain. Muat ulang halaman lalu coba kembali.",
-              },
-              slug:
-                oldArticle.slug,
+              } satisfies ActionResult,
               changed: false,
             };
           }
@@ -709,53 +715,36 @@ export async function updateBeritaProgram(
                 "articles",
               recordId:
                 id,
-              oldData:
-                oldArticle,
-              newData:
-                updatedArticle,
+              oldData: {
+                programId:
+                  oldArticle.programId,
+              },
+              newData: {
+                programId:
+                  updatedArticle.programId,
+              },
             });
 
           return {
             result: {
               success: true,
               error: null,
-              id,
+              id:
+                updatedArticle.id,
               slug:
                 updatedArticle.slug,
-            },
-            slug:
-              updatedArticle.slug,
+            } satisfies ActionResult,
             changed: true,
           };
         },
       );
 
     if (
-      !outcome.result.success ||
-      !outcome.changed
+      outcome.result.success &&
+      outcome.changed
     ) {
-      return outcome.result;
-    }
-
-    revalidateTag(
-      PUBLIC_ARTICLES_CACHE_TAG,
-    );
-
-    revalidatePath(
-      "/admin/berita",
-    );
-
-    revalidatePath(
-      `/admin/berita/${id}/edit`,
-    );
-
-    revalidatePath(
-      "/berita",
-    );
-
-    if (outcome.slug) {
-      revalidatePath(
-        `/berita/${outcome.slug}`,
+      revalidateTag(
+        PUBLIC_ARTICLES_CACHE_TAG,
       );
     }
 
