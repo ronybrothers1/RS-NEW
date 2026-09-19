@@ -8,6 +8,7 @@ import {
   eq,
   inArray,
   isNull,
+  sql,
 } from "drizzle-orm";
 
 import {
@@ -98,10 +99,32 @@ async function loadPublicAssistanceIndex() {
         .select({
           campaignId:
             financialTransactions.campaignId,
-          type:
-            financialTransactions.type,
-          amount:
-            financialTransactions.amount,
+          collected:
+            sql<string>`
+              COALESCE(
+                SUM(
+                  CASE
+                    WHEN ${financialTransactions.type} = 'IN'
+                    THEN ${financialTransactions.amount}
+                    ELSE 0
+                  END
+                ),
+                0
+              )::text
+            `,
+          spent:
+            sql<string>`
+              COALESCE(
+                SUM(
+                  CASE
+                    WHEN ${financialTransactions.type} = 'IN'
+                    THEN 0
+                    ELSE ${financialTransactions.amount}
+                  END
+                ),
+                0
+              )::text
+            `,
         })
         .from(
           financialTransactions,
@@ -110,6 +133,9 @@ async function loadPublicAssistanceIndex() {
           isNull(
             financialTransactions.deletedAt,
           ),
+        )
+        .groupBy(
+          financialTransactions.campaignId,
         ),
 
       db
@@ -151,39 +177,20 @@ async function loadPublicAssistanceIndex() {
       continue;
     }
 
-    const current =
-      totals.get(
-        row.campaignId,
-      ) ?? {
-        collected: 0,
-        spent: 0,
-      };
-
-    const amount =
-      Number(
-        row.amount,
-      );
-
-    if (
-      Number.isFinite(
-        amount,
-      )
-    ) {
-      if (
-        row.type ===
-        "IN"
-      ) {
-        current.collected +=
-          amount;
-      } else {
-        current.spent +=
-          amount;
-      }
-    }
-
     totals.set(
       row.campaignId,
-      current,
+      {
+        collected:
+          Number(
+            row.collected ||
+              0,
+          ),
+        spent:
+          Number(
+            row.spent ||
+              0,
+          ),
+      },
     );
   }
 
@@ -324,13 +331,37 @@ export async function getCachedPublicCampaign(
 async function loadPublicCampaignTotals(
   campaignId: string,
 ): Promise<CampaignTotals> {
-  const ledgerRows =
+  const [
+    totals,
+  ] =
     await db
       .select({
-        type:
-          financialTransactions.type,
-        amount:
-          financialTransactions.amount,
+        collected:
+          sql<string>`
+            COALESCE(
+              SUM(
+                CASE
+                  WHEN ${financialTransactions.type} = 'IN'
+                  THEN ${financialTransactions.amount}
+                  ELSE 0
+                END
+              ),
+              0
+            )::text
+          `,
+        spent:
+          sql<string>`
+            COALESCE(
+              SUM(
+                CASE
+                  WHEN ${financialTransactions.type} = 'IN'
+                  THEN 0
+                  ELSE ${financialTransactions.amount}
+                END
+              ),
+              0
+            )::text
+          `,
       })
       .from(
         financialTransactions,
@@ -347,41 +378,17 @@ async function loadPublicCampaignTotals(
         ),
       );
 
-  let collected = 0;
-  let spent = 0;
-
-  for (
-    const row of
-      ledgerRows
-  ) {
-    const amount =
-      Number(
-        row.amount,
-      );
-
-    if (
-      !Number.isFinite(
-        amount,
-      )
-    ) {
-      continue;
-    }
-
-    if (
-      row.type ===
-      "IN"
-    ) {
-      collected +=
-        amount;
-    } else {
-      spent +=
-        amount;
-    }
-  }
-
   return {
-    collected,
-    spent,
+    collected:
+      Number(
+        totals?.collected ||
+          0,
+      ),
+    spent:
+      Number(
+        totals?.spent ||
+          0,
+      ),
   };
 }
 
