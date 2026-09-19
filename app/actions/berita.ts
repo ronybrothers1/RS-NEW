@@ -49,6 +49,11 @@ function cleanOptional(value: FormDataEntryValue | null) {
   return cleaned.length > 0 ? cleaned : null;
 }
 
+function isUuid(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    value,
+  );
+}
 
 const newsBlobStorage =
   createVercelBlobStorage({
@@ -240,11 +245,19 @@ export async function createBerita(
 
   const title = cleanOptional(formData.get("title"));
   const rawContent = cleanOptional(formData.get("content"));
+  const programId = cleanOptional(formData.get("programId"));
 
   if (!title || !rawContent) {
     return {
       success: false,
       error: "Judul dan konten wajib diisi.",
+    };
+  }
+
+  if (programId && !isUuid(programId)) {
+    return {
+      success: false,
+      error: "Program berita yang dipilih tidak valid.",
     };
   }
 
@@ -315,6 +328,7 @@ export async function createBerita(
         imageCaption,
         metaTitle: cleanOptional(formData.get("metaTitle")),
         metaDescription: cleanOptional(formData.get("metaDescription")),
+        programId,
         status,
         authorId: staff.id,
         updatedAt: new Date(),
@@ -378,11 +392,19 @@ export async function updateBerita(
 
   const title = cleanOptional(formData.get("title"));
   const rawContent = cleanOptional(formData.get("content"));
+  const programId = cleanOptional(formData.get("programId"));
 
   if (!title || !rawContent) {
     return {
       success: false,
       error: "Judul dan konten wajib diisi.",
+    };
+  }
+
+  if (programId && !isUuid(programId)) {
+    return {
+      success: false,
+      error: "Program berita yang dipilih tidak valid.",
     };
   }
 
@@ -459,6 +481,7 @@ export async function updateBerita(
         imageCaption,
         metaTitle: cleanOptional(formData.get("metaTitle")),
         metaDescription: cleanOptional(formData.get("metaDescription")),
+        programId,
         status,
         updatedAt: new Date(),
         ...lifecycle,

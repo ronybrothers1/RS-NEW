@@ -191,9 +191,20 @@ export function articleMatchesProgram(
     excerpt:
       | string
       | null;
+    programName:
+      | string
+      | null;
   },
   key: ProgramNewsKey,
 ) {
+  if (article.programName) {
+    return (
+      getProgramNewsKey(
+        article.programName,
+      ) === key
+    );
+  }
+
   const haystack =
     normalizeText(
       [

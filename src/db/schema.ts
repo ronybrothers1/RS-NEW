@@ -296,13 +296,18 @@ export const articles = pgTable('articles', {
   metaTitle: text('meta_title'),
   metaDescription: text('meta_description'),
   authorId: uuid('author_id').references(() => users.id).notNull(),
+  programId: uuid('program_id')
+    .references(() => programs.id, { onDelete: 'set null' }),
   status: articleStatusEnum('status').default('DRAFT').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
   publishedAt: timestamp('published_at'),
   scheduledAt: timestamp('scheduled_at'),
   archivedAt: timestamp('archived_at'),
-});
+}, (table) => [
+  index('articles_program_id_idx')
+    .on(table.programId),
+]);
 
 export const donations = pgTable('donations', {
   id: uuid('id').defaultRandom().primaryKey(),

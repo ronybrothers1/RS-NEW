@@ -18,10 +18,17 @@ type ArticleStatus =
   | "PUBLISHED"
   | "ARCHIVED";
 
+type ProgramOption = {
+  id: string;
+  name: string;
+  status: "ACTIVE" | "INACTIVE";
+};
+
 type InitialArticle = {
   id: string;
   title: string;
   slug: string;
+  programId: string | null;
   content: string;
   excerpt: string | null;
   imageUrl: string | null;
@@ -34,6 +41,7 @@ type InitialArticle = {
 };
 
 type Props = {
+  programs: ProgramOption[];
   article?: InitialArticle;
 };
 
@@ -59,7 +67,10 @@ function toLocalInputValue(isoValue: string) {
   ].join("");
 }
 
-export default function ArticleForm({ article }: Props) {
+export default function ArticleForm({
+  programs,
+  article,
+}: Props) {
   const isEdit = Boolean(article);
 
   const action = article
@@ -175,6 +186,38 @@ export default function ArticleForm({ article }: Props) {
 
               <p className="mt-1 text-xs text-slate-500">
                 Slug akan dinormalisasi dan dibuat unik secara otomatis.
+              </p>
+            </div>
+
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-700">
+                Program Terkait
+              </label>
+
+              <select
+                name="programId"
+                defaultValue={article?.programId ?? ""}
+                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-slate-900 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
+              >
+                <option value="">
+                  Umum / Tidak terkait program
+                </option>
+
+                {programs.map((program) => (
+                  <option
+                    key={program.id}
+                    value={program.id}
+                  >
+                    {program.name}
+                    {program.status === "INACTIVE"
+                      ? " — Nonaktif"
+                      : ""}
+                  </option>
+                ))}
+              </select>
+
+              <p className="mt-1 text-xs leading-5 text-slate-500">
+                Pilih program bila berita merupakan dokumentasi atau informasi program tertentu.
               </p>
             </div>
 

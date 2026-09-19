@@ -13,6 +13,7 @@ import {
 } from "@/src/db";
 import {
   articles,
+  programs,
   users,
 } from "@/src/db/schema";
 
@@ -39,6 +40,7 @@ type PublicArticleListItem = {
   excerpt: string | null;
   imageUrl: string | null;
   imageAlt: string | null;
+  programName: string | null;
   createdAt: string;
   publishedAt: string | null;
   authorName: string | null;
@@ -166,6 +168,8 @@ async function loadPublishedArticles(): Promise<
           articles.imageUrl,
         imageAlt:
           articles.imageAlt,
+        programName:
+          programs.name,
         createdAt:
           articles.createdAt,
         publishedAt:
@@ -181,6 +185,13 @@ async function loadPublishedArticles(): Promise<
         eq(
           articles.authorId,
           users.id,
+        ),
+      )
+      .leftJoin(
+        programs,
+        eq(
+          articles.programId,
+          programs.id,
         ),
       )
       .where(
@@ -211,7 +222,7 @@ export const getCachedPublishedArticles =
   unstable_cache(
     loadPublishedArticles,
     [
-      "public-published-articles-v1",
+      "public-published-articles-v2",
     ],
     {
       revalidate:
