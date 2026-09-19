@@ -106,115 +106,15 @@ function articleStatus(status: string) {
 }
 
 export default async function DashboardPage() {
-  const finance =
-    await getFinanceSummary();
-
   const [
-    activityStats,
-    articleStats,
+    finance,
     donationStats,
     programStats,
     latestTransactions,
     latestActivities,
     latestArticles,
   ] = await Promise.all([
-    db
-      .select({
-        total: sql<number>`COUNT(*)`,
-        published: sql<number>`
-          COALESCE(
-            SUM(
-              CASE
-                WHEN ${activities.isPublished} = true
-                  AND ${activities.archivedAt} IS NULL
-                THEN 1
-                ELSE 0
-              END
-            ),
-            0
-          )
-        `,
-        draft: sql<number>`
-          COALESCE(
-            SUM(
-              CASE
-                WHEN ${activities.isPublished} = false
-                  AND ${activities.archivedAt} IS NULL
-                THEN 1
-                ELSE 0
-              END
-            ),
-            0
-          )
-        `,
-        archived: sql<number>`
-          COALESCE(
-            SUM(
-              CASE
-                WHEN ${activities.archivedAt} IS NOT NULL
-                THEN 1
-                ELSE 0
-              END
-            ),
-            0
-          )
-        `,
-      })
-      .from(activities),
-
-    db
-      .select({
-        total: sql<number>`COUNT(*)`,
-        published: sql<number>`
-          COALESCE(
-            SUM(
-              CASE
-                WHEN ${articles.status} = 'PUBLISHED'
-                THEN 1
-                ELSE 0
-              END
-            ),
-            0
-          )
-        `,
-        draft: sql<number>`
-          COALESCE(
-            SUM(
-              CASE
-                WHEN ${articles.status} = 'DRAFT'
-                THEN 1
-                ELSE 0
-              END
-            ),
-            0
-          )
-        `,
-        scheduled: sql<number>`
-          COALESCE(
-            SUM(
-              CASE
-                WHEN ${articles.status} = 'SCHEDULED'
-                THEN 1
-                ELSE 0
-              END
-            ),
-            0
-          )
-        `,
-        archived: sql<number>`
-          COALESCE(
-            SUM(
-              CASE
-                WHEN ${articles.status} = 'ARCHIVED'
-                THEN 1
-                ELSE 0
-              END
-            ),
-            0
-          )
-        `,
-      })
-      .from(articles),
+    getFinanceSummary(),
 
     db
       .select({
@@ -346,6 +246,47 @@ export default async function DashboardPage() {
           activities.isPublished,
         archivedAt:
           activities.archivedAt,
+        total: sql<number>`
+          COUNT(*) OVER ()
+        `,
+        published: sql<number>`
+          COALESCE(
+            SUM(
+              CASE
+                WHEN ${activities.isPublished} = true
+                  AND ${activities.archivedAt} IS NULL
+                THEN 1
+                ELSE 0
+              END
+            ) OVER (),
+            0
+          )
+        `,
+        draft: sql<number>`
+          COALESCE(
+            SUM(
+              CASE
+                WHEN ${activities.isPublished} = false
+                  AND ${activities.archivedAt} IS NULL
+                THEN 1
+                ELSE 0
+              END
+            ) OVER (),
+            0
+          )
+        `,
+        archived: sql<number>`
+          COALESCE(
+            SUM(
+              CASE
+                WHEN ${activities.archivedAt} IS NOT NULL
+                THEN 1
+                ELSE 0
+              END
+            ) OVER (),
+            0
+          )
+        `,
       })
       .from(activities)
       .orderBy(
@@ -360,6 +301,57 @@ export default async function DashboardPage() {
         title: articles.title,
         status: articles.status,
         createdAt: articles.createdAt,
+        total: sql<number>`
+          COUNT(*) OVER ()
+        `,
+        published: sql<number>`
+          COALESCE(
+            SUM(
+              CASE
+                WHEN ${articles.status} = 'PUBLISHED'
+                THEN 1
+                ELSE 0
+              END
+            ) OVER (),
+            0
+          )
+        `,
+        draft: sql<number>`
+          COALESCE(
+            SUM(
+              CASE
+                WHEN ${articles.status} = 'DRAFT'
+                THEN 1
+                ELSE 0
+              END
+            ) OVER (),
+            0
+          )
+        `,
+        scheduled: sql<number>`
+          COALESCE(
+            SUM(
+              CASE
+                WHEN ${articles.status} = 'SCHEDULED'
+                THEN 1
+                ELSE 0
+              END
+            ) OVER (),
+            0
+          )
+        `,
+        archived: sql<number>`
+          COALESCE(
+            SUM(
+              CASE
+                WHEN ${articles.status} = 'ARCHIVED'
+                THEN 1
+                ELSE 0
+              END
+            ) OVER (),
+            0
+          )
+        `,
       })
       .from(articles)
       .orderBy(
@@ -369,7 +361,7 @@ export default async function DashboardPage() {
   ]);
 
   const activity =
-    activityStats[0] ?? {
+    latestActivities[0] ?? {
       total: 0,
       published: 0,
       draft: 0,
@@ -377,7 +369,7 @@ export default async function DashboardPage() {
     };
 
   const article =
-    articleStats[0] ?? {
+    latestArticles[0] ?? {
       total: 0,
       published: 0,
       draft: 0,
