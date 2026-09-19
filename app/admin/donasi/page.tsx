@@ -6,7 +6,6 @@ import {
 import { db } from "@/src/db";
 import {
   donations,
-  financialTransactions,
   programs,
 } from "@/src/db/schema";
 
@@ -32,8 +31,6 @@ export default async function AdminDonasiPage() {
         donations.isAnonymous,
       createdAt:
         donations.createdAt,
-      linkedTransactionId:
-        financialTransactions.id,
     })
     .from(donations)
     .leftJoin(
@@ -41,13 +38,6 @@ export default async function AdminDonasiPage() {
       eq(
         donations.programId,
         programs.id,
-      ),
-    )
-    .leftJoin(
-      financialTransactions,
-      eq(
-        financialTransactions.donationId,
-        donations.id,
       ),
     )
     .orderBy(

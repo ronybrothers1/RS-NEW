@@ -41,12 +41,12 @@ type DonationItem = {
   paymentMethod: string | null;
   isAnonymous: boolean;
   createdAt: string;
-  linkedTransactionId:
-    | string
-    | null;
 };
 
 type DonationDetail = DonationItem & {
+  linkedTransactionId:
+    | string
+    | null;
   proofImage: string | null;
   reviewNote:
     | string
