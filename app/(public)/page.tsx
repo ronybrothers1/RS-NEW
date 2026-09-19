@@ -38,31 +38,36 @@ const iconMap: Record<string, React.ElementType> = {
 };
 
 export default async function HomePage() {
-  const {
-    finance,
-    monthlyFinance,
-  } =
-    await getCachedPublicFinance();
+  const financePromise =
+    getCachedPublicFinance();
 
-  const activePrograms =
-    await getCachedActivePrograms();
-    
-  let latestArticle:
-    Awaited<
-      ReturnType<
-        typeof getCachedLatestPublishedArticle
-      >
-    > = null;
+  const activeProgramsPromise =
+    getCachedActivePrograms();
 
-  try {
-    latestArticle =
-      await getCachedLatestPublishedArticle();
-  } catch (error) {
-    console.error(
-      "home: failed to fetch latest published article",
-      error,
-    );
-  }
+  const latestArticlePromise =
+    getCachedLatestPublishedArticle()
+      .catch((error) => {
+        console.error(
+          "home: failed to fetch latest published article",
+          error,
+        );
+
+        return null;
+      });
+
+  const [
+    {
+      finance,
+      monthlyFinance,
+    },
+    activePrograms,
+    latestArticle,
+  ] =
+    await Promise.all([
+      financePromise,
+      activeProgramsPromise,
+      latestArticlePromise,
+    ]);
   const latestArticleDate = latestArticle
     ? new Intl.DateTimeFormat("id-ID", {
         day: "numeric",
