@@ -126,6 +126,16 @@ export default function AssistanceLifecycleActions({
 
       <form
         action={completeAction}
+        onSubmit={(event) => {
+          const confirmed =
+            window.confirm(
+              "Pastikan bantuan benar-benar telah dilaksanakan. Setelah dilanjutkan, kegiatan akan dicatat sebagai selesai. Lanjutkan?",
+            );
+
+          if (!confirmed) {
+            event.preventDefault();
+          }
+        }}
       >
         <input
           type="hidden"

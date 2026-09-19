@@ -111,6 +111,22 @@ function parseRupiahInput(
   );
 }
 
+const WIB_OFFSET_MS =
+  7 * 60 * 60 * 1000;
+
+function toWibDateKey(
+  date: Date,
+) {
+  return new Date(
+    date.getTime() +
+      WIB_OFFSET_MS,
+  )
+    .toISOString()
+    .slice(
+      0,
+      10,
+    );
+}
 function refreshReviewPaths(
   applicationId: string,
 ) {
@@ -1016,6 +1032,20 @@ export async function completeAssistanceApplication(
   const now =
     new Date();
 
+  if (
+    toWibDateKey(
+      existing.scheduledAt,
+    ) >
+    toWibDateKey(
+      now,
+    )
+  ) {
+    return {
+      error:
+        "Kegiatan belum dapat ditandai selesai sebelum tanggal pelaksanaan.",
+    };
+  }
+
   const [updated] =
     await db
       .update(
@@ -1037,6 +1067,10 @@ export async function completeAssistanceApplication(
             assistanceApplications.status,
             "APPROVED",
           ),
+          eq(
+            assistanceApplications.scheduledAt,
+            existing.scheduledAt,
+          ),
           isNull(
             assistanceApplications.completedAt,
           ),
@@ -1050,7 +1084,7 @@ export async function completeAssistanceApplication(
   if (!updated) {
     return {
       error:
-        "Status kegiatan berubah. Muat ulang halaman sebelum memproses kembali.",
+        "Status atau jadwal kegiatan berubah. Muat ulang halaman sebelum memproses kembali.",
     };
   }
 
