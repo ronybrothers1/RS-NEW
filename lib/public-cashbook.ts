@@ -409,7 +409,10 @@ export async function getPublicCashbook(
   let totalItems =
     periodTransactionCount;
 
-  if (query) {
+  if (
+    query &&
+    requestedPage > 1
+  ) {
     const pattern =
       `%${query}%`;
 
@@ -504,7 +507,7 @@ export async function getPublicCashbook(
       );
   }
 
-  const totalPages =
+  let totalPages =
     Math.max(
       1,
       Math.ceil(
@@ -690,6 +693,13 @@ export async function getPublicCashbook(
           ledgerSource.createdAt,
         runningBalance:
           ledgerSource.runningBalance,
+        filteredCount:
+          query &&
+          requestedPage === 1
+            ? sql<number>`
+                COUNT(*) OVER()
+              `.mapWith(Number)
+            : sql<number>`0`.mapWith(Number),
       })
       .from(
         ledgerSource,
@@ -717,6 +727,27 @@ export async function getPublicCashbook(
         ) *
           PUBLIC_CASHBOOK_PAGE_SIZE,
       );
+
+  if (
+    query &&
+    requestedPage === 1
+  ) {
+    totalItems =
+      Number(
+        ledgerRows[0]
+          ?.filteredCount ??
+          0,
+      );
+
+    totalPages =
+      Math.max(
+        1,
+        Math.ceil(
+          totalItems /
+            PUBLIC_CASHBOOK_PAGE_SIZE,
+        ),
+      );
+  }
 
   const rows =
     ledgerRows.map(

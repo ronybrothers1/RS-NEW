@@ -42,10 +42,8 @@ function getFirstParam(
     : value;
 }
 
-function formatCurrency(
-  value: number,
-) {
-  return new Intl.NumberFormat(
+const currencyFormatter =
+  new Intl.NumberFormat(
     "id-ID",
     {
       style:
@@ -55,15 +53,10 @@ function formatCurrency(
       maximumFractionDigits:
         0,
     },
-  ).format(
-    value,
   );
-}
 
-function formatDate(
-  value: Date,
-) {
-  return new Intl.DateTimeFormat(
+const dateFormatter =
+  new Intl.DateTimeFormat(
     "id-ID",
     {
       day:
@@ -75,7 +68,20 @@ function formatDate(
       timeZone:
         "Asia/Jakarta",
     },
-  ).format(
+  );
+
+function formatCurrency(
+  value: number,
+) {
+  return currencyFormatter.format(
+    value,
+  );
+}
+
+function formatDate(
+  value: Date,
+) {
+  return dateFormatter.format(
     value,
   );
 }
