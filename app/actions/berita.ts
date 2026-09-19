@@ -335,10 +335,6 @@ export async function createBerita(
     revalidatePath("/admin/dashboard");
     revalidatePath("/berita");
 
-    if (status === "PUBLISHED") {
-      revalidatePath("/sitemap.xml");
-    }
-
     return {
       success: true,
       error: null,
@@ -491,13 +487,6 @@ export async function updateBerita(
     revalidatePath(`/berita/${oldArticle.slug}`);
     revalidatePath(`/berita/${updatedArticle.slug}`);
 
-    if (
-      oldArticle.status === "PUBLISHED" ||
-      updatedArticle.status === "PUBLISHED"
-    ) {
-      revalidatePath("/sitemap.xml");
-    }
-
     return {
       success: true,
       error: null,
@@ -570,10 +559,6 @@ export async function archiveBerita(
   revalidatePath("/admin/berita");
   revalidatePath("/berita");
   revalidatePath(`/berita/${oldArticle.slug}`);
-
-  if (oldArticle.status === "PUBLISHED") {
-    revalidatePath("/sitemap.xml");
-  }
 
   return {
     success: true,
