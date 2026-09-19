@@ -313,7 +313,7 @@ export default async function HomePage() {
               {activePrograms.map((program: any) => {
                 const IconComponent = iconMap[program.icon] || HeartHandshake;
                 return (
-                  <Link href={getProgramNewsHref(program.name)} key={program.id} className="group flex min-h-[112px] items-start gap-4 rounded-2xl border border-transparent p-4 transition hover:border-brand-100 hover:bg-white hover:shadow-sm">
+                  <Link href={getProgramNewsHref(program.name)} prefetch={false} key={program.id} className="group flex min-h-[112px] items-start gap-4 rounded-2xl border border-transparent p-4 transition hover:border-brand-100 hover:bg-white hover:shadow-sm">
                     <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-700 ring-1 ring-inset ring-brand-100 transition group-hover:bg-brand-700 group-hover:text-white"><IconComponent className="h-6 w-6" /></div>
                     <div className="min-w-0 pt-0.5">
                       <h3 className="text-base font-bold text-slate-950 transition group-hover:text-brand-800">{program.name}</h3>

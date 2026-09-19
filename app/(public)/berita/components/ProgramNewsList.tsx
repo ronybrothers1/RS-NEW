@@ -154,13 +154,14 @@ export default function ProgramNewsList({
             </p>
           </div>
 
-          <a
+          <Link
             href="/berita"
+            prefetch={false}
             className="inline-flex min-h-10 items-center justify-center gap-2 self-start rounded-xl border border-teal-200 bg-white px-4 py-2 text-sm font-semibold text-teal-800 transition hover:bg-teal-100 sm:self-auto"
           >
             <X className="h-4 w-4" />
             Lihat Semua Berita
-          </a>
+          </Link>
         </div>
       )}
 
@@ -179,12 +180,13 @@ export default function ProgramNewsList({
             {activeLabel}.
           </p>
 
-          <a
+          <Link
             href="/berita"
+            prefetch={false}
             className="mt-5 inline-flex min-h-11 items-center justify-center rounded-xl bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800"
           >
             Lihat Semua Berita
-          </a>
+          </Link>
         </div>
       ) : (
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
