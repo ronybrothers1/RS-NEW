@@ -10,6 +10,7 @@ import {
   ilike,
   ne,
   or,
+  sql,
   type SQL,
 } from "drizzle-orm";
 import Link from "next/link";
@@ -39,6 +40,42 @@ const reviewStatuses:
     "REJECTED",
   ];
 
+const PAGE_SIZE = 50;
+
+function parsePositiveInteger(
+  value:
+    | string
+    | string[]
+    | undefined,
+) {
+  const raw =
+    Array.isArray(value)
+      ? value[0]
+      : value;
+
+  const parsed =
+    Number.parseInt(
+      raw ?? "1",
+      10,
+    );
+
+  return Number.isSafeInteger(parsed) &&
+    parsed > 0
+    ? parsed
+    : 1;
+}
+
+function asCount(
+  value: unknown,
+) {
+  const parsed =
+    Number(value ?? 0);
+
+  return Number.isFinite(parsed)
+    ? parsed
+    : 0;
+}
+
 function formatDate(
   value:
     | Date
@@ -67,6 +104,7 @@ export default async function AdminAssistancePage({
       q?: string;
       status?: string;
       program?: string;
+      page?: string | string[];
     }>;
 }) {
   const params =
@@ -159,8 +197,15 @@ export default async function AdminAssistancePage({
     }
   }
 
-  const applications =
-    await db
+  const requestedPage =
+    parsePositiveInteger(
+      params.page,
+    );
+
+  const loadApplications = (
+    page: number,
+  ) =>
+    db
       .select({
         id:
           assistanceApplications.id,
@@ -186,6 +231,8 @@ export default async function AdminAssistancePage({
           users.name,
         programName:
           programs.name,
+        filteredTotal:
+          sql<number>`COUNT(*) OVER ()`,
       })
       .from(
         assistanceApplications,
@@ -213,13 +260,81 @@ export default async function AdminAssistancePage({
         desc(
           assistanceApplications.updatedAt,
         ),
+        desc(
+          assistanceApplications.id,
+        ),
+      )
+      .limit(
+        PAGE_SIZE,
+      )
+      .offset(
+        (page - 1) *
+          PAGE_SIZE,
       );
 
-  const allStatuses =
-    await db
+  const [
+    requestedApplications,
+    statusRows,
+    programOptions,
+  ] = await Promise.all([
+    loadApplications(
+      requestedPage,
+    ),
+
+    db
       .select({
-        status:
-          assistanceApplications.status,
+        submitted:
+          sql<number>`
+            COALESCE(
+              SUM(
+                CASE
+                  WHEN ${assistanceApplications.status} = 'SUBMITTED'
+                  THEN 1
+                  ELSE 0
+                END
+              ),
+              0
+            )
+          `,
+        needsRevision:
+          sql<number>`
+            COALESCE(
+              SUM(
+                CASE
+                  WHEN ${assistanceApplications.status} = 'NEEDS_REVISION'
+                  THEN 1
+                  ELSE 0
+                END
+              ),
+              0
+            )
+          `,
+        approved:
+          sql<number>`
+            COALESCE(
+              SUM(
+                CASE
+                  WHEN ${assistanceApplications.status} = 'APPROVED'
+                  THEN 1
+                  ELSE 0
+                END
+              ),
+              0
+            )
+          `,
+        rejected:
+          sql<number>`
+            COALESCE(
+              SUM(
+                CASE
+                  WHEN ${assistanceApplications.status} = 'REJECTED'
+                  THEN 1
+                  ELSE 0
+                END
+              ),
+              0
+            )
+          `,
       })
       .from(
         assistanceApplications,
@@ -229,32 +344,9 @@ export default async function AdminAssistancePage({
           assistanceApplications.status,
           "DRAFT",
         ),
-      );
+      ),
 
-  const counts:
-    Record<
-      AssistanceApplicationStatus,
-      number
-    > = {
-      DRAFT: 0,
-      SUBMITTED: 0,
-      NEEDS_REVISION: 0,
-      APPROVED: 0,
-      REJECTED: 0,
-    };
-
-  for (
-    const row of
-      allStatuses
-  ) {
-    counts[
-      row.status as
-        AssistanceApplicationStatus
-    ] += 1;
-  }
-
-  const programOptions =
-    await db
+    db
       .select({
         id:
           programs.id,
@@ -264,7 +356,144 @@ export default async function AdminAssistancePage({
       .from(programs)
       .orderBy(
         programs.name,
+      ),
+  ]);
+
+  let totalApplications =
+    requestedApplications.length > 0
+      ? asCount(
+          requestedApplications[0]
+            ?.filteredTotal,
+        )
+      : 0;
+
+  if (
+    requestedApplications.length === 0 &&
+    requestedPage > 1
+  ) {
+    const [
+      totalRow,
+    ] =
+      await db
+        .select({
+          total:
+            sql<number>`COUNT(*)`,
+        })
+        .from(
+          assistanceApplications,
+        )
+        .innerJoin(
+          users,
+          eq(
+            assistanceApplications.applicantId,
+            users.id,
+          ),
+        )
+        .innerJoin(
+          programs,
+          eq(
+            assistanceApplications.programId,
+            programs.id,
+          ),
+        )
+        .where(
+          and(
+            ...filters,
+          ),
+        );
+
+    totalApplications =
+      asCount(
+        totalRow?.total,
       );
+  }
+
+  const totalPages =
+    Math.max(
+      1,
+      Math.ceil(
+        totalApplications /
+          PAGE_SIZE,
+      ),
+    );
+
+  const currentPage =
+    Math.min(
+      requestedPage,
+      totalPages,
+    );
+
+  const applications =
+    currentPage ===
+      requestedPage ||
+    totalApplications === 0
+      ? requestedApplications
+      : await loadApplications(
+          currentPage,
+        );
+
+  const statusSummary =
+    statusRows[0];
+
+  const counts:
+    Record<
+      AssistanceApplicationStatus,
+      number
+    > = {
+      DRAFT: 0,
+      SUBMITTED:
+        asCount(
+          statusSummary?.submitted,
+        ),
+      NEEDS_REVISION:
+        asCount(
+          statusSummary?.needsRevision,
+        ),
+      APPROVED:
+        asCount(
+          statusSummary?.approved,
+        ),
+      REJECTED:
+        asCount(
+          statusSummary?.rejected,
+        ),
+    };
+
+  const pageHref = (
+    page: number,
+  ) => {
+    const query =
+      new URLSearchParams();
+
+    if (q) {
+      query.set(
+        "q",
+        q,
+      );
+    }
+
+    if (status) {
+      query.set(
+        "status",
+        status,
+      );
+    }
+
+    if (programId) {
+      query.set(
+        "program",
+        programId,
+      );
+    }
+
+    query.set(
+      "page",
+      String(page),
+    );
+
+    return `/admin/pengajuan?${query.toString()}`;
+  };
+
 
   return (
     <div className="space-y-6">
@@ -388,7 +617,7 @@ export default async function AdminAssistancePage({
       <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="border-b border-slate-200 px-5 py-4">
           <p className="text-sm font-semibold text-slate-900">
-            {applications.length} pengajuan ditemukan
+            {totalApplications} pengajuan ditemukan
           </p>
         </div>
 
@@ -499,6 +728,54 @@ export default async function AdminAssistancePage({
                 );
               },
             )}
+          </div>
+        )}
+
+        {totalPages > 1 && (
+          <div className="flex flex-col gap-3 border-t border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs text-slate-500">
+              Halaman{" "}
+              <span className="font-semibold text-slate-700">
+                {currentPage}
+              </span>{" "}
+              dari{" "}
+              <span className="font-semibold text-slate-700">
+                {totalPages}
+              </span>
+            </p>
+
+            <div className="flex items-center gap-2">
+              {currentPage > 1 ? (
+                <Link
+                  href={pageHref(
+                    currentPage - 1,
+                  )}
+                  className="inline-flex min-h-10 items-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                >
+                  Sebelumnya
+                </Link>
+              ) : (
+                <span className="inline-flex min-h-10 cursor-not-allowed items-center rounded-xl border border-slate-100 bg-slate-50 px-4 text-sm font-semibold text-slate-300">
+                  Sebelumnya
+                </span>
+              )}
+
+              {currentPage <
+              totalPages ? (
+                <Link
+                  href={pageHref(
+                    currentPage + 1,
+                  )}
+                  className="inline-flex min-h-10 items-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                >
+                  Berikutnya
+                </Link>
+              ) : (
+                <span className="inline-flex min-h-10 cursor-not-allowed items-center rounded-xl border border-slate-100 bg-slate-50 px-4 text-sm font-semibold text-slate-300">
+                  Berikutnya
+                </span>
+              )}
+            </div>
           </div>
         )}
       </section>
