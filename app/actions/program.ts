@@ -4,7 +4,7 @@ import { getCurrentDbUser } from "@/lib/current-authz";
 import { PUBLIC_PROGRAMS_CACHE_TAG } from "@/lib/public-programs";
 import { db } from "@/src/db";
 import { auditLogs, programs } from "@/src/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq, ne } from "drizzle-orm";
 import { revalidatePath, revalidateTag } from "next/cache";
 
 const ALLOWED_ICONS = new Set([
@@ -230,18 +230,20 @@ export async function updateProgram(
       };
     }
 
-    const sameNamePrograms = await db
+    const [duplicateProgram] = await db
       .select({
         id: programs.id,
       })
       .from(programs)
-      .where(eq(programs.name, name));
+      .where(
+        and(
+          eq(programs.name, name),
+          ne(programs.id, id),
+        ),
+      )
+      .limit(1);
 
-    const duplicateName = sameNamePrograms.some(
-      (program) => program.id !== id,
-    );
-
-    if (duplicateName) {
+    if (duplicateProgram) {
       return {
         success: false,
         error: "Nama program tersebut sudah digunakan.",
