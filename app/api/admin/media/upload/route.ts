@@ -53,9 +53,13 @@ async function cleanupStaleNewsBlobOrphans() {
       .filter((value): value is string => Boolean(value)),
   );
 
-  const articleContents = articleReferences.map(
-    (article) => article.content,
-  );
+  const articleContentCorpus =
+    articleReferences
+      .map(
+        (article) =>
+          article.content,
+      )
+      .join("\u0000");
 
   const orphanUrls = [];
   let cursor: string | undefined;
@@ -81,10 +85,11 @@ async function cleanupStaleNewsBlobOrphans() {
       }
 
       const referencedInContent =
-        articleContents.some(
-          (content) =>
-            content.includes(blob.url) ||
-            content.includes(blob.downloadUrl),
+        articleContentCorpus.includes(
+          blob.url,
+        ) ||
+        articleContentCorpus.includes(
+          blob.downloadUrl,
         );
 
       if (!referencedInContent) {

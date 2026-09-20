@@ -459,7 +459,18 @@ export async function updateBerita(
   const requestedSlug =
     cleanOptional(formData.get("slug")) ?? title;
 
-  const slug = await makeUniqueSlug(requestedSlug, id);
+  const normalizedRequestedSlug =
+    slugify(requestedSlug) ||
+    "berita";
+
+  const slug =
+    normalizedRequestedSlug ===
+    oldArticle.slug
+      ? oldArticle.slug
+      : await makeUniqueSlug(
+          requestedSlug,
+          id,
+        );
 
   const lifecycle = getLifecycleForUpdate(
     oldArticle.status,
