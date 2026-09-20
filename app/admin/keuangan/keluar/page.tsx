@@ -6,8 +6,8 @@ import {
   asc,
   eq,
   inArray,
-  isNotNull,
   isNull,
+  sql,
 } from "drizzle-orm";
 
 import { db } from "@/src/db";
@@ -35,7 +35,6 @@ export default async function UangKeluarPage({
   const [
     activePrograms,
     campaignRows,
-    ledgerRows,
   ] = await Promise.all([
     db
       .select({
@@ -58,8 +57,50 @@ export default async function UangKeluarPage({
         programId:
           campaigns.programId,
         status: campaigns.status,
+        collected:
+          sql<string>`
+            coalesce(
+              sum(
+                case
+                  when
+                    ${financialTransactions.type} = 'IN'
+                    and ${financialTransactions.amount} <> 'NaN'::numeric
+                  then ${financialTransactions.amount}
+                  else 0
+                end
+              ),
+              0
+            )
+          `,
+        spent:
+          sql<string>`
+            coalesce(
+              sum(
+                case
+                  when
+                    ${financialTransactions.type} = 'OUT'
+                    and ${financialTransactions.amount} <> 'NaN'::numeric
+                  then ${financialTransactions.amount}
+                  else 0
+                end
+              ),
+              0
+            )
+          `,
       })
       .from(campaigns)
+      .leftJoin(
+        financialTransactions,
+        and(
+          eq(
+            financialTransactions.campaignId,
+            campaigns.id,
+          ),
+          isNull(
+            financialTransactions.deletedAt,
+          ),
+        ),
+      )
       .where(
         inArray(
           campaigns.status,
@@ -70,85 +111,29 @@ export default async function UangKeluarPage({
           ],
         ),
       )
-      .orderBy(asc(campaigns.title)),
-
-    db
-      .select({
-        campaignId:
-          financialTransactions.campaignId,
-        type:
-          financialTransactions.type,
-        amount:
-          financialTransactions.amount,
-      })
-      .from(
-        financialTransactions,
+      .groupBy(
+        campaigns.id,
+        campaigns.title,
+        campaigns.programId,
+        campaigns.status,
       )
-      .where(
-        and(
-          isNotNull(
-            financialTransactions.campaignId,
-          ),
-          isNull(
-            financialTransactions.deletedAt,
-          ),
-        ),
+      .orderBy(
+        asc(campaigns.title),
       ),
   ]);
-
-  const totals =
-    new Map<
-      string,
-      {
-        collected: number;
-        spent: number;
-      }
-    >();
-
-  for (const row of ledgerRows) {
-    if (!row.campaignId) {
-      continue;
-    }
-
-    const current =
-      totals.get(
-        row.campaignId,
-      ) || {
-        collected: 0,
-        spent: 0,
-      };
-
-    const value =
-      Number(row.amount);
-
-    if (
-      Number.isFinite(value)
-    ) {
-      if (row.type === "IN") {
-        current.collected +=
-          value;
-      } else {
-        current.spent +=
-          value;
-      }
-    }
-
-    totals.set(
-      row.campaignId,
-      current,
-    );
-  }
 
   const campaignOptions =
     campaignRows.map(
       (campaign) => {
-        const total =
-          totals.get(
-            campaign.id,
-          ) || {
-            collected: 0,
-            spent: 0,
-          };
+        const collected =
+          Number(
+            campaign.collected,
+          );
+
+        const spent =
+          Number(
+            campaign.spent,
+          );
 
         return {
           id: campaign.id,
@@ -162,8 +147,20 @@ export default async function UangKeluarPage({
               | "PAUSED"
               | "COMPLETED",
           available:
-            total.collected -
-            total.spent,
+            (
+              Number.isFinite(
+                collected,
+              )
+                ? collected
+                : 0
+            ) -
+            (
+              Number.isFinite(
+                spent,
+              )
+                ? spent
+                : 0
+            ),
         };
       },
     );
