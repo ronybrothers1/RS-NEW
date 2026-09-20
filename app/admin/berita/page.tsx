@@ -9,9 +9,49 @@ import DeleteBeritaButton from "./components/DeleteBeritaButton";
 import ArchiveBeritaButton from "./components/ArchiveBeritaButton";
 import ArticleProgramSelect from "./components/ArticleProgramSelect";
 
-export default async function BeritaPage() {
+const PAGE_SIZE = 50;
+
+function parsePositiveInteger(
+  value: string | string[] | undefined,
+) {
+  const firstValue =
+    Array.isArray(value)
+      ? value[0]
+      : value;
+
+  const parsed =
+    Number.parseInt(
+      firstValue ?? "1",
+      10,
+    );
+
+  return Number.isSafeInteger(parsed) &&
+    parsed > 0
+    ? parsed
+    : 1;
+}
+
+export default async function BeritaPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    page?: string | string[];
+  }>;
+}) {
+  const rawSearchParams =
+    await searchParams;
+
+  const currentPage =
+    parsePositiveInteger(
+      rawSearchParams.page,
+    );
+
+  const offset =
+    (currentPage - 1) *
+    PAGE_SIZE;
+
   const [
-    allArticles,
+    articleRows,
     activePrograms,
   ] = await Promise.all([
     db
@@ -45,7 +85,12 @@ export default async function BeritaPage() {
         desc(
           articles.createdAt,
         ),
-      ),
+        desc(
+          articles.id,
+        ),
+      )
+      .limit(PAGE_SIZE + 1)
+      .offset(offset),
 
     db
       .select({
@@ -65,6 +110,19 @@ export default async function BeritaPage() {
         ),
       ),
   ]);
+
+  const hasPrevious =
+    currentPage > 1;
+
+  const hasNext =
+    articleRows.length >
+    PAGE_SIZE;
+
+  const allArticles =
+    articleRows.slice(
+      0,
+      PAGE_SIZE,
+    );
 
   return (
     <div className="space-y-6">
@@ -188,6 +246,51 @@ export default async function BeritaPage() {
           </table>
         </div>
       </div>
+
+      {(hasPrevious || hasNext) && (
+        <nav
+          aria-label="Navigasi halaman berita admin"
+          className="flex items-center justify-between gap-4"
+        >
+          <div className="text-sm text-slate-500">
+            Halaman {currentPage}
+          </div>
+
+          <div className="flex items-center gap-2">
+            {hasPrevious ? (
+              <Link
+                href={`/admin/berita?page=${currentPage - 1}`}
+                className="inline-flex min-h-10 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+              >
+                Sebelumnya
+              </Link>
+            ) : (
+              <span
+                aria-disabled="true"
+                className="inline-flex min-h-10 cursor-not-allowed items-center justify-center rounded-lg border border-slate-200 bg-slate-50 px-4 text-sm font-medium text-slate-400"
+              >
+                Sebelumnya
+              </span>
+            )}
+
+            {hasNext ? (
+              <Link
+                href={`/admin/berita?page=${currentPage + 1}`}
+                className="inline-flex min-h-10 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+              >
+                Berikutnya
+              </Link>
+            ) : (
+              <span
+                aria-disabled="true"
+                className="inline-flex min-h-10 cursor-not-allowed items-center justify-center rounded-lg border border-slate-200 bg-slate-50 px-4 text-sm font-medium text-slate-400"
+              >
+                Berikutnya
+              </span>
+            )}
+          </div>
+        </nav>
+      )}
     </div>
   );
 }
