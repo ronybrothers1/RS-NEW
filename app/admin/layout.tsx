@@ -1,8 +1,6 @@
 import {
-  auth,
-} from "@/auth";
-import {
   getCurrentDbUser,
+  getCurrentRequestSession,
 } from "@/lib/current-authz";
 import {
   redirect,
@@ -18,7 +16,7 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   const session =
-    await auth();
+    await getCurrentRequestSession();
 
   if (!session?.user) {
     redirect("/login");

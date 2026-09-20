@@ -1,6 +1,9 @@
 import type {
   Session,
 } from "next-auth";
+import {
+  cache,
+} from "react";
 
 import {
   eq,
@@ -28,6 +31,49 @@ export type CurrentDbUser = {
     number;
 };
 
+export const getCurrentRequestSession =
+  cache(
+    async () =>
+      auth(),
+  );
+
+const getCurrentDbUserForSession =
+  cache(
+    async (
+      userId: string,
+      sessionVersion: number,
+    ): Promise<CurrentDbUser | null> => {
+      const [user] =
+        await db
+          .select({
+            id: users.id,
+            role: users.role,
+            emailVerifiedAt:
+              users.emailVerifiedAt,
+            sessionVersion:
+              users.sessionVersion,
+          })
+          .from(users)
+          .where(
+            eq(
+              users.id,
+              userId,
+            ),
+          )
+          .limit(1);
+
+      if (
+        !user ||
+        user.sessionVersion !==
+          sessionVersion
+      ) {
+        return null;
+      }
+
+      return user;
+    },
+  );
+
 export async function getCurrentDbUser(
   sessionOverride?:
     | Session
@@ -36,7 +82,7 @@ export async function getCurrentDbUser(
 Promise<CurrentDbUser | null> {
   const session =
     sessionOverride === undefined
-      ? await auth()
+      ? await getCurrentRequestSession()
       : sessionOverride;
 
   const userId =
@@ -62,34 +108,10 @@ Promise<CurrentDbUser | null> {
     return null;
   }
 
-  const [user] =
-    await db
-      .select({
-        id: users.id,
-        role: users.role,
-        emailVerifiedAt:
-          users.emailVerifiedAt,
-        sessionVersion:
-          users.sessionVersion,
-      })
-      .from(users)
-      .where(
-        eq(
-          users.id,
-          userId,
-        ),
-      )
-      .limit(1);
-
-  if (
-    !user ||
-    user.sessionVersion !==
-      sessionVersion
-  ) {
-    return null;
-  }
-
-  return user;
+  return getCurrentDbUserForSession(
+    userId,
+    sessionVersion,
+  );
 }
 
 export async function getCurrentStaffUser() {
