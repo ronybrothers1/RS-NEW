@@ -15,10 +15,59 @@ import TogglePublishButton from "./components/TogglePublishButton";
 
 export const dynamic = "force-dynamic";
 
-export default async function KegiatanPage() {
-  const allActivities = await db
+const PAGE_SIZE = 50;
+
+function parsePositiveInteger(
+  value: string | string[] | undefined,
+) {
+  const firstValue =
+    Array.isArray(value)
+      ? value[0]
+      : value;
+
+  const parsed =
+    Number.parseInt(
+      firstValue ?? "1",
+      10,
+    );
+
+  return Number.isSafeInteger(parsed) &&
+    parsed > 0
+    ? parsed
+    : 1;
+}
+
+export default async function KegiatanPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    page?: string | string[];
+  }>;
+}) {
+  const rawSearchParams =
+    await searchParams;
+
+  const currentPage =
+    parsePositiveInteger(
+      rawSearchParams.page,
+    );
+
+  const offset =
+    (currentPage - 1) *
+    PAGE_SIZE;
+  const activityRows = await db
     .select({
-      activity: activities,
+      activity: {
+        id: activities.id,
+        title: activities.title,
+        date: activities.date,
+        location: activities.location,
+        tiktokUrl: activities.tiktokUrl,
+        isPublished:
+          activities.isPublished,
+        archivedAt:
+          activities.archivedAt,
+      },
       programName: programs.name,
     })
     .from(activities)
@@ -29,6 +78,22 @@ export default async function KegiatanPage() {
     .orderBy(
       desc(activities.date),
       desc(activities.createdAt),
+      desc(activities.id),
+    )
+    .limit(PAGE_SIZE + 1)
+    .offset(offset);
+
+  const hasPrevious =
+    currentPage > 1;
+
+  const hasNext =
+    activityRows.length >
+    PAGE_SIZE;
+
+  const allActivities =
+    activityRows.slice(
+      0,
+      PAGE_SIZE,
     );
 
   return (
@@ -227,6 +292,51 @@ export default async function KegiatanPage() {
           </table>
         </div>
       </div>
+
+      {(hasPrevious || hasNext) && (
+        <nav
+          aria-label="Navigasi halaman kegiatan admin"
+          className="flex items-center justify-between gap-4"
+        >
+          <div className="text-sm text-slate-500">
+            Halaman {currentPage}
+          </div>
+
+          <div className="flex items-center gap-2">
+            {hasPrevious ? (
+              <Link
+                href={`/admin/kegiatan?page=${currentPage - 1}`}
+                className="inline-flex min-h-10 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              >
+                Sebelumnya
+              </Link>
+            ) : (
+              <span
+                aria-disabled="true"
+                className="inline-flex min-h-10 cursor-not-allowed items-center justify-center rounded-lg border border-slate-200 bg-slate-50 px-4 text-sm font-medium text-slate-400"
+              >
+                Sebelumnya
+              </span>
+            )}
+
+            {hasNext ? (
+              <Link
+                href={`/admin/kegiatan?page=${currentPage + 1}`}
+                className="inline-flex min-h-10 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              >
+                Berikutnya
+              </Link>
+            ) : (
+              <span
+                aria-disabled="true"
+                className="inline-flex min-h-10 cursor-not-allowed items-center justify-center rounded-lg border border-slate-200 bg-slate-50 px-4 text-sm font-medium text-slate-400"
+              >
+                Berikutnya
+              </span>
+            )}
+          </div>
+        </nav>
+      )}
     </div>
   );
 }
