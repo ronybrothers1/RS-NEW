@@ -7,13 +7,53 @@ import { getCurrentDbUser } from "@/lib/current-authz";
 import { redirect } from "next/navigation";
 import DeletePenggunaButton from "./components/DeletePenggunaButton";
 
-export default async function PenggunaPage() {
+const PAGE_SIZE = 50;
+
+function parsePositiveInteger(
+  value: string | string[] | undefined,
+) {
+  const firstValue =
+    Array.isArray(value)
+      ? value[0]
+      : value;
+
+  const parsed =
+    Number.parseInt(
+      firstValue ?? "1",
+      10,
+    );
+
+  return Number.isSafeInteger(parsed) &&
+    parsed > 0
+    ? parsed
+    : 1;
+}
+
+export default async function PenggunaPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    page?: string | string[];
+  }>;
+}) {
   const currentUser = await getCurrentDbUser();
   if (!currentUser || currentUser.role !== 'ADMIN') {
     redirect('/admin/dashboard');
   }
 
-  const allUsers = await db
+  const rawSearchParams =
+    await searchParams;
+
+  const currentPage =
+    parsePositiveInteger(
+      rawSearchParams.page,
+    );
+
+  const offset =
+    (currentPage - 1) *
+    PAGE_SIZE;
+
+  const userRows = await db
     .select({
       id: users.id,
       name: users.name,
@@ -22,7 +62,25 @@ export default async function PenggunaPage() {
       createdAt: users.createdAt,
     })
     .from(users)
-    .orderBy(desc(users.createdAt));
+    .orderBy(
+      desc(users.createdAt),
+      desc(users.id),
+    )
+    .limit(PAGE_SIZE + 1)
+    .offset(offset);
+
+  const hasPrevious =
+    currentPage > 1;
+
+  const hasNext =
+    userRows.length >
+    PAGE_SIZE;
+
+  const allUsers =
+    userRows.slice(
+      0,
+      PAGE_SIZE,
+    );
 
   return (
     <div className="space-y-6">
@@ -93,6 +151,51 @@ export default async function PenggunaPage() {
           </table>
         </div>
       </div>
+
+      {(hasPrevious || hasNext) && (
+        <nav
+          aria-label="Navigasi halaman pengguna admin"
+          className="flex items-center justify-between gap-4"
+        >
+          <div className="text-sm text-slate-500">
+            Halaman {currentPage}
+          </div>
+
+          <div className="flex items-center gap-2">
+            {hasPrevious ? (
+              <Link
+                href={`/admin/pengguna?page=${currentPage - 1}`}
+                className="inline-flex min-h-10 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+              >
+                Sebelumnya
+              </Link>
+            ) : (
+              <span
+                aria-disabled="true"
+                className="inline-flex min-h-10 cursor-not-allowed items-center justify-center rounded-lg border border-slate-200 bg-slate-50 px-4 text-sm font-medium text-slate-400"
+              >
+                Sebelumnya
+              </span>
+            )}
+
+            {hasNext ? (
+              <Link
+                href={`/admin/pengguna?page=${currentPage + 1}`}
+                className="inline-flex min-h-10 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+              >
+                Berikutnya
+              </Link>
+            ) : (
+              <span
+                aria-disabled="true"
+                className="inline-flex min-h-10 cursor-not-allowed items-center justify-center rounded-lg border border-slate-200 bg-slate-50 px-4 text-sm font-medium text-slate-400"
+              >
+                Berikutnya
+              </span>
+            )}
+          </div>
+        </nav>
+      )}
     </div>
   );
 }
