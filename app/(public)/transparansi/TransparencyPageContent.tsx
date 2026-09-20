@@ -7,7 +7,6 @@ import {
   ChevronRight,
   RotateCcw,
   Search,
-  TrendingUp,
   Wallet,
 } from "lucide-react";
 
@@ -297,7 +296,7 @@ export default async function TransparencyPageContent({
                 </dl>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 lg:grid-rows-2">
                 <div className="flex items-center gap-4 rounded-2xl border border-emerald-100 bg-emerald-50/60 p-4">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
                     <ArrowDownRight className="h-5 w-5" />
@@ -332,22 +331,6 @@ export default async function TransparencyPageContent({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-4 rounded-2xl border border-brand-100 bg-brand-50 p-4">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-brand-800">
-                    <TrendingUp className="h-5 w-5" />
-                  </div>
-
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-brand-800">
-                      Pinjaman Beredar
-                    </p>
-                    <p className="mt-1 truncate font-extrabold text-ink">
-                      {formatCurrency(
-                        finance.loanOutstanding,
-                      )}
-                    </p>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
