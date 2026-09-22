@@ -111,7 +111,70 @@ function buildCashbookHref({
     );
   }
 
-  return `/transparansi?${params.toString()}`;
+  const queryString =
+    params.toString();
+
+  return queryString
+    ? `/transparansi?${queryString}`
+    : "/transparansi";
+}
+
+type PaginationItem =
+  | number
+  | "ellipsis-start"
+  | "ellipsis-end";
+
+function getPaginationItems(
+  currentPage: number,
+  totalPages: number,
+): PaginationItem[] {
+  if (totalPages <= 7) {
+    return Array.from(
+      {
+        length:
+          totalPages,
+      },
+      (_, index) =>
+        index + 1,
+    );
+  }
+
+  if (currentPage <= 4) {
+    return [
+      1,
+      2,
+      3,
+      4,
+      5,
+      "ellipsis-end",
+      totalPages,
+    ];
+  }
+
+  if (
+    currentPage >=
+    totalPages - 3
+  ) {
+    return [
+      1,
+      "ellipsis-start",
+      totalPages - 4,
+      totalPages - 3,
+      totalPages - 2,
+      totalPages - 1,
+      totalPages,
+    ];
+  }
+
+  return [
+    1,
+    "ellipsis-start",
+    currentPage - 1,
+    currentPage,
+    currentPage + 1,
+    "ellipsis-end",
+    totalPages,
+  ];
 }
 
 export default async function TransparencyPageContent({
@@ -160,6 +223,12 @@ export default async function TransparencyPageContent({
       pagination.currentPage *
         pagination.pageSize,
       pagination.totalItems,
+    );
+
+  const paginationItems =
+    getPaginationItems(
+      pagination.currentPage,
+      pagination.totalPages,
     );
 
   return (
@@ -640,7 +709,7 @@ export default async function TransparencyPageContent({
               {pagination.totalPages > 1 && (
                 <nav
                   aria-label="Navigasi halaman Buku Kas"
-                  className="flex items-center gap-2"
+                  className="flex flex-wrap items-center justify-end gap-1"
                 >
                   {pagination.currentPage > 1 ? (
                     <Link
@@ -652,19 +721,67 @@ export default async function TransparencyPageContent({
                           1,
                       })}
                       prefetch={false}
-                      className="inline-flex min-h-10 items-center gap-1 rounded-xl border border-stone-300 bg-white px-3 py-2 text-sm font-semibold text-ink shadow-[0_3px_0_#d6d3d1] transition-[transform,box-shadow,background-color] hover:bg-brand-50 active:translate-y-[1px] active:shadow-[0_1px_0_#d6d3d1]"
+                      aria-label="Buka halaman sebelumnya"
+                      className="inline-flex min-h-10 min-w-10 items-center justify-center gap-1 rounded-xl border border-stone-300 bg-white px-2.5 py-2 text-sm font-semibold text-ink shadow-[0_3px_0_#d6d3d1] transition-[transform,box-shadow,background-color] hover:bg-brand-50 active:translate-y-[1px] active:shadow-[0_1px_0_#d6d3d1] sm:px-3"
                     >
                       <ChevronLeft className="h-4 w-4" />
-                      Sebelumnya
+                      <span className="hidden lg:inline">
+                        Sebelumnya
+                      </span>
                     </Link>
                   ) : null}
 
-                  <span className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-xl bg-brand-950 px-3 py-2 text-sm font-bold text-white">
-                    {pagination.currentPage}
-                    <span className="sr-only">
-                      {" "}dari {pagination.totalPages}
-                    </span>
-                  </span>
+                  {paginationItems.map(
+                    (item) => {
+                      if (
+                        typeof item !==
+                        "number"
+                      ) {
+                        return (
+                          <span
+                            key={item}
+                            aria-hidden="true"
+                            className="inline-flex min-h-10 min-w-7 items-center justify-center px-1 text-sm font-bold text-ink-muted"
+                          >
+                            …
+                          </span>
+                        );
+                      }
+
+                      if (
+                        item ===
+                        pagination.currentPage
+                      ) {
+                        return (
+                          <span
+                            key={item}
+                            aria-current="page"
+                            aria-label={`Halaman ${item}, halaman saat ini`}
+                            className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-xl bg-brand-950 px-3 py-2 text-sm font-bold text-white"
+                          >
+                            {item}
+                          </span>
+                        );
+                      }
+
+                      return (
+                        <Link
+                          key={item}
+                          href={buildCashbookHref({
+                            query:
+                              cashbook.query,
+                            page:
+                              item,
+                          })}
+                          prefetch={false}
+                          aria-label={`Buka halaman ${item}`}
+                          className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-xl border border-stone-300 bg-white px-3 py-2 text-sm font-bold text-ink shadow-[0_3px_0_#d6d3d1] transition-[transform,box-shadow,background-color] hover:bg-brand-50 active:translate-y-[1px] active:shadow-[0_1px_0_#d6d3d1]"
+                        >
+                          {item}
+                        </Link>
+                      );
+                    },
+                  )}
 
                   {pagination.currentPage < pagination.totalPages ? (
                     <Link
@@ -676,9 +793,12 @@ export default async function TransparencyPageContent({
                           1,
                       })}
                       prefetch={false}
-                      className="inline-flex min-h-10 items-center gap-1 rounded-xl border border-stone-300 bg-white px-3 py-2 text-sm font-semibold text-ink shadow-[0_3px_0_#d6d3d1] transition-[transform,box-shadow,background-color] hover:bg-brand-50 active:translate-y-[1px] active:shadow-[0_1px_0_#d6d3d1]"
+                      aria-label="Buka halaman berikutnya"
+                      className="inline-flex min-h-10 min-w-10 items-center justify-center gap-1 rounded-xl border border-stone-300 bg-white px-2.5 py-2 text-sm font-semibold text-ink shadow-[0_3px_0_#d6d3d1] transition-[transform,box-shadow,background-color] hover:bg-brand-50 active:translate-y-[1px] active:shadow-[0_1px_0_#d6d3d1] sm:px-3"
                     >
-                      Berikutnya
+                      <span className="hidden lg:inline">
+                        Berikutnya
+                      </span>
                       <ChevronRight className="h-4 w-4" />
                     </Link>
                   ) : null}
