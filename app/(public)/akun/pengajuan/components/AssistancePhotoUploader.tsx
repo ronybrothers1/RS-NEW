@@ -34,6 +34,9 @@ const MIN_PHOTOS = 2;
 const MAX_FILE_SIZE =
   5 * 1024 * 1024;
 
+const UPLOAD_TIMEOUT_MS =
+  5 * 60 * 1000;
+
 const ALLOWED_TYPES =
   new Set([
     "image/jpeg",
@@ -70,11 +73,15 @@ export default function AssistancePhotoUploader({
   userId,
   initialPhotos = [],
   onPhotoCountChange,
+  onUploadingChange,
 }: {
   userId: string;
   initialPhotos?: InitialPhoto[];
   onPhotoCountChange?: (
     count: number,
+  ) => void;
+  onUploadingChange?: (
+    uploading: boolean,
   ) => void;
 }) {
   const [
@@ -178,6 +185,9 @@ export default function AssistancePhotoUploader({
     }
 
     setUploading(true);
+    onUploadingChange?.(
+      true,
+    );
     setProgress(0);
 
     const completed:
@@ -204,47 +214,80 @@ export default function AssistancePhotoUploader({
               file.name,
             )}`;
 
-          const blob =
-            await upload(
-              pathname,
-              file,
-              {
-                access:
-                  "private",
-                handleUploadUrl:
-                  "/api/akun/pengajuan/media/upload",
+          const uploadController =
+            new AbortController();
 
-                onUploadProgress(
-                  uploadEvent,
-                ) {
-                  const base =
-                    (index /
-                      selected.length) *
-                    100;
-
-                  const current =
-                    uploadEvent.percentage /
-                    selected.length;
-
-                  setProgress(
-                    Math.round(
-                      base +
-                        current,
-                    ),
-                  );
-                },
+          const uploadTimeoutId =
+            window.setTimeout(
+              () => {
+                uploadController.abort();
               },
+              UPLOAD_TIMEOUT_MS,
             );
 
-          completed.push({
-            url: blob.url,
-            pathname:
-              blob.pathname,
-            previewUrl,
-            originalName:
-              file.name,
-            persisted: false,
-          });
+          try {
+            const blob =
+              await upload(
+                pathname,
+                file,
+                {
+                  access:
+                    "private",
+                  handleUploadUrl:
+                    "/api/akun/pengajuan/media/upload",
+                  abortSignal:
+                    uploadController.signal,
+
+                  onUploadProgress(
+                    uploadEvent,
+                  ) {
+                    const base =
+                      (index /
+                        selected.length) *
+                      100;
+
+                    const current =
+                      uploadEvent.percentage /
+                      selected.length;
+
+                    setProgress(
+                      Math.round(
+                        base +
+                          current,
+                      ),
+                    );
+                  },
+                },
+              );
+
+            completed.push({
+              url: blob.url,
+              pathname:
+                blob.pathname,
+              previewUrl,
+              originalName:
+                file.name,
+              persisted: false,
+            });
+          } catch (
+            uploadError
+          ) {
+            if (
+              uploadController
+                .signal
+                .aborted
+            ) {
+              throw new Error(
+                "Unggah foto melewati batas waktu 5 menit. Periksa koneksi lalu coba lagi.",
+              );
+            }
+
+            throw uploadError;
+          } finally {
+            window.clearTimeout(
+              uploadTimeoutId,
+            );
+          }
         } catch (uploadError) {
           URL.revokeObjectURL(
             previewUrl,
@@ -301,6 +344,9 @@ export default function AssistancePhotoUploader({
       }
     } finally {
       setUploading(false);
+      onUploadingChange?.(
+        false,
+      );
     }
   }
 

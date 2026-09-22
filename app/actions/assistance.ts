@@ -938,73 +938,90 @@ export async function updateAssistanceApplication(
             ? "SUBMITTED"
             : existing.status;
 
-        await tx
-          .update(
-            assistanceApplications,
-          )
-          .set({
-            programId:
-              input.programId,
-            title:
-              input.title,
-            beneficiaryName:
-              input.beneficiaryName,
-            applicantRelationship:
-              input.applicantRelationship,
-            contactWhatsapp:
-              input.contactWhatsapp,
-            village:
-              input.village,
-            subdistrict:
-              input.subdistrict,
-            regency:
-              input.regency,
-            detailedAddress:
-              input.detailedAddress,
-            conditionDescription:
-              input.conditionDescription,
-            targetAmount:
-              input.targetAmount,
-            programData:
-              input.programData,
-            truthConsent:
-              input.truthConsent,
-            truthConsentAt:
-              input.truthConsent
-                ? now
-                : null,
-            status:
-              nextStatus,
-            submittedAt:
-              input.intent ===
-              "submit"
-                ? now
-                : existing.submittedAt,
-            reviewedBy:
-              input.intent ===
-              "submit"
-                ? null
-                : undefined,
-            reviewedAt:
-              input.intent ===
-              "submit"
-                ? null
-                : undefined,
-            updatedAt:
-              now,
-          })
-          .where(
-            and(
-              eq(
+        const [
+          updated,
+        ] =
+          await tx
+            .update(
+              assistanceApplications,
+            )
+            .set({
+              programId:
+                input.programId,
+              title:
+                input.title,
+              beneficiaryName:
+                input.beneficiaryName,
+              applicantRelationship:
+                input.applicantRelationship,
+              contactWhatsapp:
+                input.contactWhatsapp,
+              village:
+                input.village,
+              subdistrict:
+                input.subdistrict,
+              regency:
+                input.regency,
+              detailedAddress:
+                input.detailedAddress,
+              conditionDescription:
+                input.conditionDescription,
+              targetAmount:
+                input.targetAmount,
+              programData:
+                input.programData,
+              truthConsent:
+                input.truthConsent,
+              truthConsentAt:
+                input.truthConsent
+                  ? now
+                  : null,
+              status:
+                nextStatus,
+              submittedAt:
+                input.intent ===
+                "submit"
+                  ? now
+                  : existing.submittedAt,
+              reviewedBy:
+                input.intent ===
+                "submit"
+                  ? null
+                  : undefined,
+              reviewedAt:
+                input.intent ===
+                "submit"
+                  ? null
+                  : undefined,
+              updatedAt:
+                now,
+            })
+            .where(
+              and(
+                eq(
+                  assistanceApplications.id,
+                  applicationId,
+                ),
+                eq(
+                  assistanceApplications.applicantId,
+                  user.id,
+                ),
+                eq(
+                  assistanceApplications.status,
+                  existing.status,
+                ),
+              ),
+            )
+            .returning({
+              id:
                 assistanceApplications.id,
-                applicationId,
-              ),
-              eq(
-                assistanceApplications.applicantId,
-                user.id,
-              ),
-            ),
+            });
+
+        if (!updated) {
+          throw new Error(
+            "APPLICATION_STATE_CHANGED",
           );
+        }
 
         for (
           const photo of
@@ -1111,6 +1128,17 @@ export async function updateAssistanceApplication(
       },
     );
   } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message ===
+        "APPLICATION_STATE_CHANGED"
+    ) {
+      return {
+        error:
+          "Pengajuan sudah berubah sejak halaman dibuka. Muat ulang halaman sebelum menyimpan atau mengirim ulang.",
+      };
+    }
+
     console.error(
       "Update assistance application error:",
       error,

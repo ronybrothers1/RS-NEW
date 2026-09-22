@@ -197,6 +197,11 @@ export default function AssistanceApplicationForm({
   );
 
   const [
+    photosUploading,
+    setPhotosUploading,
+  ] = useState(false);
+
+  const [
     lastSubmittedPhotoCount,
     setLastSubmittedPhotoCount,
   ] = useState<
@@ -247,7 +252,16 @@ export default function AssistanceApplicationForm({
       action={
         formAction
       }
-      onSubmit={() => {
+      onSubmit={(
+        event,
+      ) => {
+        if (
+          photosUploading
+        ) {
+          event.preventDefault();
+          return;
+        }
+
         setLastSubmittedPhotoCount(
           photoCount,
         );
@@ -793,6 +807,9 @@ export default function AssistanceApplicationForm({
             onPhotoCountChange={
               setPhotoCount
             }
+            onUploadingChange={
+              setPhotosUploading
+            }
           />
         </div>
       </section>
@@ -827,7 +844,8 @@ export default function AssistanceApplicationForm({
           value="draft"
           formNoValidate
           disabled={
-            pending
+            pending ||
+            photosUploading
           }
           className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
         >
@@ -844,7 +862,8 @@ export default function AssistanceApplicationForm({
           name="intent"
           value="submit"
           disabled={
-            pending
+            pending ||
+            photosUploading
           }
           className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-60"
         >
