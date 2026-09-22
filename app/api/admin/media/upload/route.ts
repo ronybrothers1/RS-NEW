@@ -111,6 +111,13 @@ async function cleanupStaleNewsBlobOrphans() {
 }
 
 function scheduleStaleNewsBlobCleanup() {
+  if (
+    process.env.VERCEL_ENV !==
+    "production"
+  ) {
+    return;
+  }
+
   const now =
     Date.now();
 
