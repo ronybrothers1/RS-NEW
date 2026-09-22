@@ -3,6 +3,7 @@ import {
   type HandleUploadBody,
 } from "@vercel/blob/client";
 import {
+  after,
   NextResponse,
 } from "next/server";
 
@@ -35,6 +36,10 @@ const NEWS_BLOB_PREFIX = "media/berita/";
 const STALE_NEWS_BLOB_AGE_MS =
   7 * 24 * 60 * 60 * 1000;
 const NEWS_BLOB_LIST_LIMIT = 250;
+const NEWS_BLOB_CLEANUP_WINDOW_MS =
+  24 * 60 * 60 * 1000;
+
+let nextNewsBlobCleanupCheckAt = 0;
 
 async function cleanupStaleNewsBlobOrphans() {
   const cutoff =
@@ -105,6 +110,44 @@ async function cleanupStaleNewsBlobOrphans() {
   }
 }
 
+function scheduleStaleNewsBlobCleanup() {
+  const now =
+    Date.now();
+
+  if (
+    now <
+    nextNewsBlobCleanupCheckAt
+  ) {
+    return;
+  }
+
+  nextNewsBlobCleanupCheckAt =
+    now +
+    NEWS_BLOB_CLEANUP_WINDOW_MS;
+
+  after(async () => {
+    try {
+      const { success } =
+        await rateLimit(
+          "maintenance-news-blob-orphan-cleanup",
+          1,
+          NEWS_BLOB_CLEANUP_WINDOW_MS,
+        );
+
+      if (!success) {
+        return;
+      }
+
+      await cleanupStaleNewsBlobOrphans();
+    } catch (error) {
+      console.error(
+        "Gagal membersihkan orphan Blob berita lama.",
+        error,
+      );
+    }
+  });
+}
+
 export async function POST(
   request: Request,
 ): Promise<NextResponse> {
@@ -166,6 +209,9 @@ export async function POST(
     const body =
       (await request.json()) as HandleUploadBody;
 
+    let shouldScheduleCleanup =
+      false;
+
     const jsonResponse =
       await handleUpload({
         body,
@@ -185,14 +231,8 @@ export async function POST(
               );
             }
 
-            try {
-              await cleanupStaleNewsBlobOrphans();
-            } catch (error) {
-              console.error(
-                "Gagal membersihkan orphan Blob berita lama.",
-                error,
-              );
-            }
+            shouldScheduleCleanup =
+              true;
 
             return {
               allowedContentTypes:
@@ -216,6 +256,10 @@ export async function POST(
             // URL Blob disimpan ketika artikel disimpan.
           },
       });
+
+    if (shouldScheduleCleanup) {
+      scheduleStaleNewsBlobCleanup();
+    }
 
     return NextResponse.json(
       jsonResponse,

@@ -12,6 +12,7 @@ import {
 import { useRef, useState } from "react";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const UPLOAD_TIMEOUT_MS = 120 * 1000;
 
 const ALLOWED_TYPES = [
   "image/jpeg",
@@ -96,21 +97,52 @@ export default function FeaturedImageUploader({ initialUrl = "" }: { initialUrl?
 
       const safeName = sanitizeFilename(uploadFile.name);
 
-      const blob = await upload(
-        `media/berita/${Date.now()}-${safeName}`,
-        uploadFile,
-        {
-          access: "public",
-          handleUploadUrl: "/api/admin/media/upload",
-          contentType: uploadFile.type,
-          onUploadProgress: ({ percentage }) => {
-            setProgress(Math.round(percentage));
-          },
-        },
-      );
+      const uploadAbortController =
+        new AbortController();
 
-      setImageUrl(blob.url);
-      setProgress(100);
+      const uploadTimeoutId =
+        window.setTimeout(
+          () => {
+            uploadAbortController.abort();
+          },
+          UPLOAD_TIMEOUT_MS,
+        );
+
+      try {
+        const blob = await upload(
+          `media/berita/${Date.now()}-${safeName}`,
+          uploadFile,
+          {
+            access: "public",
+            handleUploadUrl: "/api/admin/media/upload",
+            contentType: uploadFile.type,
+            abortSignal:
+              uploadAbortController.signal,
+            onUploadProgress: ({ percentage }) => {
+              setProgress(Math.round(percentage));
+            },
+          },
+        );
+
+        setImageUrl(blob.url);
+        setProgress(100);
+      } catch (uploadError) {
+        if (
+          uploadAbortController
+            .signal
+            .aborted
+        ) {
+          throw new Error(
+            "Unggah gambar melewati batas waktu 120 detik. Periksa koneksi lalu coba lagi.",
+          );
+        }
+
+        throw uploadError;
+      } finally {
+        window.clearTimeout(
+          uploadTimeoutId,
+        );
+      }
     } catch (err) {
       setError(
         err instanceof Error
