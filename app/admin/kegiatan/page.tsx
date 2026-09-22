@@ -1,6 +1,6 @@
 ﻿import { db } from "@/src/db";
 import { activities, programs } from "@/src/db/schema";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 import {
   CalendarRange,
   Eye,
@@ -67,6 +67,8 @@ export default async function KegiatanPage({
           activities.isPublished,
         archivedAt:
           activities.archivedAt,
+        revision:
+          sql<string>`${activities.updatedAt}::text`,
       },
       programName: programs.name,
     })
@@ -264,6 +266,7 @@ export default async function KegiatanPage({
                                 <TogglePublishButton
                                   id={activity.id}
                                   isPublished={false}
+                                  revision={activity.revision}
                                 />
                               )}
 
@@ -272,6 +275,7 @@ export default async function KegiatanPage({
                                 <ArchiveKegiatanButton
                                   id={activity.id}
                                   title={activity.title}
+                                  revision={activity.revision}
                                 />
                               )}
 
@@ -279,6 +283,7 @@ export default async function KegiatanPage({
                               <DeleteKegiatanButton
                                 id={activity.id}
                                 title={activity.title}
+                                revision={activity.revision}
                               />
                             )}
                           </div>

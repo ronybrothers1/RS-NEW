@@ -1,7 +1,7 @@
 import KegiatanForm from "../../components/KegiatanForm";
 import { db } from "@/src/db";
 import { activities, programs } from "@/src/db/schema";
-import { asc, eq } from "drizzle-orm";
+import { asc, eq, sql } from "drizzle-orm";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -16,7 +16,18 @@ export default async function EditKegiatanPage({
   const { id } = await params;
 
   const [activity] = await db
-    .select()
+    .select({
+      id: activities.id,
+      title: activities.title,
+      programId: activities.programId,
+      date: activities.date,
+      location: activities.location,
+      description: activities.description,
+      tiktokUrl: activities.tiktokUrl,
+      isPublished: activities.isPublished,
+      archivedAt: activities.archivedAt,
+      revision: sql<string>`${activities.updatedAt}::text`,
+    })
     .from(activities)
     .where(eq(activities.id, id))
     .limit(1);
@@ -60,6 +71,7 @@ export default async function EditKegiatanPage({
           defaultDate={activity.date.toISOString().slice(0, 10)}
           activity={{
             id: activity.id,
+            revision: activity.revision,
             title: activity.title,
             programId: activity.programId,
             date: activity.date.toISOString().slice(0, 10),

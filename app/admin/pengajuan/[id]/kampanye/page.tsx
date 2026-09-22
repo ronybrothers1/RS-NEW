@@ -6,6 +6,7 @@ import {
 import {
   asc,
   eq,
+  sql,
 } from "drizzle-orm";
 import Link from "next/link";
 import {
@@ -58,6 +59,8 @@ export default async function AdminCampaignPage({
           campaigns.applicationId,
         slug:
           campaigns.slug,
+        revision:
+          sql<string>`${campaigns.updatedAt}::text`,
         title:
           campaigns.title,
         summary:
@@ -191,6 +194,8 @@ export default async function AdminCampaignPage({
         campaign={{
           slug:
             campaign.slug,
+          revision:
+            campaign.revision,
           title:
             campaign.title,
           summary:

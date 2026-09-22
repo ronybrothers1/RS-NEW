@@ -3,6 +3,7 @@
 import {
   and,
   eq,
+  sql,
 } from "drizzle-orm";
 import {
   revalidatePath,
@@ -38,6 +39,24 @@ type CampaignIntent =
   | "pause"
   | "complete"
   | "cancel";
+
+const CAMPAIGN_STATE_CHANGED =
+  "CAMPAIGN_STATE_CHANGED";
+
+function campaignStateChangedResult(): CampaignActionState {
+  return {
+    error:
+      "Kampanye sudah berubah sejak halaman dibuka. Muat ulang halaman sebelum melanjutkan.",
+  };
+}
+
+function isRevision(
+  value: string,
+) {
+  return /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(?:\.\d{1,6})?$/.test(
+    value,
+  );
+}
 
 function cleanText(
   value: FormDataEntryValue | null,
@@ -100,6 +119,17 @@ export async function saveCampaign(
     };
   }
 
+  const revision =
+    String(
+      formData.get(
+        "revision",
+      ) || "",
+    ).trim();
+
+  if (!isRevision(revision)) {
+    return campaignStateChangedResult();
+  }
+
   const [
     record,
   ] =
@@ -111,6 +141,8 @@ export async function saveCampaign(
           campaigns.status,
         slug:
           campaigns.slug,
+        revision:
+          sql<string>`${campaigns.updatedAt}::text`,
         activatedAt:
           campaigns.activatedAt,
         completedAt:
@@ -145,6 +177,13 @@ export async function saveCampaign(
       error:
         "Kampanye belum tersedia untuk pengajuan ini.",
     };
+  }
+
+  if (
+    record.revision !==
+    revision
+  ) {
+    return campaignStateChangedResult();
   }
 
   if (
@@ -410,47 +449,93 @@ export async function saveCampaign(
   try {
     await db.transaction(
       async (tx) => {
-        await tx
-          .update(campaigns)
-          .set({
-            title,
-            summary,
-            story,
-            beneficiaryDisplayName:
-              beneficiaryDisplayName ||
-              null,
-            publicLocation:
-              publicLocation || null,
-            targetAmount:
-              targetAmount.toString(),
-            coverPhotoId:
-              coverPhotoId || null,
-            status:
-              nextStatus,
-            activatedAt:
-              intent ===
-              "activate"
-                ? (
-                    record.activatedAt ||
-                    now
-                  )
-                : undefined,
-            completedAt:
-              intent ===
-              "complete"
-                ? now
-                : record.completedAt,
-            updatedBy:
-              staff.id,
-            updatedAt:
-              now,
-          })
-          .where(
-            eq(
-              campaigns.id,
-              record.id,
-            ),
+        const [application] =
+          await tx
+            .select({
+              status:
+                assistanceApplications.status,
+            })
+            .from(
+              assistanceApplications,
+            )
+            .where(
+              eq(
+                assistanceApplications.id,
+                applicationId,
+              ),
+            )
+            .limit(1)
+            .for("update");
+
+        if (
+          !application ||
+          application.status !==
+            "APPROVED"
+        ) {
+          throw new Error(
+            CAMPAIGN_STATE_CHANGED,
           );
+        }
+
+        const [updated] =
+          await tx
+            .update(campaigns)
+            .set({
+              title,
+              summary,
+              story,
+              beneficiaryDisplayName:
+                beneficiaryDisplayName ||
+                null,
+              publicLocation:
+                publicLocation || null,
+              targetAmount:
+                targetAmount.toString(),
+              coverPhotoId:
+                coverPhotoId || null,
+              status:
+                nextStatus,
+              activatedAt:
+                intent ===
+                "activate"
+                  ? (
+                      record.activatedAt ||
+                      now
+                    )
+                  : undefined,
+              completedAt:
+                intent ===
+                "complete"
+                  ? now
+                  : record.completedAt,
+              updatedBy:
+                staff.id,
+              updatedAt:
+                now,
+            })
+            .where(
+              and(
+                eq(
+                  campaigns.id,
+                  record.id,
+                ),
+                eq(
+                  campaigns.status,
+                  record.status,
+                ),
+                sql`${campaigns.updatedAt} = ${revision}::timestamp`,
+              ),
+            )
+            .returning({
+              id:
+                campaigns.id,
+            });
+
+        if (!updated) {
+          throw new Error(
+            CAMPAIGN_STATE_CHANGED,
+          );
+        }
 
         await tx
           .insert(auditLogs)
@@ -495,6 +580,14 @@ export async function saveCampaign(
       },
     );
   } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message ===
+        CAMPAIGN_STATE_CHANGED
+    ) {
+      return campaignStateChangedResult();
+    }
+
     console.error(
       "Save campaign error:",
       error,

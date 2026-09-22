@@ -7,9 +7,11 @@ import { useTransition } from "react";
 export default function TogglePublishButton({
   id,
   isPublished,
+  revision,
 }: {
   id: string;
   isPublished: boolean;
+  revision: string;
 }) {
   const [isPending, startTransition] = useTransition();
 
@@ -18,6 +20,7 @@ export default function TogglePublishButton({
       const result = await togglePublishKegiatan(
         id,
         isPublished,
+        revision,
       );
 
       if (!result.success) {

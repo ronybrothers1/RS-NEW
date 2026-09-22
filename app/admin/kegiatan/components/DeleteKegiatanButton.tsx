@@ -7,9 +7,11 @@ import { useTransition } from "react";
 export default function DeleteKegiatanButton({
   id,
   title,
+  revision,
 }: {
   id: string;
   title: string;
+  revision: string;
 }) {
   const [isPending, startTransition] = useTransition();
 
@@ -21,7 +23,10 @@ export default function DeleteKegiatanButton({
     if (!confirmed) return;
 
     startTransition(async () => {
-      const result = await deleteKegiatan(id);
+      const result = await deleteKegiatan(
+        id,
+        revision,
+      );
 
       if (!result.success) {
         window.alert(result.error ?? "Gagal menghapus kegiatan.");

@@ -19,6 +19,7 @@ type ProgramOption = {
 
 type InitialActivity = {
   id: string;
+  revision: string;
   title: string;
   programId: string | null;
   date: string;
@@ -61,6 +62,12 @@ export default function KegiatanForm({
         type="hidden"
         name="id"
         value={activity?.id ?? ""}
+      />
+
+      <input
+        type="hidden"
+        name="revision"
+        value={activity?.revision ?? ""}
       />
 
       {state.error && (

@@ -28,6 +28,7 @@ type CampaignStatus =
 
 type CampaignData = {
   slug: string;
+  revision: string;
   title: string;
   summary: string;
   story: string;
@@ -153,6 +154,12 @@ export default function CampaignEditorForm({
       action={formAction}
       className="space-y-6"
     >
+      <input
+        type="hidden"
+        name="revision"
+        value={campaign.revision}
+      />
+
       <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
