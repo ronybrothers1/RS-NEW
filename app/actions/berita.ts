@@ -5,10 +5,15 @@ import { db } from "@/src/db";
 import { articles, auditLogs, programs } from "@/src/db/schema";
 import { and, eq, isNull, ne } from "drizzle-orm";
 import { revalidatePath, revalidateTag } from "next/cache";
+import { after } from "next/server";
 import { hasMeaningfulArticleContent } from "@/lib/article-content";
 import {
   PUBLIC_ARTICLES_CACHE_TAG,
 } from "@/lib/public-articles";
+import {
+  buildPublicArticleUrl,
+  notifyIndexNow,
+} from "@/lib/indexnow";
 import { createVercelBlobStorage } from "@/lib/storage/providers/vercel-blob";
 
 type ArticleStatus = "DRAFT" | "SCHEDULED" | "PUBLISHED" | "ARCHIVED";
@@ -113,6 +118,24 @@ function parseScheduledAt(value: FormDataEntryValue | null) {
 
 async function getEditorUser() {
   return getCurrentStaffUser();
+}
+
+function scheduleIndexNow(urls: string[]) {
+  if (
+    process.env.VERCEL_ENV !== "production" ||
+    urls.length === 0
+  ) {
+    return;
+  }
+
+  try {
+    after(() => notifyIndexNow(urls));
+  } catch (error) {
+    console.warn(
+      "IndexNow scheduling failed.",
+      error instanceof Error ? error.message : error,
+    );
+  }
 }
 
 async function makeUniqueSlug(baseValue: string, excludeId?: string) {
@@ -349,6 +372,12 @@ export async function createBerita(
     revalidatePath("/admin/dashboard");
     revalidatePath("/berita");
 
+    if (newArticle.status === "PUBLISHED") {
+      scheduleIndexNow([
+        buildPublicArticleUrl(newArticle.slug),
+      ]);
+    }
+
     return {
       success: true,
       error: null,
@@ -520,6 +549,22 @@ export async function updateBerita(
     revalidatePath("/berita");
     revalidatePath(`/berita/${oldArticle.slug}`);
     revalidatePath(`/berita/${updatedArticle.slug}`);
+
+    const indexNowUrls: string[] = [];
+
+    if (oldArticle.status === "PUBLISHED") {
+      indexNowUrls.push(
+        buildPublicArticleUrl(oldArticle.slug),
+      );
+    }
+
+    if (updatedArticle.status === "PUBLISHED") {
+      indexNowUrls.push(
+        buildPublicArticleUrl(updatedArticle.slug),
+      );
+    }
+
+    scheduleIndexNow(indexNowUrls);
 
     return {
       success: true,
@@ -827,6 +872,12 @@ export async function archiveBerita(
   revalidatePath("/admin/berita");
   revalidatePath("/berita");
   revalidatePath(`/berita/${oldArticle.slug}`);
+
+  if (oldArticle.status === "PUBLISHED") {
+    scheduleIndexNow([
+      buildPublicArticleUrl(oldArticle.slug),
+    ]);
+  }
 
   return {
     success: true,
