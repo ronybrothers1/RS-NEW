@@ -441,10 +441,33 @@ export default function PushOptInController() {
               .pushManager
               .getSubscription();
 
+          if (!subscription) {
+            setState(
+              "idle",
+            );
+
+            return;
+          }
+
+          const saved =
+            await saveSubscription(
+              subscription,
+            );
+
+          if (!saved) {
+            setState(
+              "error",
+            );
+
+            setMessage(
+              "Notifikasi pada perangkat ini belum dapat disinkronkan dengan akun.",
+            );
+
+            return;
+          }
+
           setState(
-            subscription
-              ? "active"
-              : "idle",
+            "active",
           );
         } catch {
           setState(
