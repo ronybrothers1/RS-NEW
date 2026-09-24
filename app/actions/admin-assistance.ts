@@ -12,10 +12,20 @@ import {
 import {
   redirect,
 } from "next/navigation";
+import {
+  after,
+} from "next/server";
 
 import {
   getCurrentStaffUser,
 } from "@/lib/current-authz";
+import {
+  notificationsEnabled,
+} from "@/lib/notifications/config.server";
+import {
+  createUserNotificationEventBestEffort,
+  NOTIFICATION_EVENT_TYPES,
+} from "@/lib/notifications/events.server";
 import {
   db,
 } from "@/src/db";
@@ -345,6 +355,8 @@ export async function reviewAssistanceApplication(
           assistanceApplications.reviewedBy,
         reviewedAt:
           assistanceApplications.reviewedAt,
+        submittedAt:
+          assistanceApplications.submittedAt,
         campaignId:
           campaigns.id,
       })
@@ -673,6 +685,73 @@ export async function reviewAssistanceApplication(
       error:
         "Keputusan belum dapat disimpan. Silakan coba lagi.",
     };
+  }
+
+  if (
+    notificationsEnabled()
+  ) {
+    const reviewCycle =
+      existing.submittedAt
+        ?.toISOString() ||
+      "submitted";
+
+    const applicantNotification =
+      decision ===
+        "revision"
+        ? {
+            type:
+              NOTIFICATION_EVENT_TYPES.assistanceNeedsRevision,
+            title:
+              "Status pengajuan diperbarui",
+            body:
+              "Pengajuan Anda memerlukan tindak lanjut. Buka aplikasi untuk melihat detail.",
+          }
+        : decision ===
+            "approve"
+          ? {
+              type:
+                NOTIFICATION_EVENT_TYPES.assistanceApproved,
+              title:
+                "Status pengajuan diperbarui",
+              body:
+                "Status pengajuan Anda telah diperbarui. Buka aplikasi untuk melihat detail.",
+            }
+          : {
+              type:
+                NOTIFICATION_EVENT_TYPES.assistanceRejected,
+              title:
+                "Status pengajuan diperbarui",
+              body:
+                "Status pengajuan Anda telah diperbarui. Buka aplikasi untuk melihat detail.",
+            };
+
+    try {
+      after(
+        async () => {
+          await createUserNotificationEventBestEffort({
+            userId:
+              existing.applicantId,
+            type:
+              applicantNotification.type,
+            title:
+              applicantNotification.title,
+            body:
+              applicantNotification.body,
+            targetUrl:
+              `/akun/pengajuan/${applicationId}`,
+            dedupeKey:
+              `assistance-review:${applicationId}:${reviewCycle}:${nextStatus}`,
+          });
+        },
+      );
+    } catch (error) {
+      console.error(
+        "[notifications] applicant review notification scheduling failed:",
+        error instanceof Error
+          ? error.message
+          : "unknown_error",
+      );
+    }
   }
 
   refreshReviewPaths(
