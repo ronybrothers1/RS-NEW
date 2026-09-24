@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { SITE_DESCRIPTION, SITE_NAME } from '@/lib/seo-metadata';
 import { getSiteUrl } from '@/lib/site-url';
@@ -12,6 +12,7 @@ export const metadata: Metadata = {
     template: '%s | Ruang Sejahtera',
   },
   description: SITE_DESCRIPTION,
+  manifest: '/manifest.webmanifest',
   openGraph: {
     title: SITE_NAME,
     description: SITE_DESCRIPTION,
@@ -24,6 +25,11 @@ export const metadata: Metadata = {
     title: SITE_NAME,
     description: SITE_DESCRIPTION,
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: '#022c22',
+  colorScheme: 'light',
 };
 
 export default function RootLayout({
