@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.ruangsejahtera.app",
+      "sha256_cert_fingerprints": [
+        "B6:B3:4A:6B:DE:05:35:EF:F7:A7:25:5C:9F:4F:9F:B0:40:DA:18:84:E8:CE:AB:90:79:B4:88:AC:AF:A9:68:B3"
+      ]
+    }
+  }
+]
