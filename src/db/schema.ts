@@ -319,6 +319,12 @@ export const donations = pgTable('donations', {
   paymentMethod: text('payment_method'),
   proofImage: text('proof_image'),
 
+  notificationCapabilityHash:
+    text('notification_capability_hash'),
+
+  notificationCapabilityCreatedAt:
+    timestamp('notification_capability_created_at'),
+
   reviewNote: text('review_note'),
 
   reviewedBy: uuid('reviewed_by')
@@ -328,8 +334,217 @@ export const donations = pgTable('donations', {
 
   isAnonymous: boolean('is_anonymous').default(false).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-});
+}, (table) => [
+  uniqueIndex(
+    'donations_notification_capability_hash_unique',
+  )
+    .on(
+      table.notificationCapabilityHash,
+    )
+    .where(
+      sql`${table.notificationCapabilityHash} IS NOT NULL`,
+    ),
+]);
 
+export const notifications = pgTable(
+  'notifications',
+  {
+    id: uuid('id')
+      .defaultRandom()
+      .primaryKey(),
+
+    userId: uuid('user_id')
+      .references(
+        () => users.id,
+        {
+          onDelete: 'cascade',
+        },
+      )
+      .notNull(),
+
+    type: text('type')
+      .notNull(),
+
+    title: text('title')
+      .notNull(),
+
+    body: text('body')
+      .notNull(),
+
+    targetUrl:
+      text('target_url'),
+
+    dedupeKey:
+      text('dedupe_key'),
+
+    readAt:
+      timestamp('read_at'),
+
+    createdAt:
+      timestamp('created_at')
+        .defaultNow()
+        .notNull(),
+  },
+  (table) => [
+    uniqueIndex(
+      'notifications_user_dedupe_key_unique',
+    )
+      .on(
+        table.userId,
+        table.dedupeKey,
+      )
+      .where(
+        sql`${table.dedupeKey} IS NOT NULL`,
+      ),
+
+    index(
+      'notifications_user_created_idx',
+    ).on(
+      table.userId,
+      table.createdAt.desc(),
+      table.id.desc(),
+    ),
+
+    index(
+      'notifications_user_unread_created_idx',
+    )
+      .on(
+        table.userId,
+        table.createdAt.desc(),
+      )
+      .where(
+        sql`${table.readAt} IS NULL`,
+      ),
+  ],
+);
+
+export const pushSubscriptions = pgTable(
+  'push_subscriptions',
+  {
+    id: uuid('id')
+      .defaultRandom()
+      .primaryKey(),
+
+    userId: uuid('user_id')
+      .references(
+        () => users.id,
+        {
+          onDelete: 'cascade',
+        },
+      ),
+
+    endpointHash:
+      text('endpoint_hash')
+        .notNull(),
+
+    endpoint:
+      text('endpoint')
+        .notNull(),
+
+    p256dh:
+      text('p256dh')
+        .notNull(),
+
+    auth:
+      text('auth')
+        .notNull(),
+
+    isActive:
+      boolean('is_active')
+        .default(true)
+        .notNull(),
+
+    failureCount:
+      integer('failure_count')
+        .default(0)
+        .notNull(),
+
+    lastSuccessAt:
+      timestamp('last_success_at'),
+
+    lastFailureAt:
+      timestamp('last_failure_at'),
+
+    createdAt:
+      timestamp('created_at')
+        .defaultNow()
+        .notNull(),
+
+    updatedAt:
+      timestamp('updated_at')
+        .defaultNow()
+        .notNull(),
+  },
+  (table) => [
+    uniqueIndex(
+      'push_subscriptions_endpoint_hash_unique',
+    ).on(
+      table.endpointHash,
+    ),
+
+    index(
+      'push_subscriptions_user_active_idx',
+    ).on(
+      table.userId,
+      table.isActive,
+      table.updatedAt.desc(),
+    ),
+  ],
+);
+
+export const donationPushSubscriptions =
+  pgTable(
+    'donation_push_subscriptions',
+    {
+      id: uuid('id')
+        .defaultRandom()
+        .primaryKey(),
+
+      donationId:
+        uuid('donation_id')
+          .references(
+            () => donations.id,
+            {
+              onDelete:
+                'cascade',
+            },
+          )
+          .notNull(),
+
+      pushSubscriptionId:
+        uuid(
+          'push_subscription_id',
+        )
+          .references(
+            () =>
+              pushSubscriptions.id,
+            {
+              onDelete:
+                'cascade',
+            },
+          )
+          .notNull(),
+
+      createdAt:
+        timestamp('created_at')
+          .defaultNow()
+          .notNull(),
+    },
+    (table) => [
+      uniqueIndex(
+        'donation_push_subscriptions_donation_subscription_unique',
+      ).on(
+        table.donationId,
+        table.pushSubscriptionId,
+      ),
+
+      index(
+        'donation_push_subscriptions_subscription_idx',
+      ).on(
+        table.pushSubscriptionId,
+      ),
+    ],
+  );
 export const gallery = pgTable('gallery', {
   id: uuid('id').defaultRandom().primaryKey(),
   title: text('title'),
