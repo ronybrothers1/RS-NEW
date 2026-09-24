@@ -1,4 +1,5 @@
 import {
+  Bell,
   CircleUserRound,
   ClipboardList,
   Mail,
@@ -150,6 +151,28 @@ export default async function AccountPage() {
                 </div>
               </div>
             </div>
+          </section>
+
+          <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-teal-50 text-teal-700">
+              <Bell className="h-5 w-5" />
+            </div>
+
+            <h2 className="mt-5 font-bold text-slate-950">
+              Notifikasi
+            </h2>
+
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              Kelola notifikasi perangkat dan lihat
+              pembaruan yang terkait dengan akun Anda.
+            </p>
+
+            <Link
+              href="/akun/notifikasi"
+              className="mt-5 inline-flex min-h-11 items-center justify-center rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800"
+            >
+              Buka Pusat Notifikasi
+            </Link>
           </section>
 
           <section className="rounded-2xl border border-rose-200 bg-white p-6 shadow-sm">
