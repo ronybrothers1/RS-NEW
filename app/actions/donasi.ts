@@ -7,6 +7,7 @@ import {
 } from "drizzle-orm";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import {
   checkBotId,
 } from "botid/server";
@@ -18,6 +19,16 @@ import {
 import {
   validatePrivateDonationProof,
 } from "@/lib/donation-proof-media";
+import {
+  createDonationNotificationCapability,
+} from "@/lib/notifications/capability.server";
+import {
+  notificationsEnabled,
+} from "@/lib/notifications/config.server";
+import {
+  createStaffNotificationEventBestEffort,
+  NOTIFICATION_EVENT_TYPES,
+} from "@/lib/notifications/events.server";
 import { db } from "@/src/db";
 import {
   campaigns,
@@ -459,6 +470,35 @@ export async function submitDonation(
         selectedCampaign.slug;
     }
 
+    const notificationFeatureEnabled =
+      notificationsEnabled();
+
+    let notificationCapability:
+      ReturnType<
+        typeof createDonationNotificationCapability
+      > | null = null;
+
+    if (
+      notificationFeatureEnabled
+    ) {
+      try {
+        notificationCapability =
+          createDonationNotificationCapability();
+      } catch (error) {
+        console.error(
+          "Donation notification capability generation failed:",
+          error instanceof Error
+            ? error.message
+            : "unknown_error",
+        );
+      }
+    }
+
+    const notificationCapabilityCreatedAt =
+      notificationCapability
+        ? new Date()
+        : null;
+
     let lockedProofError:
       string | null = null;
 
@@ -522,6 +562,16 @@ export async function submitDonation(
                   proofImageUrl,
                 status:
                   "PENDING",
+                ...(
+                  notificationCapability
+                    ? {
+                        notificationCapabilityHash:
+                          notificationCapability.hash,
+                        notificationCapabilityCreatedAt:
+                          notificationCapabilityCreatedAt,
+                      }
+                    : {}
+                ),
               })
               .returning({
                 id:
@@ -563,6 +613,46 @@ export async function submitDonation(
       );
     }
 
+    if (
+      notificationFeatureEnabled
+    ) {
+      try {
+        after(
+          async () => {
+            const notificationResult =
+              await createStaffNotificationEventBestEffort({
+                type:
+                  NOTIFICATION_EVENT_TYPES.donationSubmitted,
+                title:
+                  "Donasi baru menunggu verifikasi",
+                body:
+                  "Ada donasi baru yang perlu diperiksa oleh pengurus.",
+                targetUrl:
+                  "/admin/donasi",
+                dedupeKey:
+                  `donation-submitted:${inserted}`,
+              });
+
+            if (
+              !notificationResult.available ||
+              notificationResult.failed > 0
+            ) {
+              console.error(
+                "[notifications] donation submitted staff notification incomplete",
+              );
+            }
+          },
+        );
+      } catch (error) {
+        console.error(
+          "[notifications] donation submitted scheduling failed:",
+          error instanceof Error
+            ? error.message
+            : "unknown_error",
+        );
+      }
+    }
+
     return {
       success: true,
       error: null,
@@ -570,6 +660,10 @@ export async function submitDonation(
         formatDonationReference(
           inserted,
         ),
+      notificationCapability:
+        notificationCapability
+          ?.token ||
+        null,
     };
   } catch (error) {
     console.error(
