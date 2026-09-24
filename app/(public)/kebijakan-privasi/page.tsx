@@ -27,7 +27,7 @@ export default function KebijakanPrivasiPage() {
           </h1>
 
           <p className="mt-4 text-slate-400">
-            Terakhir diperbarui: 24
+            Terakhir diperbarui: 24 September 2026
             September 2026
           </p>
         </div>
@@ -347,7 +347,46 @@ export default function KebijakanPrivasiPage() {
             penyimpanan yang sah.
           </p>
 
-          <h2>Kontak</h2>
+                    <h2>Notifikasi Push</h2>
+          <p>
+            Ruang Sejahtera dapat menyediakan notifikasi push untuk
+            menyampaikan pembaruan layanan, seperti perubahan status donasi,
+            pengajuan bantuan, jadwal pelaksanaan, atau informasi layanan lain
+            yang berkaitan langsung dengan aktivitas pengguna.
+          </p>
+          <p>
+            Notifikasi push hanya diaktifkan setelah pengguna secara sadar
+            memilih untuk mengaktifkannya dan memberikan izin melalui browser,
+            peramban, atau perangkat yang digunakan. Ruang Sejahtera tidak
+            meminta izin notifikasi secara otomatis saat halaman pertama kali
+            dibuka.
+          </p>
+          <p>
+            Untuk mengirim notifikasi, sistem dapat memproses data teknis
+            subscription push, termasuk endpoint layanan push, pengidentifikasi
+            subscription, serta kunci teknis yang diperlukan untuk pengiriman
+            pesan secara aman. Data tersebut digunakan untuk pengiriman dan
+            pengelolaan notifikasi layanan, bukan untuk menampilkan informasi
+            pribadi pada layar notifikasi atau untuk tujuan periklanan.
+          </p>
+          <p>
+            Endpoint dan data subscription dapat berkaitan dengan browser,
+            perangkat, sistem operasi, atau layanan push yang digunakan oleh
+            pengguna. Penyedia browser, sistem operasi, atau layanan push dapat
+            memproses data teknis yang diperlukan agar pesan dapat dikirim ke
+            perangkat pengguna sesuai mekanisme layanan mereka.
+          </p>
+          <p>
+            Pengguna dapat menonaktifkan notifikasi melalui pengaturan yang
+            tersedia pada layanan Ruang Sejahtera atau mencabut izin notifikasi
+            melalui pengaturan browser atau perangkat. Setelah dinonaktifkan,
+            sistem tidak lagi menggunakan subscription tersebut untuk
+            pengiriman notifikasi baru, kecuali sejauh data teknis tertentu
+            masih perlu dipertahankan sementara untuk keamanan, pencegahan
+            penyalahgunaan, pencatatan teknis, atau pemenuhan kewajiban yang
+            berlaku.
+          </p>
+<h2>Kontak</h2>
 
           <p>
             Pertanyaan mengenai privasi,
