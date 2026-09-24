@@ -10,6 +10,9 @@ import {
 import {
   redirect,
 } from "next/navigation";
+import {
+  after,
+} from "next/server";
 
 import {
   getCurrentVerifiedPublicUser,
@@ -30,6 +33,13 @@ import {
 import {
   createVercelBlobStorage,
 } from "@/lib/storage/providers/vercel-blob";
+import {
+  notificationsEnabled,
+} from "@/lib/notifications/config.server";
+import {
+  createStaffNotificationEventBestEffort,
+  NOTIFICATION_EVENT_TYPES,
+} from "@/lib/notifications/events.server";
 import {
   db,
 } from "@/src/db";
@@ -751,6 +761,48 @@ export async function createAssistanceApplication(
     };
   }
 
+  if (
+    input.intent ===
+      "submit" &&
+    notificationsEnabled()
+  ) {
+    try {
+      after(
+        async () => {
+          const notificationResult =
+            await createStaffNotificationEventBestEffort({
+              type:
+                NOTIFICATION_EVENT_TYPES.assistanceSubmitted,
+              title:
+                "Pengajuan bantuan baru",
+              body:
+                "Ada pengajuan bantuan yang menunggu verifikasi pengurus.",
+              targetUrl:
+                "/admin/pengajuan",
+              dedupeKey:
+                `assistance-submitted:${createdId}:initial`,
+            });
+
+          if (
+            !notificationResult.available ||
+            notificationResult.failed > 0
+          ) {
+            console.error(
+              "[notifications] assistance submission staff notification incomplete",
+            );
+          }
+        },
+      );
+    } catch (error) {
+      console.error(
+        "[notifications] assistance submission scheduling failed:",
+        error instanceof Error
+          ? error.message
+          : "unknown_error",
+      );
+    }
+  }
+
   refreshAssistancePages(
     createdId,
   );
@@ -785,6 +837,8 @@ export async function updateAssistanceApplication(
           assistanceApplications.status,
         submittedAt:
           assistanceApplications.submittedAt,
+        reviewedAt:
+          assistanceApplications.reviewedAt,
       })
       .from(
         assistanceApplications,
@@ -1181,6 +1235,66 @@ export async function updateAssistanceApplication(
           );
         }
       }
+    }
+  }
+
+  if (
+    input.intent ===
+      "submit" &&
+    notificationsEnabled()
+  ) {
+    const submissionCycle =
+      existing.status ===
+        "NEEDS_REVISION"
+        ? (
+            existing.reviewedAt
+              ?.toISOString() ||
+            existing.submittedAt
+              ?.toISOString() ||
+            "revision"
+          )
+        : "initial";
+
+    try {
+      after(
+        async () => {
+          const notificationResult =
+            await createStaffNotificationEventBestEffort({
+              type:
+                NOTIFICATION_EVENT_TYPES.assistanceSubmitted,
+              title:
+                existing.status ===
+                  "NEEDS_REVISION"
+                  ? "Pengajuan bantuan dikirim ulang"
+                  : "Pengajuan bantuan baru",
+              body:
+                existing.status ===
+                  "NEEDS_REVISION"
+                  ? "Ada pengajuan bantuan hasil revisi yang menunggu pemeriksaan kembali."
+                  : "Ada pengajuan bantuan yang menunggu verifikasi pengurus.",
+              targetUrl:
+                "/admin/pengajuan",
+              dedupeKey:
+                `assistance-submitted:${applicationId}:${submissionCycle}`,
+            });
+
+          if (
+            !notificationResult.available ||
+            notificationResult.failed > 0
+          ) {
+            console.error(
+              "[notifications] assistance resubmission staff notification incomplete",
+            );
+          }
+        },
+      );
+    } catch (error) {
+      console.error(
+        "[notifications] assistance resubmission scheduling failed:",
+        error instanceof Error
+          ? error.message
+          : "unknown_error",
+      );
     }
   }
 
