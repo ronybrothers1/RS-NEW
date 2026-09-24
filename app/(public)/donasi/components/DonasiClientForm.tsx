@@ -16,6 +16,7 @@ import {
 } from "react";
 
 import { submitDonation } from "@/app/actions/donasi";
+import DonationPushOptInController from "@/components/notifications/DonationPushOptInController";
 import DonationProofUploader from "./DonationProofUploader";
 
 type ProgramOption = {
@@ -32,6 +33,9 @@ type DonationState = {
   success: boolean;
   error: string | null;
   reference?:
+    | string
+    | null;
+  notificationCapability?:
     | string
     | null;
 };
@@ -122,6 +126,8 @@ export default function DonasiClientForm({
     success: false,
     error: null,
     reference: null,
+    notificationCapability:
+      null,
   };
 
   const [
@@ -272,6 +278,20 @@ export default function DonasiClientForm({
             </p>
           </div>
         )}
+
+        {state.reference &&
+          state.notificationCapability && (
+            <div className="mx-auto mt-5 max-w-lg">
+              <DonationPushOptInController
+                reference={
+                  state.reference
+                }
+                capabilityToken={
+                  state.notificationCapability
+                }
+              />
+            </div>
+          )}
 
         <div className="mx-auto mt-6 max-w-lg rounded-2xl border border-blue-100 bg-blue-50 p-4 text-left">
           <div className="flex gap-3">
