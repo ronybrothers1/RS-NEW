@@ -127,6 +127,11 @@ export default async function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/hapus-akun" className="transition-colors hover:text-citrus-300">
+                  Penghapusan Akun
+                </Link>
+              </li>
+              <li>
                 <Link href="/ketentuan-donasi" className="transition-colors hover:text-citrus-300">
                   Ketentuan Donasi
                 </Link>

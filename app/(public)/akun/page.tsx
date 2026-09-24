@@ -3,6 +3,7 @@ import {
   ClipboardList,
   Mail,
   Phone,
+  Trash2,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -111,44 +112,70 @@ export default async function AccountPage() {
       </section>
 
       <div className="mx-auto grid max-w-6xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] lg:px-8">
-        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="font-bold text-slate-950">
-            Informasi Akun
-          </h2>
+        <div className="space-y-6">
+          <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 className="font-bold text-slate-950">
+              Informasi Akun
+            </h2>
 
-          <div className="mt-5 space-y-4">
-            <div className="flex gap-3">
-              <Mail className="mt-0.5 h-5 w-5 shrink-0 text-slate-400" />
+            <div className="mt-5 space-y-4">
+              <div className="flex gap-3">
+                <Mail className="mt-0.5 h-5 w-5 shrink-0 text-slate-400" />
 
-              <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
-                  Email
-                </p>
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                    Email
+                  </p>
 
-                <p className="mt-1 break-all text-sm font-medium text-slate-700">
-                  {
-                    user.email
-                  }
-                </p>
+                  <p className="mt-1 break-all text-sm font-medium text-slate-700">
+                    {
+                      user.email
+                    }
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <Phone className="mt-0.5 h-5 w-5 shrink-0 text-slate-400" />
+
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                    WhatsApp
+                  </p>
+
+                  <p className="mt-1 text-sm font-medium text-slate-700">
+                    {user.phone ||
+                      "Belum diisi"}
+                  </p>
+                </div>
               </div>
             </div>
+          </section>
 
-            <div className="flex gap-3">
-              <Phone className="mt-0.5 h-5 w-5 shrink-0 text-slate-400" />
-
-              <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
-                  WhatsApp
-                </p>
-
-                <p className="mt-1 text-sm font-medium text-slate-700">
-                  {user.phone ||
-                    "Belum diisi"}
-                </p>
-              </div>
+          <section className="rounded-2xl border border-rose-200 bg-white p-6 shadow-sm">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 text-rose-700">
+              <Trash2 className="h-5 w-5" />
             </div>
-          </div>
-        </section>
+
+            <h2 className="mt-5 font-bold text-slate-950">
+              Pengelolaan Akun
+            </h2>
+
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              Anda dapat mengajukan
+              penghapusan akun Ruang
+              Sejahtera beserta data terkait
+              yang tidak wajib dipertahankan.
+            </p>
+
+            <Link
+              href="/hapus-akun"
+              className="mt-5 inline-flex min-h-11 items-center justify-center rounded-xl border border-rose-300 bg-white px-4 py-2.5 text-sm font-semibold text-rose-700 transition hover:bg-rose-50"
+            >
+              Ajukan Penghapusan Akun
+            </Link>
+          </section>
+        </div>
 
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-50 text-amber-700">
@@ -160,12 +187,19 @@ export default async function AccountPage() {
           </h2>
 
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            Ajukan calon penerima untuk salah satu program aktif, simpan draf, kirim untuk verifikasi, dan pantau statusnya dari akun ini.
+            Ajukan calon penerima untuk salah
+            satu program aktif, simpan draf,
+            kirim untuk verifikasi, dan pantau
+            statusnya dari akun ini.
           </p>
 
           <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
             <p className="text-sm font-medium text-slate-700">
-              Data alamat lengkap dan foto pengajuan digunakan untuk proses internal. Foto pengajuan tidak dibuka sebagai media publik.
+              Data alamat lengkap dan foto
+              pengajuan digunakan untuk
+              proses internal. Foto pengajuan
+              tidak dibuka sebagai media
+              publik.
             </p>
           </div>
 
