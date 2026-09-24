@@ -28,7 +28,6 @@ export default function KebijakanPrivasiPage() {
 
           <p className="mt-4 text-slate-400">
             Terakhir diperbarui: 24 September 2026
-            September 2026
           </p>
         </div>
       </section>
@@ -347,7 +346,7 @@ export default function KebijakanPrivasiPage() {
             penyimpanan yang sah.
           </p>
 
-                    <h2>Notifikasi Push</h2>
+          <h2>Notifikasi Push</h2>
           <p>
             Ruang Sejahtera dapat menyediakan notifikasi push untuk
             menyampaikan pembaruan layanan, seperti perubahan status donasi,
