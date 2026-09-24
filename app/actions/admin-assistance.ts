@@ -833,6 +833,8 @@ export async function scheduleAssistanceApplication(
           assistanceApplications.id,
         status:
           assistanceApplications.status,
+        applicantId:
+          assistanceApplications.applicantId,
         scheduledAt:
           assistanceApplications.scheduledAt,
         completedAt:
@@ -1012,6 +1014,38 @@ export async function scheduleAssistanceApplication(
       },
     });
 
+  if (
+    notificationsEnabled()
+  ) {
+    try {
+      after(
+        async () => {
+          await createUserNotificationEventBestEffort({
+            userId:
+              existing.applicantId,
+            type:
+              NOTIFICATION_EVENT_TYPES.assistanceScheduled,
+            title:
+              "Jadwal bantuan diperbarui",
+            body:
+              "Jadwal pelaksanaan pengajuan Anda telah diperbarui. Buka aplikasi untuk melihat detail.",
+            targetUrl:
+              `/akun/pengajuan/${applicationId}`,
+            dedupeKey:
+              `assistance-scheduled:${applicationId}:${scheduledAt.toISOString()}`,
+          });
+        },
+      );
+    } catch (error) {
+      console.error(
+        "[notifications] assistance scheduled notification scheduling failed:",
+        error instanceof Error
+          ? error.message
+          : "unknown_error",
+      );
+    }
+  }
+
   refreshReviewPaths(
     applicationId,
   );
@@ -1057,6 +1091,8 @@ export async function completeAssistanceApplication(
           assistanceApplications.id,
         status:
           assistanceApplications.status,
+        applicantId:
+          assistanceApplications.applicantId,
         scheduledAt:
           assistanceApplications.scheduledAt,
         completedAt:
@@ -1191,6 +1227,38 @@ export async function completeAssistanceApplication(
           existing.scheduledAt,
       },
     });
+
+  if (
+    notificationsEnabled()
+  ) {
+    try {
+      after(
+        async () => {
+          await createUserNotificationEventBestEffort({
+            userId:
+              existing.applicantId,
+            type:
+              NOTIFICATION_EVENT_TYPES.assistanceCompleted,
+            title:
+              "Pelaksanaan bantuan diperbarui",
+            body:
+              "Pelaksanaan bantuan untuk pengajuan Anda telah ditandai selesai. Buka aplikasi untuk melihat detail.",
+            targetUrl:
+              `/akun/pengajuan/${applicationId}`,
+            dedupeKey:
+              `assistance-completed:${applicationId}`,
+          });
+        },
+      );
+    } catch (error) {
+      console.error(
+        "[notifications] assistance completed notification scheduling failed:",
+        error instanceof Error
+          ? error.message
+          : "unknown_error",
+      );
+    }
+  }
 
   refreshReviewPaths(
     applicationId,
