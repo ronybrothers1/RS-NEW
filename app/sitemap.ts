@@ -33,6 +33,48 @@ import {
 const SITEMAP_REVALIDATE_SECONDS =
   300;
 
+const STATIC_PAGE_LAST_MODIFIED = {
+  about:
+    "2026-09-18T04:31:22.000Z",
+  privacy:
+    "2026-09-08T00:00:00.000Z",
+  donationTerms:
+    "2026-09-08T00:00:00.000Z",
+} as const;
+
+function getLatestLastModified(
+  entries: MetadataRoute.Sitemap,
+): string | undefined {
+  let latestTimestamp = 0;
+
+  for (const entry of entries) {
+    if (!entry.lastModified) {
+      continue;
+    }
+
+    const timestamp =
+      entry.lastModified instanceof Date
+        ? entry.lastModified.getTime()
+        : Date.parse(
+            entry.lastModified,
+          );
+
+    if (
+      Number.isFinite(timestamp) &&
+      timestamp > latestTimestamp
+    ) {
+      latestTimestamp =
+        timestamp;
+    }
+  }
+
+  return latestTimestamp > 0
+    ? new Date(
+        latestTimestamp,
+      ).toISOString()
+    : undefined;
+}
+
 async function loadPublishedArticleSitemap(
   baseUrl: string,
 ): Promise<MetadataRoute.Sitemap> {
@@ -260,6 +302,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       campaignUrlsPromise,
     ]);
 
+  const articleIndexLastModified =
+    getLatestLastModified(
+      articleUrls,
+    );
+
+  const activityIndexLastModified =
+    getLatestLastModified(
+      activityUrls,
+    );
+
+  const assistanceIndexLastModified =
+    getLatestLastModified(
+      campaignUrls,
+    );
+
   return [
     {
       url: baseUrl,
@@ -271,6 +328,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     {
       url:
         `${baseUrl}/tentang-kami`,
+      lastModified:
+        STATIC_PAGE_LAST_MODIFIED.about,
 
       changeFrequency:
         "monthly",
@@ -287,6 +346,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     {
       url:
         `${baseUrl}/berita`,
+      lastModified:
+        articleIndexLastModified,
 
       changeFrequency:
         "daily",
@@ -295,6 +356,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     {
       url:
         `${baseUrl}/kegiatan`,
+      lastModified:
+        activityIndexLastModified,
 
       changeFrequency:
         "daily",
@@ -303,6 +366,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     {
       url:
         `${baseUrl}/bantuan`,
+      lastModified:
+        assistanceIndexLastModified,
 
       changeFrequency:
         "daily",
@@ -335,6 +400,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     {
       url:
         `${baseUrl}/kebijakan-privasi`,
+      lastModified:
+        STATIC_PAGE_LAST_MODIFIED.privacy,
 
       changeFrequency:
         "yearly",
@@ -343,6 +410,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     {
       url:
         `${baseUrl}/ketentuan-donasi`,
+      lastModified:
+        STATIC_PAGE_LAST_MODIFIED.donationTerms,
 
       changeFrequency:
         "yearly",
