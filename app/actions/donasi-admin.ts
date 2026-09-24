@@ -6,6 +6,9 @@ import {
 import {
   PUBLIC_FINANCE_CACHE_TAG,
 } from "@/lib/public-finance";
+import {
+  deliverPushToDonationBestEffort,
+} from "@/lib/notifications/donation-delivery.server";
 import { db } from "@/src/db";
 import {
   auditLogs,
@@ -18,6 +21,7 @@ import {
   eq,
 } from "drizzle-orm";
 import { revalidatePath, revalidateTag } from "next/cache";
+import { after } from "next/server";
 
 function isUuid(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
@@ -157,6 +161,8 @@ export async function verifyDonation(
               return {
                 success: true as const,
                 error: null,
+                transitioned:
+                  false as const,
               };
             }
 
@@ -323,15 +329,64 @@ export async function verifyDonation(
           return {
             success: true as const,
             error: null,
+            transitioned:
+              true as const,
           };
         },
       );
 
     if (result.success) {
       revalidateVerifiedDonationPages();
+
+      if (
+        "transitioned" in
+          result &&
+        result.transitioned ===
+          true
+      ) {
+        try {
+          after(
+            async () => {
+              const pushResult =
+                await deliverPushToDonationBestEffort(
+                  donationId,
+                  {
+                    title:
+                      "Status donasi diperbarui",
+                    body:
+                      "Donasi Anda telah selesai diverifikasi. Buka aplikasi untuk melihat status terbaru.",
+                    targetUrl:
+                      "/donasi#cek-status",
+                  },
+                );
+
+              if (
+                !pushResult.available ||
+                pushResult.failed > 0
+              ) {
+                console.error(
+                  "[notifications] verified donation push incomplete",
+                );
+              }
+            },
+          );
+        } catch (error) {
+          console.error(
+            "[notifications] verified donation push scheduling failed:",
+            error instanceof Error
+              ? error.message
+              : "unknown_error",
+          );
+        }
+      }
     }
 
-    return result;
+    return {
+      success:
+        result.success,
+      error:
+        result.error,
+    };
   } catch (error) {
     console.error(
       "Verify donation error:",
@@ -478,15 +533,64 @@ export async function rejectDonation(
           return {
             success: true as const,
             error: null,
+            transitioned:
+              true as const,
           };
         },
       );
 
     if (result.success) {
       revalidateDonationPages();
+
+      if (
+        "transitioned" in
+          result &&
+        result.transitioned ===
+          true
+      ) {
+        try {
+          after(
+            async () => {
+              const pushResult =
+                await deliverPushToDonationBestEffort(
+                  donationId,
+                  {
+                    title:
+                      "Status donasi diperbarui",
+                    body:
+                      "Status donasi Anda telah diperbarui. Buka aplikasi untuk melihat hasil verifikasi.",
+                    targetUrl:
+                      "/donasi#cek-status",
+                  },
+                );
+
+              if (
+                !pushResult.available ||
+                pushResult.failed > 0
+              ) {
+                console.error(
+                  "[notifications] rejected donation push incomplete",
+                );
+              }
+            },
+          );
+        } catch (error) {
+          console.error(
+            "[notifications] rejected donation push scheduling failed:",
+            error instanceof Error
+              ? error.message
+              : "unknown_error",
+          );
+        }
+      }
     }
 
-    return result;
+    return {
+      success:
+        result.success,
+      error:
+        result.error,
+    };
   } catch (error) {
     console.error(
       "Reject donation error:",
