@@ -26,13 +26,10 @@ import {
   SAMPANG_REGENCY,
 } from "@/lib/sampang-regions";
 import {
-  getAssistanceBlobToken,
-  isAllowedAssistanceUserPath,
-  isPrivateAssistanceBlobUrl,
+  deleteAssistancePhoto,
+  isValidAssistancePhotoReference,
+  validateAssistancePhotoForUser,
 } from "@/lib/assistance-media";
-import {
-  createVercelBlobStorage,
-} from "@/lib/storage/providers/vercel-blob";
 import {
   notificationsEnabled,
 } from "@/lib/notifications/config.server";
@@ -204,13 +201,10 @@ function parsePhotos(
     if (
       !url ||
       !pathname ||
-      !isAllowedAssistanceUserPath(
-        pathname,
-        userId,
-      ) ||
-      !isPrivateAssistanceBlobUrl(
+      !isValidAssistancePhotoReference(
         url,
         pathname,
+        userId,
       )
     ) {
       throw new Error(
@@ -249,8 +243,6 @@ function parsePhotos(
 
   return result;
 }
-
-
 
 async function parseApplication(
   formData: FormData,
@@ -382,6 +374,23 @@ async function parseApplication(
       formData,
       userId,
     );
+
+  for (const photo of photos) {
+    const valid =
+      await validateAssistancePhotoForUser({
+        value:
+          photo.url,
+        pathname:
+          photo.pathname,
+        userId,
+      });
+
+    if (!valid) {
+      throw new Error(
+        "Salah satu foto pengajuan tidak dapat diverifikasi. Silakan unggah ulang.",
+      );
+    }
+  }
 
   if (
     isSubmit &&
@@ -992,9 +1001,7 @@ export async function updateAssistanceApplication(
             ? "SUBMITTED"
             : existing.status;
 
-        const [
-          updated,
-        ] =
+        const [updated] =
           await tx
             .update(
               assistanceApplications,
@@ -1094,14 +1101,10 @@ export async function updateAssistanceApplication(
         }
 
         for (
-          const [
-            index,
-            photo,
-          ] of input.photos.entries()
+          const [index, photo] of
+            input.photos.entries()
         ) {
-          if (
-            photo.id
-          ) {
+          if (photo.id) {
             await tx
               .update(
                 assistanceApplicationPhotos,
@@ -1120,8 +1123,7 @@ export async function updateAssistanceApplication(
         }
 
         if (
-          newPhotos.length >
-          0
+          newPhotos.length > 0
         ) {
           await tx
             .insert(
@@ -1204,37 +1206,25 @@ export async function updateAssistanceApplication(
     };
   }
 
-  if (
-    removed.length >
-    0
-  ) {
-    const token =
-      getAssistanceBlobToken();
+  for (const photo of removed) {
+    if (!photo.storagePath) {
+      continue;
+    }
 
-    if (token) {
-      const storage =
-        createVercelBlobStorage({
-          access: "private",
-          token,
-        });
-
-      for (
-        const photo of
-          removed
-      ) {
-        try {
-          await storage.delete(
-            photo.imageUrl,
-          );
-        } catch (
-          error
-        ) {
-          console.error(
-            "Failed to delete removed assistance blob:",
-            error,
-          );
-        }
-      }
+    try {
+      await deleteAssistancePhoto({
+        value:
+          photo.imageUrl,
+        pathname:
+          photo.storagePath,
+        userId:
+          user.id,
+      });
+    } catch (error) {
+      console.error(
+        "Failed to delete removed assistance media:",
+        error,
+      );
     }
   }
 

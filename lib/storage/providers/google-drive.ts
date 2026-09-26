@@ -36,6 +36,10 @@ export type GoogleDriveStorageAdapter =
       locator: string,
     ): Promise<string[]>;
 
+    getName(
+      locator: string,
+    ): Promise<string>;
+
     createResumableUploadSession(
       input: GoogleDriveResumableUploadInput,
     ): Promise<string>;
@@ -43,6 +47,7 @@ export type GoogleDriveStorageAdapter =
 
 type GoogleDriveFileMetadata = {
   id?: string;
+  name?: string;
   mimeType?: string;
   size?: string;
   createdTime?: string;
@@ -485,6 +490,50 @@ export function createGoogleDriveStorage({
     );
   }
 
+  async function getName(
+    locator: string,
+  ) {
+    const fileId =
+      getGoogleDriveFileId(
+        locator,
+      );
+
+    const response =
+      await requestFile(
+        fileId,
+        {
+          query: {
+            fields:
+              "id,name",
+          },
+        },
+      );
+
+    assertDriveResponse(
+      response,
+      "name",
+    );
+
+    const metadata =
+      (await response.json()) as
+        GoogleDriveFileMetadata;
+
+    if (
+      !metadata.id ||
+      metadata.id !==
+        fileId ||
+      typeof metadata.name !==
+        "string" ||
+      !metadata.name.trim()
+    ) {
+      throw new Error(
+        "Google Drive mengembalikan nama file yang tidak valid.",
+      );
+    }
+
+    return metadata.name;
+  }
+
   async function createResumableUploadSession({
     folderId,
     filename,
@@ -639,6 +688,7 @@ export function createGoogleDriveStorage({
     read,
     head,
     getParents,
+    getName,
     createResumableUploadSession,
     async delete(locator) {
       const locators =

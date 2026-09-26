@@ -5,11 +5,8 @@ import {
 } from "drizzle-orm";
 
 import {
-  getAssistanceBlobToken,
+  getAssistancePhotoForAuthorizedRead,
 } from "@/lib/assistance-media";
-import {
-  createVercelBlobStorage,
-} from "@/lib/storage/providers/vercel-blob";
 import {
   db,
 } from "@/src/db";
@@ -81,27 +78,9 @@ export async function GET(
     );
   }
 
-  const token =
-    getAssistanceBlobToken();
-
-  if (!token) {
-    return new Response(
-      "Media storage unavailable",
-      {
-        status: 503,
-      },
-    );
-  }
-
   try {
-    const storage =
-      createVercelBlobStorage({
-        access: "private",
-        token,
-      });
-
     const result =
-      await storage.read(
+      await getAssistancePhotoForAuthorizedRead(
         photo.imageUrl,
       );
 

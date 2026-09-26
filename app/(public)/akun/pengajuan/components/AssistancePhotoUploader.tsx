@@ -1,9 +1,6 @@
 "use client";
 
 import {
-  upload,
-} from "@vercel/blob/client";
-import {
   ImagePlus,
   Loader2,
   Trash2,
@@ -33,9 +30,12 @@ const MAX_PHOTOS = 5;
 const MIN_PHOTOS = 2;
 const MAX_FILE_SIZE =
   5 * 1024 * 1024;
-
-const UPLOAD_TIMEOUT_MS =
-  5 * 60 * 1000;
+const DRIVE_CHUNK_SIZE =
+  1024 * 1024;
+const SESSION_TIMEOUT_MS =
+  30 * 1000;
+const CHUNK_TIMEOUT_MS =
+  2 * 60 * 1000;
 
 const ALLOWED_TYPES =
   new Set([
@@ -44,33 +44,320 @@ const ALLOWED_TYPES =
     "image/webp",
   ]);
 
-function safeFileName(
-  value: string,
+type UploadSessionResponse = {
+  uploadTicket?: string;
+  error?: string;
+};
+
+type UploadChunkResponse = {
+  complete?: boolean;
+  url?: string;
+  pathname?: string;
+  nextStart?: number;
+  error?: string;
+};
+
+async function createUploadSession(
+  file: File,
 ) {
-  const cleaned =
-    value
-      .normalize("NFKD")
-      .replace(
-        /[^a-zA-Z0-9._-]+/g,
-        "-",
-      )
-      .replace(
-        /-+/g,
-        "-",
-      )
-      .replace(
-        /^[-.]+|[-.]+$/g,
-        "",
+  const controller =
+    new AbortController();
+  const timeout =
+    window.setTimeout(
+      () => controller.abort(),
+      SESSION_TIMEOUT_MS,
+    );
+
+  try {
+    const response =
+      await fetch(
+        "/api/akun/pengajuan/media/session",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body:
+            JSON.stringify({
+              filename:
+                file.name,
+              contentType:
+                file.type,
+              size:
+                file.size,
+            }),
+          signal:
+            controller.signal,
+        },
       );
 
-  return (
-    cleaned ||
-    "foto.jpg"
+    const result =
+      (await response
+        .json()
+        .catch(() => null)) as
+        UploadSessionResponse | null;
+
+    if (!response.ok) {
+      throw new Error(
+        result?.error ||
+          "Gagal menyiapkan upload foto.",
+      );
+    }
+
+    if (!result?.uploadTicket) {
+      throw new Error(
+        "Sesi upload foto tidak valid.",
+      );
+    }
+
+    return result.uploadTicket;
+  } catch (error) {
+    if (controller.signal.aborted) {
+      throw new Error(
+        "Server terlalu lama menyiapkan upload foto. Periksa koneksi lalu coba lagi.",
+      );
+    }
+
+    throw error;
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
+
+function uploadChunk(
+  uploadTicket: string,
+  file: File,
+  chunk: Blob,
+  start: number,
+  onProgress: (
+    percentage: number,
+  ) => void,
+) {
+  return new Promise<UploadChunkResponse>(
+    (resolve, reject) => {
+      const request =
+        new XMLHttpRequest();
+
+      request.open(
+        "POST",
+        "/api/akun/pengajuan/media/upload?mode=chunk",
+      );
+      request.timeout =
+        CHUNK_TIMEOUT_MS;
+      request.setRequestHeader(
+        "Content-Type",
+        "application/octet-stream",
+      );
+      request.setRequestHeader(
+        "X-Upload-Ticket",
+        uploadTicket,
+      );
+      request.setRequestHeader(
+        "X-Upload-Start",
+        String(start),
+      );
+
+      request.upload.onprogress =
+        (event) => {
+          if (!event.lengthComputable) {
+            return;
+          }
+
+          const uploaded =
+            start + event.loaded;
+
+          onProgress(
+            Math.min(
+              99,
+              Math.round(
+                (uploaded /
+                  file.size) *
+                  100,
+              ),
+            ),
+          );
+        };
+
+      request.onerror =
+        () => reject(
+          new Error(
+            "Koneksi upload foto terputus.",
+          ),
+        );
+
+      request.ontimeout =
+        () => reject(
+          new Error(
+            "Upload foto terlalu lama. Periksa koneksi lalu coba lagi.",
+          ),
+        );
+
+      request.onload =
+        () => {
+          let result:
+            UploadChunkResponse | null =
+              null;
+
+          try {
+            result =
+              JSON.parse(
+                request.responseText,
+              ) as UploadChunkResponse;
+          } catch {
+            result = null;
+          }
+
+          if (
+            request.status < 200 ||
+            request.status >= 300
+          ) {
+            reject(
+              new Error(
+                result?.error ||
+                  `Upload foto gagal (HTTP ${request.status}).`,
+              ),
+            );
+            return;
+          }
+
+          if (!result) {
+            reject(
+              new Error(
+                "Respons upload foto tidak valid.",
+              ),
+            );
+            return;
+          }
+
+          resolve(result);
+        };
+
+      request.send(chunk);
+    },
   );
 }
 
+async function uploadToGoogleDrive(
+  uploadTicket: string,
+  file: File,
+  onProgress: (
+    percentage: number,
+  ) => void,
+) {
+  let start = 0;
+
+  while (start < file.size) {
+    const end =
+      Math.min(
+        start +
+          DRIVE_CHUNK_SIZE,
+        file.size,
+      );
+
+    const result =
+      await uploadChunk(
+        uploadTicket,
+        file,
+        file.slice(start, end),
+        start,
+        onProgress,
+      );
+
+    if (result.complete) {
+      if (
+        typeof result.url !==
+          "string" ||
+        !result.url ||
+        typeof result.pathname !==
+          "string" ||
+        !result.pathname ||
+        end !== file.size
+      ) {
+        throw new Error(
+          "Google Drive mengembalikan hasil upload yang tidak valid.",
+        );
+      }
+
+      onProgress(100);
+
+      return {
+        url:
+          result.url,
+        pathname:
+          result.pathname,
+      };
+    }
+
+    const nextStart =
+      typeof result.nextStart ===
+        "number" &&
+      Number.isSafeInteger(
+        result.nextStart,
+      )
+        ? result.nextStart
+        : end;
+
+    if (
+      nextStart <= start ||
+      nextStart > file.size ||
+      nextStart %
+        (256 * 1024) !==
+        0
+    ) {
+      throw new Error(
+        "Status upload Google Drive tidak valid.",
+      );
+    }
+
+    start = nextStart;
+  }
+
+  throw new Error(
+    "Google Drive tidak menyelesaikan upload foto.",
+  );
+}
+
+async function cleanupPhoto(
+  photo: Pick<
+    PhotoState,
+    "url" | "pathname"
+  >,
+) {
+  const response =
+    await fetch(
+      "/api/akun/pengajuan/media/upload",
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type":
+            "application/json",
+        },
+        body:
+          JSON.stringify({
+            url:
+              photo.url,
+            pathname:
+              photo.pathname,
+          }),
+      },
+    );
+
+  if (!response.ok) {
+    const payload =
+      await response
+        .json()
+        .catch(() => null);
+
+    throw new Error(
+      payload?.error ||
+        "Foto belum dapat dihapus.",
+    );
+  }
+}
+
 export default function AssistancePhotoUploader({
-  userId,
+  userId: _userId,
   initialPhotos = [],
   onPhotoCountChange,
   onUploadingChange,
@@ -84,40 +371,26 @@ export default function AssistancePhotoUploader({
     uploading: boolean,
   ) => void;
 }) {
-  const [
-    photos,
-    setPhotos,
-  ] = useState<
-    PhotoState[]
-  >(
-    initialPhotos.map(
-      (photo, index) => ({
-        ...photo,
-        previewUrl:
-          `/api/akun/pengajuan/media/${photo.id}`,
-        originalName:
-          `Foto ${index + 1}`,
-        persisted: true,
-      }),
-    ),
-  );
+  const [photos, setPhotos] =
+    useState<PhotoState[]>(
+      initialPhotos.map(
+        (photo, index) => ({
+          ...photo,
+          previewUrl:
+            `/api/akun/pengajuan/media/${photo.id}`,
+          originalName:
+            `Foto ${index + 1}`,
+          persisted: true,
+        }),
+      ),
+    );
 
-  const [
-    uploading,
-    setUploading,
-  ] = useState(false);
-
-  const [
-    progress,
-    setProgress,
-  ] = useState(0);
-
-  const [
-    error,
-    setError,
-  ] = useState<
-    string | null
-  >(null);
+  const [uploading, setUploading] =
+    useState(false);
+  const [progress, setProgress] =
+    useState(0);
+  const [error, setError] =
+    useState<string | null>(null);
 
   useEffect(() => {
     onPhotoCountChange?.(
@@ -134,15 +407,12 @@ export default function AssistancePhotoUploader({
   ) {
     const selected =
       Array.from(
-        event.target.files ||
-          [],
+        event.target.files || [],
       );
 
     event.target.value = "";
 
-    if (
-      selected.length === 0
-    ) {
+    if (selected.length === 0) {
       return;
     }
 
@@ -159,9 +429,7 @@ export default function AssistancePhotoUploader({
       return;
     }
 
-    for (
-      const file of selected
-    ) {
+    for (const file of selected) {
       if (
         !ALLOWED_TYPES.has(
           file.type,
@@ -174,8 +442,9 @@ export default function AssistancePhotoUploader({
       }
 
       if (
+        file.size <= 0 ||
         file.size >
-        MAX_FILE_SIZE
+          MAX_FILE_SIZE
       ) {
         setError(
           "Ukuran setiap foto maksimal 5 MB.",
@@ -185,9 +454,7 @@ export default function AssistancePhotoUploader({
     }
 
     setUploading(true);
-    onUploadingChange?.(
-      true,
-    );
+    onUploadingChange?.(true);
     setProgress(0);
 
     const completed:
@@ -196,98 +463,50 @@ export default function AssistancePhotoUploader({
     try {
       for (
         let index = 0;
-        index <
-        selected.length;
+        index < selected.length;
         index++
       ) {
         const file =
           selected[index];
-
         const previewUrl =
-          URL.createObjectURL(
-            file,
-          );
+          URL.createObjectURL(file);
 
         try {
-          const pathname =
-            `media/pengajuan/${userId}/${safeFileName(
-              file.name,
-            )}`;
+          const uploadTicket =
+            await createUploadSession(
+              file,
+            );
 
-          const uploadController =
-            new AbortController();
+          const result =
+            await uploadToGoogleDrive(
+              uploadTicket,
+              file,
+              (fileProgress) => {
+                const totalProgress =
+                  Math.round(
+                    (
+                      index * 100 +
+                      fileProgress
+                    ) /
+                      selected.length,
+                  );
 
-          const uploadTimeoutId =
-            window.setTimeout(
-              () => {
-                uploadController.abort();
+                setProgress(
+                  totalProgress,
+                );
               },
-              UPLOAD_TIMEOUT_MS,
             );
 
-          try {
-            const blob =
-              await upload(
-                pathname,
-                file,
-                {
-                  access:
-                    "private",
-                  handleUploadUrl:
-                    "/api/akun/pengajuan/media/upload",
-                  abortSignal:
-                    uploadController.signal,
-
-                  onUploadProgress(
-                    uploadEvent,
-                  ) {
-                    const base =
-                      (index /
-                        selected.length) *
-                      100;
-
-                    const current =
-                      uploadEvent.percentage /
-                      selected.length;
-
-                    setProgress(
-                      Math.round(
-                        base +
-                          current,
-                      ),
-                    );
-                  },
-                },
-              );
-
-            completed.push({
-              url: blob.url,
-              pathname:
-                blob.pathname,
-              previewUrl,
-              originalName:
-                file.name,
-              persisted: false,
-            });
-          } catch (
-            uploadError
-          ) {
-            if (
-              uploadController
-                .signal
-                .aborted
-            ) {
-              throw new Error(
-                "Unggah foto melewati batas waktu 5 menit. Periksa koneksi lalu coba lagi.",
-              );
-            }
-
-            throw uploadError;
-          } finally {
-            window.clearTimeout(
-              uploadTimeoutId,
-            );
-          }
+          completed.push({
+            url:
+              result.url,
+            pathname:
+              result.pathname,
+            previewUrl,
+            originalName:
+              file.name,
+            persisted: false,
+          });
         } catch (uploadError) {
           URL.revokeObjectURL(
             previewUrl,
@@ -302,7 +521,6 @@ export default function AssistancePhotoUploader({
           ...completed,
         ],
       );
-
       setProgress(100);
     } catch (uploadError) {
       console.error(
@@ -316,37 +534,16 @@ export default function AssistancePhotoUploader({
           : "Foto belum dapat diunggah.",
       );
 
-      for (
-        const photo of completed
-      ) {
-        await fetch(
-          "/api/akun/pengajuan/media/upload",
-          {
-            method:
-              "DELETE",
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
-            body:
-              JSON.stringify({
-                pathname:
-                  photo.pathname,
-              }),
-          },
-        ).catch(
-          () => undefined,
-        );
-
+      for (const photo of completed) {
+        await cleanupPhoto(photo)
+          .catch(() => undefined);
         URL.revokeObjectURL(
           photo.previewUrl,
         );
       }
     } finally {
       setUploading(false);
-      onUploadingChange?.(
-        false,
-      );
+      onUploadingChange?.(false);
     }
   }
 
@@ -355,52 +552,19 @@ export default function AssistancePhotoUploader({
   ) {
     setError(null);
 
-    if (
-      photo.persisted
-    ) {
+    if (photo.persisted) {
       setPhotos(
         (current) =>
           current.filter(
             (item) =>
-              item.id !==
-              photo.id,
+              item.id !== photo.id,
           ),
       );
       return;
     }
 
     try {
-      const response =
-        await fetch(
-          "/api/akun/pengajuan/media/upload",
-          {
-            method:
-              "DELETE",
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
-            body:
-              JSON.stringify({
-                pathname:
-                  photo.pathname,
-              }),
-          },
-        );
-
-      if (!response.ok) {
-        const payload =
-          await response
-            .json()
-            .catch(
-              () => null,
-            );
-
-        throw new Error(
-          payload?.error ||
-            "Foto belum dapat dihapus.",
-        );
-      }
+      await cleanupPhoto(photo);
 
       setPhotos(
         (current) =>
@@ -410,7 +574,6 @@ export default function AssistancePhotoUploader({
               photo.pathname,
           ),
       );
-
       URL.revokeObjectURL(
         photo.previewUrl,
       );
@@ -458,9 +621,7 @@ export default function AssistancePhotoUploader({
           </p>
 
           <p className="mt-1 max-w-md text-sm leading-6 text-slate-500">
-            Unggah 2–5 foto yang memperlihatkan
-            kondisi calon penerima secara jelas.
-            JPG, PNG, atau WebP, maksimal 5 MB per foto.
+            Unggah 2–5 foto yang memperlihatkan kondisi calon penerima secara jelas. JPG, PNG, atau WebP, maksimal 5 MB per foto.
           </p>
 
           <label className="mt-4 inline-flex cursor-pointer items-center gap-2 rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800">
@@ -475,9 +636,7 @@ export default function AssistancePhotoUploader({
                 photos.length >=
                   MAX_PHOTOS
               }
-              onChange={
-                handleFiles
-              }
+              onChange={handleFiles}
               className="sr-only"
             />
           </label>
@@ -488,11 +647,9 @@ export default function AssistancePhotoUploader({
             <div className="mb-2 flex items-center justify-between text-xs text-slate-500">
               <span className="inline-flex items-center gap-2">
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                Mengunggah foto
+                Mengunggah foto ke penyimpanan aman
               </span>
-              <span>
-                {progress}%
-              </span>
+              <span>{progress}%</span>
             </div>
 
             <div className="h-2 overflow-hidden rounded-full bg-slate-200">
@@ -517,14 +674,10 @@ export default function AssistancePhotoUploader({
         </div>
       )}
 
-      {photos.length >
-        0 && (
+      {photos.length > 0 && (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {photos.map(
-            (
-              photo,
-              index,
-            ) => (
+            (photo, index) => (
               <div
                 key={
                   photo.id ||
@@ -533,7 +686,7 @@ export default function AssistancePhotoUploader({
                 className="overflow-hidden rounded-xl border border-slate-200 bg-white"
               >
                 <div className="aspect-[4/3] bg-slate-100">
-                  {/* eslint-disable-next-line @next/next/no-img-element -- preview may be a browser object URL or authenticated private media */}
+                  {/* eslint-disable-next-line @next/next/no-img-element -- local preview or authenticated private media */}
                   <img
                     src={
                       photo.previewUrl
@@ -545,19 +698,14 @@ export default function AssistancePhotoUploader({
 
                 <div className="flex items-center justify-between gap-2 p-2">
                   <span className="truncate text-xs text-slate-500">
-                    Foto{" "}
-                    {index + 1}
+                    Foto {index + 1}
                   </span>
 
                   <button
                     type="button"
-                    disabled={
-                      uploading
-                    }
+                    disabled={uploading}
                     onClick={() =>
-                      removePhoto(
-                        photo,
-                      )
+                      removePhoto(photo)
                     }
                     className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-rose-600 transition hover:bg-rose-50 disabled:opacity-50"
                     aria-label={`Hapus foto ${index + 1}`}
@@ -578,8 +726,7 @@ export default function AssistancePhotoUploader({
             : "text-slate-500"
         }`}
       >
-        {photos.length} dari{" "}
-        {MAX_PHOTOS} foto.
+        {photos.length} dari {MAX_PHOTOS} foto.
         {!enoughPhotos &&
           ` Minimal ${MIN_PHOTOS} foto diperlukan sebelum pengajuan dikirim.`}
       </div>

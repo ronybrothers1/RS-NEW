@@ -6,11 +6,8 @@ import {
   getCurrentDbUser,
 } from "@/lib/current-authz";
 import {
-  getAssistanceBlobToken,
+  getAssistancePhotoForAuthorizedRead,
 } from "@/lib/assistance-media";
-import {
-  createVercelBlobStorage,
-} from "@/lib/storage/providers/vercel-blob";
 import {
   db,
 } from "@/src/db";
@@ -47,9 +44,8 @@ export async function GET(
     );
   }
 
-  const {
-    id,
-  } = await context.params;
+  const { id } =
+    await context.params;
 
   const [photo] =
     await db
@@ -102,10 +98,7 @@ export async function GET(
     photo.applicantId ===
       currentUser.id;
 
-  if (
-    !isStaff &&
-    !isOwner
-  ) {
+  if (!isStaff && !isOwner) {
     return new Response(
       "Forbidden",
       {
@@ -118,31 +111,9 @@ export async function GET(
     );
   }
 
-  const token =
-    getAssistanceBlobToken();
-
-  if (!token) {
-    return new Response(
-      "Media storage unavailable",
-      {
-        status: 503,
-        headers: {
-          "Cache-Control":
-            "no-store",
-        },
-      },
-    );
-  }
-
   try {
-    const storage =
-      createVercelBlobStorage({
-        access: "private",
-        token,
-      });
-
     const result =
-      await storage.read(
+      await getAssistancePhotoForAuthorizedRead(
         photo.imageUrl,
       );
 
