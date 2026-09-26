@@ -19,7 +19,9 @@ import { getCachedPublicFinance } from "@/lib/public-finance";
 import { getCachedActivePrograms } from "@/lib/public-programs";
 import { getCachedLatestPublishedArticle } from "@/lib/public-articles";
 import { getProgramNewsHref } from "@/lib/program-news";
+import { getCachedCurrentMonthDonors } from "@/lib/public-current-month-donors";
 import { createPageMetadata, SITE_DESCRIPTION, SITE_NAME } from "@/lib/seo-metadata";
+import tickerStyles from "./HomeDonorTicker.module.css";
 
 export const metadata = createPageMetadata({
   title: SITE_NAME,
@@ -56,6 +58,17 @@ export default async function HomePage() {
         return null;
       });
 
+  const donorTickerPromise =
+    getCachedCurrentMonthDonors()
+      .catch((error) => {
+        console.error(
+          "home: failed to fetch current-month donors",
+          error,
+        );
+
+        return null;
+      });
+
   const [
     {
       finance,
@@ -63,11 +76,13 @@ export default async function HomePage() {
     },
     activePrograms,
     latestArticle,
+    donorTicker,
   ] =
     await Promise.all([
       financePromise,
       activeProgramsPromise,
       latestArticlePromise,
+      donorTickerPromise,
     ]);
   const latestArticleDate = latestArticle
     ? new Intl.DateTimeFormat("id-ID", {
@@ -296,6 +311,45 @@ export default async function HomePage() {
           ) : (
             <div className="px-8 py-6 text-center"><p className="font-medium text-brand-800">Data dampak akan diperbarui setelah laporan kegiatan pertama terverifikasi.</p></div>
           )}
+
+          {donorTicker &&
+            donorTicker.donors.length > 0 && (
+              <div
+                className={`${tickerStyles.root} border-t border-brand-800 bg-brand-950 px-4 py-3 text-white sm:px-6`}
+                aria-label={`Apresiasi donatur ${donorTicker.monthLabel}. Fokuskan bagian ini untuk menjeda teks berjalan.`}
+                tabIndex={0}
+              >
+                <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:gap-4">
+                  <div className="flex shrink-0 items-center gap-2 text-xs font-extrabold uppercase tracking-[0.12em] text-citrus-300 sm:text-sm">
+                    <HeartHandshake
+                      aria-hidden="true"
+                      className="h-4 w-4"
+                    />
+                    <span>
+                      Terima kasih, donatur {donorTicker.monthLabel}
+                    </span>
+                  </div>
+
+                  <span className="sr-only">
+                    {donorTicker.donors.join(" • ")}
+                  </span>
+
+                  <div
+                    className={tickerStyles.viewport}
+                    aria-hidden="true"
+                  >
+                    <div className={tickerStyles.track}>
+                      <span className={tickerStyles.group}>
+                        {donorTicker.donors.join(" • ")}
+                      </span>
+                      <span className={tickerStyles.group}>
+                        {donorTicker.donors.join(" • ")}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
         </section>
       </div>
 
