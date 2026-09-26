@@ -21,7 +21,7 @@ import { getCachedLatestPublishedArticle } from "@/lib/public-articles";
 import { getProgramNewsHref } from "@/lib/program-news";
 import { getCachedCurrentMonthDonors } from "@/lib/public-current-month-donors";
 import { createPageMetadata, SITE_DESCRIPTION, SITE_NAME } from "@/lib/seo-metadata";
-import tickerStyles from "./HomeDonorTicker.module.css";
+import HomeDonorTicker from "./HomeDonorTicker";
 
 export const metadata = createPageMetadata({
   title: SITE_NAME,
@@ -101,39 +101,6 @@ export default async function HomePage() {
     finance.totalIncome > 0 ||
     activePrograms.length > 0;
 
-  const donorTickerText =
-    donorTicker?.donors.join(" • ") ?? "";
-
-  const donorTickerTextLength =
-    Array.from(
-      donorTickerText,
-    ).length;
-
-  const donorTickerDesktopSeconds =
-    Math.min(
-      150,
-      Math.max(
-        50,
-        Math.round(
-          12 +
-            donorTickerTextLength *
-              0.32,
-        ),
-      ),
-    );
-
-  const donorTickerMobileSeconds =
-    Math.min(
-      180,
-      Math.max(
-        60,
-        Math.round(
-          14 +
-            donorTickerTextLength *
-              0.42,
-        ),
-      ),
-    );
 
   const formatImpactCurrency = (
     value: number,
@@ -348,67 +315,10 @@ export default async function HomePage() {
 
           {donorTicker &&
             donorTicker.donors.length > 0 && (
-              <div
-                className={`${tickerStyles.root} border-t border-brand-800 bg-brand-950 px-4 py-3 text-white sm:px-6`}
-                aria-label={`Apresiasi donatur ${donorTicker.monthLabel}`}
-                style={{
-                  "--ticker-duration":
-                    `${donorTickerDesktopSeconds}s`,
-                  "--ticker-duration-mobile":
-                    `${donorTickerMobileSeconds}s`,
-                } as React.CSSProperties}
-              >
-                <input
-                  id="home-donor-ticker-pause"
-                  type="checkbox"
-                  className={tickerStyles.pauseToggle}
-                  aria-label="Jeda atau lanjutkan teks berjalan donatur"
-                />
-
-                <div className={tickerStyles.layout}>
-                  <div className={tickerStyles.meta}>
-                    <div className="flex shrink-0 items-center gap-2 text-sm font-bold uppercase tracking-[0.08em] text-citrus-300">
-                      <HeartHandshake
-                        aria-hidden="true"
-                        className="h-4 w-4"
-                      />
-                      <span>
-                        Terima kasih, donatur {donorTicker.monthLabel}
-                      </span>
-                    </div>
-
-                    <label
-                      htmlFor="home-donor-ticker-pause"
-                      className={tickerStyles.pauseControl}
-                    >
-                      <span className={tickerStyles.pauseLabelRunning}>
-                        Jeda
-                      </span>
-                      <span className={tickerStyles.pauseLabelPaused}>
-                        Lanjutkan
-                      </span>
-                    </label>
-                  </div>
-
-                  <span className="sr-only">
-                    {donorTickerText}
-                  </span>
-
-                  <div
-                    className={tickerStyles.viewport}
-                    aria-hidden="true"
-                  >
-                    <div className={tickerStyles.track}>
-                      <span className={tickerStyles.group}>
-                        {donorTickerText}
-                      </span>
-                      <span className={tickerStyles.group}>
-                        {donorTickerText}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <HomeDonorTicker
+                monthLabel={donorTicker.monthLabel}
+                donors={donorTicker.donors}
+              />
             )}
         </section>
       </div>
