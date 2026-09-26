@@ -1,5 +1,21 @@
 .root {
   min-width: 0;
+  position: relative;
+}
+
+.layout {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.meta {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
 }
 
 .viewport {
@@ -26,23 +42,94 @@
   display: flex;
   width: max-content;
   will-change: transform;
-  animation: home-donor-ticker-scroll 55s linear infinite;
+  animation:
+    home-donor-ticker-scroll
+    var(--ticker-duration, 60s)
+    linear
+    infinite;
 }
 
 .group {
   flex: 0 0 auto;
   padding-right: 2.5rem;
   white-space: nowrap;
-  font-size: 0.875rem;
-  font-weight: 600;
-  line-height: 1.5rem;
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.6rem;
+  letter-spacing: 0;
   color: rgb(255 255 255 / 0.92);
 }
 
-.root:hover .track,
-.root:focus .track,
-.root:focus-within .track {
+.pauseToggle {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.pauseControl {
+  display: inline-flex;
+  min-height: 2rem;
+  flex: 0 0 auto;
+  cursor: pointer;
+  user-select: none;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgb(255 255 255 / 0.24);
+  border-radius: 9999px;
+  background: rgb(255 255 255 / 0.08);
+  padding: 0.25rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1rem;
+  color: rgb(255 255 255 / 0.92);
+  transition:
+    background 140ms ease,
+    border-color 140ms ease;
+}
+
+.pauseControl:hover {
+  border-color: rgb(255 255 255 / 0.4);
+  background: rgb(255 255 255 / 0.14);
+}
+
+.pauseToggle:focus-visible + .layout .pauseControl {
+  outline: 2px solid #bef264;
+  outline-offset: 2px;
+}
+
+.pauseLabelPaused {
+  display: none;
+}
+
+.pauseToggle:checked + .layout .track {
   animation-play-state: paused;
+}
+
+.pauseToggle:checked + .layout .pauseLabelRunning {
+  display: none;
+}
+
+.pauseToggle:checked + .layout .pauseLabelPaused {
+  display: inline;
+}
+
+@media (hover: hover) {
+  .root:hover .track {
+    animation-play-state: paused;
+  }
 }
 
 @keyframes home-donor-ticker-scroll {
@@ -55,26 +142,34 @@
   }
 }
 
+@media (min-width: 640px) {
+  .layout {
+    flex-direction: row;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .meta {
+    flex: 0 0 auto;
+    justify-content: flex-start;
+  }
+}
+
 @media (max-width: 639px) {
   .track {
-    animation-duration: 48s;
+    animation-duration:
+      var(--ticker-duration-mobile, 72s);
   }
 
   .viewport {
-    -webkit-mask-image: linear-gradient(
-      to right,
-      transparent,
-      black 0.6rem,
-      black calc(100% - 0.6rem),
-      transparent
-    );
-    mask-image: linear-gradient(
-      to right,
-      transparent,
-      black 0.6rem,
-      black calc(100% - 0.6rem),
-      transparent
-    );
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+
+  .group {
+    font-size: 1rem;
+    font-weight: 500;
+    line-height: 1.65rem;
   }
 }
 
@@ -99,6 +194,10 @@
   }
 
   .group:nth-child(2) {
+    display: none;
+  }
+
+  .pauseControl {
     display: none;
   }
 }
