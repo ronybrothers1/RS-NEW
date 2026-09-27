@@ -232,9 +232,9 @@ export default async function TransparencyPageContent({
     );
 
   return (
-    <div className="min-h-screen bg-canvas text-ink">
+    <div className="min-h-screen bg-canvas text-ink [overflow-wrap:anywhere]">
       <section className="border-b border-brand-900 bg-brand-950 text-white">
-        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
           <div className="max-w-3xl">
             <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-citrus-300 sm:text-sm">
               Transparansi Keuangan
@@ -259,47 +259,24 @@ export default async function TransparencyPageContent({
           className="overflow-hidden rounded-3xl border border-frame bg-white shadow-sm"
           aria-labelledby="cashbook-heading"
         >
-          <div className="border-b border-frame bg-brand-50 px-5 py-5 sm:px-6 lg:px-8">
-            <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand-700">
-                  Buku Kas Ruang Sejahtera
-                </p>
-
-                <h2
-                  id="cashbook-heading"
-                  className="mt-1 text-xl font-extrabold text-brand-950 sm:text-2xl"
-                >
-                  Periode {cashbook.period.label}
-                </h2>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 sm:min-w-[360px]">
-                <div className="rounded-2xl border border-brand-100 bg-white px-4 py-3">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                    Periode
-                  </p>
-                  <p className="mt-1 font-bold text-brand-950">
-                    {cashbook.period.label}
-                  </p>
-                </div>
-
-                <div className="rounded-2xl border border-brand-100 bg-white px-4 py-3 text-right">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                    Saldo Awal
-                  </p>
-                  <p className="mt-1 font-extrabold text-brand-950">
-                    {formatCurrency(
-                      cashbook.openingBalance,
-                    )}
-                  </p>
-                </div>
-              </div>
-            </div>
+          <div className="border-b border-frame bg-brand-50 px-4 py-5 sm:px-6 lg:px-8">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand-700">
+              Ringkasan Kas Bulanan
+            </p>
+            <h2
+              id="cashbook-heading"
+              className="mt-1 text-xl font-extrabold tracking-tight text-brand-950 sm:text-2xl"
+            >
+              Periode {cashbook.period.label}
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-ink-muted">
+              Saldo akhir = saldo awal + penerimaan − pengeluaran.
+              Ringkasan mencakup seluruh transaksi bulan ini, bukan hanya hasil pencarian.
+            </p>
           </div>
 
-          <div className="p-5 sm:p-6 lg:p-8">
-            <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+          <div className="p-4 sm:p-6 lg:p-8">
+            <div className="grid min-w-0 gap-6">
               <div className="overflow-hidden rounded-2xl border border-frame bg-white">
                 <div className="border-b border-frame px-5 py-4 sm:px-6">
                   <div className="flex items-center gap-3">
@@ -309,7 +286,7 @@ export default async function TransparencyPageContent({
 
                     <div>
                       <h3 className="font-bold text-ink">
-                        Rekonsiliasi Saldo Kas
+                        Perhitungan Saldo Bulan Ini
                       </h3>
                       <p className="mt-0.5 text-xs text-ink-muted sm:text-sm">
                         Arus kas bulan {cashbook.period.label}.
@@ -319,44 +296,44 @@ export default async function TransparencyPageContent({
                 </div>
 
                 <dl className="divide-y divide-frame">
-                  <div className="flex items-center justify-between gap-4 px-5 py-3.5 sm:px-6">
+                  <div className="grid min-w-0 gap-1 px-4 py-3.5 sm:grid-cols-2 sm:items-center sm:gap-4 sm:px-6">
                     <dt className="text-sm text-ink-muted">
-                      Saldo awal bulan {cashbook.period.label}
+                      Saldo awal
                     </dt>
-                    <dd className="shrink-0 font-bold text-ink">
+                    <dd className="min-w-0 font-bold text-ink tabular-nums sm:text-right">
                       {formatCurrency(
                         cashbook.openingBalance,
                       )}
                     </dd>
                   </div>
 
-                  <div className="flex items-center justify-between gap-4 px-5 py-3.5 sm:px-6">
+                  <div className="grid min-w-0 gap-1 px-4 py-3.5 sm:grid-cols-2 sm:items-center sm:gap-4 sm:px-6">
                     <dt className="text-sm text-ink-muted">
-                      Penerimaan bulan {cashbook.period.label}
+                      Penerimaan bulan ini
                     </dt>
-                    <dd className="shrink-0 font-bold text-emerald-700">
+                    <dd className="min-w-0 font-bold text-emerald-700 tabular-nums sm:text-right">
                       {formatCurrency(
                         cashbook.cashIn,
                       )}
                     </dd>
                   </div>
 
-                  <div className="flex items-center justify-between gap-4 px-5 py-3.5 sm:px-6">
+                  <div className="grid min-w-0 gap-1 px-4 py-3.5 sm:grid-cols-2 sm:items-center sm:gap-4 sm:px-6">
                     <dt className="text-sm text-ink-muted">
-                      Pengeluaran bulan {cashbook.period.label}
+                      Pengeluaran bulan ini
                     </dt>
-                    <dd className="shrink-0 font-bold text-rose-700">
+                    <dd className="min-w-0 font-bold text-rose-700 tabular-nums sm:text-right">
                       {formatCurrency(
                         cashbook.cashOut,
                       )}
                     </dd>
                   </div>
 
-                  <div className="flex items-center justify-between gap-4 bg-brand-50 px-5 py-4 sm:px-6">
+                  <div className="grid min-w-0 gap-1 bg-brand-50 px-4 py-5 sm:grid-cols-2 sm:items-center sm:gap-4 sm:px-6">
                     <dt className="font-bold text-brand-950">
-                      Sisa saldo bulan {cashbook.period.label}
+                      Saldo akhir
                     </dt>
-                    <dd className="shrink-0 text-lg font-extrabold text-brand-800">
+                    <dd className="min-w-0 text-2xl font-extrabold tracking-tight text-brand-800 tabular-nums sm:text-right">
                       {formatCurrency(
                         cashbook.closingBalance,
                       )}
@@ -365,7 +342,14 @@ export default async function TransparencyPageContent({
                 </dl>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 lg:grid-rows-2">
+              <div className="grid min-w-0 gap-3 border-t border-frame pt-5 sm:grid-cols-2">
+                <div className="min-w-0 sm:col-span-2">
+                  <h3 className="font-bold text-ink">Total Kumulatif Pembukuan</h3>
+                  <p className="mt-1 text-sm leading-6 text-ink-muted">
+                    Akumulasi sejak awal pembukuan yang digunakan sistem, bukan hanya bulan ini.
+                    Transaksi pinjaman dan pengembaliannya tidak termasuk dalam dua total berikut.
+                  </p>
+                </div>
                 <div className="flex items-center gap-4 rounded-2xl border border-emerald-100 bg-emerald-50/60 p-4">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
                     <ArrowDownRight className="h-5 w-5" />
@@ -375,7 +359,7 @@ export default async function TransparencyPageContent({
                     <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800">
                       Total Penerimaan
                     </p>
-                    <p className="mt-1 truncate font-extrabold text-ink">
+                    <p className="mt-1 text-lg font-extrabold text-ink tabular-nums">
                       {formatCurrency(
                         finance.totalIncome,
                       )}
@@ -392,7 +376,7 @@ export default async function TransparencyPageContent({
                     <p className="text-xs font-semibold uppercase tracking-wide text-rose-800">
                       Total Pengeluaran
                     </p>
-                    <p className="mt-1 truncate font-extrabold text-ink">
+                    <p className="mt-1 text-lg font-extrabold text-ink tabular-nums">
                       {formatCurrency(
                         finance.totalExpense,
                       )}
@@ -436,7 +420,8 @@ export default async function TransparencyPageContent({
                   defaultValue={
                     cashbook.query
                   }
-                  placeholder="Cari Nomor Bukti atau Uraian"
+                  placeholder="Nomor bukti atau uraian transaksi"
+                  aria-describedby="cashbook-search-help"
                   className="min-h-11 w-full rounded-xl border border-frame bg-white py-2.5 pl-10 pr-4 text-sm text-ink outline-none transition placeholder:text-stone-400 focus:border-brand-400 focus:ring-2 focus:ring-brand-200"
                 />
               </div>
@@ -450,7 +435,7 @@ export default async function TransparencyPageContent({
                 }
               >
                 <Search className="h-4 w-4" />
-                Terapkan
+                Cari
               </button>
 
               <Link
@@ -465,6 +450,10 @@ export default async function TransparencyPageContent({
 
             </div>
           </form>
+          <p id="cashbook-search-help" className="mt-3 text-sm leading-6 text-ink-muted">
+            Cari berdasarkan nomor bukti atau uraian transaksi pada bulan {cashbook.period.label}.
+            Pilih Reset untuk menampilkan semua transaksi bulan ini.
+          </p>
         </section>
 
         <section
@@ -474,7 +463,7 @@ export default async function TransparencyPageContent({
           <div className="flex flex-col gap-3 border-b border-frame px-5 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-6 lg:px-8">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand-700">
-                Ledger Kas
+                Rincian Buku Kas
               </p>
 
               <h2
@@ -505,7 +494,17 @@ export default async function TransparencyPageContent({
             </p>
           </div>
 
-          <div className="hidden overflow-x-auto md:block">
+          <p className="border-b border-frame px-5 py-3 text-sm leading-6 text-ink-muted sm:px-6 lg:px-8">
+            Saldo pada setiap transaksi adalah posisi kas setelah transaksi tersebut dicatat.
+            Pencarian menyaring daftar transaksi tanpa menghitung ulang saldo.
+          </p>
+
+          <div
+            className="hidden overflow-x-auto focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-700 lg:block"
+            role="region"
+            aria-labelledby="ledger-heading"
+            tabIndex={0}
+          >
             <table className="w-full min-w-[940px] text-left text-sm">
               <caption className="sr-only">
                 Buku Kas Ruang Sejahtera periode {cashbook.period.label}
@@ -553,7 +552,7 @@ export default async function TransparencyPageContent({
                       </p>
 
                       <p className="mt-1 text-sm text-ink-muted">
-                        Ubah periode atau kata pencarian untuk melihat data lainnya.
+                        Jika sedang mencari, coba kata lain atau pilih Reset. Jika tidak, belum ada transaksi pada bulan ini.
                       </p>
                     </td>
                   </tr>
@@ -580,7 +579,7 @@ export default async function TransparencyPageContent({
                           </p>
                         </td>
 
-                        <td className="whitespace-nowrap px-5 py-4 text-right font-semibold text-emerald-700">
+                        <td className="whitespace-nowrap px-5 py-4 text-right font-semibold text-emerald-700 tabular-nums">
                           {row.income > 0
                             ? formatCurrency(
                                 row.income,
@@ -588,7 +587,7 @@ export default async function TransparencyPageContent({
                             : "—"}
                         </td>
 
-                        <td className="whitespace-nowrap px-5 py-4 text-right font-semibold text-rose-700">
+                        <td className="whitespace-nowrap px-5 py-4 text-right font-semibold text-rose-700 tabular-nums">
                           {row.expense > 0
                             ? formatCurrency(
                                 row.expense,
@@ -596,7 +595,7 @@ export default async function TransparencyPageContent({
                             : "—"}
                         </td>
 
-                        <td className="whitespace-nowrap px-5 py-4 text-right font-extrabold text-brand-950 lg:px-6">
+                        <td className="whitespace-nowrap px-5 py-4 text-right font-extrabold text-brand-950 tabular-nums lg:px-6">
                           {formatCurrency(
                             row.balance,
                           )}
@@ -609,7 +608,7 @@ export default async function TransparencyPageContent({
             </table>
           </div>
 
-          <div className="divide-y divide-frame md:hidden">
+          <div className="divide-y divide-frame lg:hidden">
             {cashbook.rows.length === 0 ? (
               <div className="px-5 py-12 text-center">
                 <BookOpen className="mx-auto h-9 w-9 text-brand-200" />
@@ -619,7 +618,7 @@ export default async function TransparencyPageContent({
                 </p>
 
                 <p className="mt-1 text-sm leading-6 text-ink-muted">
-                  Ubah periode atau kata pencarian untuk melihat data lainnya.
+                  Jika sedang mencari, coba kata lain atau pilih Reset. Jika tidak, belum ada transaksi pada bulan ini.
                 </p>
               </div>
             ) : (
@@ -627,11 +626,11 @@ export default async function TransparencyPageContent({
                 (row) => (
                   <article
                     key={row.id}
-                    className="p-5"
+                    className="min-w-0 p-4 sm:p-5"
                   >
-                    <div className="flex items-start justify-between gap-4">
+                    <div className="grid min-w-0 gap-3 sm:grid-cols-2 sm:items-start">
                       <div>
-                        <p className="font-mono text-xs font-bold text-brand-800">
+                        <p className="min-w-0 font-mono text-xs font-bold text-brand-800">
                           {row.receiptNumber}
                         </p>
 
@@ -642,12 +641,12 @@ export default async function TransparencyPageContent({
                         </p>
                       </div>
 
-                      <div className="rounded-xl bg-brand-50 px-3 py-2 text-right">
+                      <div className="min-w-0 rounded-xl bg-brand-50 px-3 py-2 sm:text-right">
                         <p className="text-[10px] font-bold uppercase tracking-wide text-brand-700">
                           Saldo
                         </p>
 
-                        <p className="mt-0.5 text-sm font-extrabold text-brand-950">
+                        <p className="mt-0.5 text-base font-extrabold text-brand-950 tabular-nums">
                           {formatCurrency(
                             row.balance,
                           )}
@@ -665,13 +664,13 @@ export default async function TransparencyPageContent({
                       </p>
                     </div>
 
-                    <dl className="mt-4 grid grid-cols-2 gap-3">
+                    <dl className="mt-4 grid min-w-0 gap-3 min-[400px]:grid-cols-2">
                       <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-3">
                         <dt className="text-[10px] font-bold uppercase tracking-wide text-emerald-800">
                           Penerimaan
                         </dt>
 
-                        <dd className="mt-1 text-sm font-bold text-emerald-700">
+                        <dd className="mt-1 text-base font-bold text-emerald-700 tabular-nums">
                           {row.income > 0
                             ? formatCurrency(
                                 row.income,
@@ -685,7 +684,7 @@ export default async function TransparencyPageContent({
                           Pengeluaran
                         </dt>
 
-                        <dd className="mt-1 text-sm font-bold text-rose-700">
+                        <dd className="mt-1 text-base font-bold text-rose-700 tabular-nums">
                           {row.expense > 0
                             ? formatCurrency(
                                 row.expense,
@@ -709,7 +708,7 @@ export default async function TransparencyPageContent({
               {pagination.totalPages > 1 && (
                 <nav
                   aria-label="Navigasi halaman Buku Kas"
-                  className="flex flex-wrap items-center justify-end gap-1"
+                  className="flex flex-wrap items-center justify-start gap-2 sm:justify-end"
                 >
                   {pagination.currentPage > 1 ? (
                     <Link
@@ -722,7 +721,7 @@ export default async function TransparencyPageContent({
                       })}
                       prefetch={false}
                       aria-label="Buka halaman sebelumnya"
-                      className="inline-flex min-h-10 min-w-10 items-center justify-center gap-1 rounded-xl border border-stone-300 bg-white px-2.5 py-2 text-sm font-semibold text-ink shadow-[0_3px_0_#d6d3d1] transition-[transform,box-shadow,background-color] hover:bg-brand-50 active:translate-y-[1px] active:shadow-[0_1px_0_#d6d3d1] sm:px-3"
+                      className="inline-flex min-h-11 min-w-11 items-center justify-center gap-1 rounded-xl border border-stone-300 bg-white px-2.5 py-2 text-sm font-semibold text-ink shadow-[0_3px_0_#d6d3d1] transition-[transform,box-shadow,background-color] hover:bg-brand-50 active:translate-y-[1px] active:shadow-[0_1px_0_#d6d3d1] sm:px-3"
                     >
                       <ChevronLeft className="h-4 w-4" />
                       <span className="hidden lg:inline">
@@ -741,7 +740,7 @@ export default async function TransparencyPageContent({
                           <span
                             key={item}
                             aria-hidden="true"
-                            className="inline-flex min-h-10 min-w-7 items-center justify-center px-1 text-sm font-bold text-ink-muted"
+                            className="inline-flex min-h-11 min-w-7 items-center justify-center px-1 text-sm font-bold text-ink-muted"
                           >
                             …
                           </span>
@@ -757,7 +756,7 @@ export default async function TransparencyPageContent({
                             key={item}
                             aria-current="page"
                             aria-label={`Halaman ${item}, halaman saat ini`}
-                            className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-xl bg-brand-950 px-3 py-2 text-sm font-bold text-white"
+                            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl bg-brand-950 px-3 py-2 text-sm font-bold text-white"
                           >
                             {item}
                           </span>
@@ -775,7 +774,7 @@ export default async function TransparencyPageContent({
                           })}
                           prefetch={false}
                           aria-label={`Buka halaman ${item}`}
-                          className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-xl border border-stone-300 bg-white px-3 py-2 text-sm font-bold text-ink shadow-[0_3px_0_#d6d3d1] transition-[transform,box-shadow,background-color] hover:bg-brand-50 active:translate-y-[1px] active:shadow-[0_1px_0_#d6d3d1]"
+                          className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-stone-300 bg-white px-3 py-2 text-sm font-bold text-ink shadow-[0_3px_0_#d6d3d1] transition-[transform,box-shadow,background-color] hover:bg-brand-50 active:translate-y-[1px] active:shadow-[0_1px_0_#d6d3d1]"
                         >
                           {item}
                         </Link>
@@ -794,7 +793,7 @@ export default async function TransparencyPageContent({
                       })}
                       prefetch={false}
                       aria-label="Buka halaman berikutnya"
-                      className="inline-flex min-h-10 min-w-10 items-center justify-center gap-1 rounded-xl border border-stone-300 bg-white px-2.5 py-2 text-sm font-semibold text-ink shadow-[0_3px_0_#d6d3d1] transition-[transform,box-shadow,background-color] hover:bg-brand-50 active:translate-y-[1px] active:shadow-[0_1px_0_#d6d3d1] sm:px-3"
+                      className="inline-flex min-h-11 min-w-11 items-center justify-center gap-1 rounded-xl border border-stone-300 bg-white px-2.5 py-2 text-sm font-semibold text-ink shadow-[0_3px_0_#d6d3d1] transition-[transform,box-shadow,background-color] hover:bg-brand-50 active:translate-y-[1px] active:shadow-[0_1px_0_#d6d3d1] sm:px-3"
                     >
                       <span className="hidden lg:inline">
                         Berikutnya
