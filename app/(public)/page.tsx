@@ -114,7 +114,7 @@ export default async function HomePage() {
       );
     }
 
-    return `Rp ${(value / 1_000_000).toFixed(1)} Jt`;
+    return `Rp ${(value / 1_000_000).toFixed(1).replace(".", ",")} Jt`;
   };
   const impactItems = [
     { label: "Program Sosial", value: activePrograms.length, icon: Users },
@@ -208,11 +208,40 @@ export default async function HomePage() {
       </section>
 
       <div className="relative z-20 flex flex-col">
-        <section className="order-1 px-4 pt-5 sm:px-6 lg:order-2 lg:px-8 lg:pt-8">
+        <section className="mx-4 mt-5 max-w-7xl overflow-hidden rounded-2xl border border-frame bg-white shadow-xl sm:mx-6 lg:mx-auto lg:w-full lg:-mt-14">
+          {donorTicker &&
+            donorTicker.donors.length > 0 && (
+              <HomeDonorTicker
+                monthLabel={donorTicker.monthLabel}
+                donors={donorTicker.donors}
+              />
+            )}
+
+          {hasRealData ? (
+            <div className="grid grid-cols-2 lg:grid-cols-4">
+              {impactItems.map((item, index) => {
+                const Icon = item.icon;
+                return (
+                  <div key={item.label} className={`flex min-w-0 flex-col items-start gap-2 px-3 py-4 sm:flex-row sm:items-center sm:gap-3 sm:px-6 sm:py-5 ${index % 2 ? "border-l border-frame" : ""} ${index > 1 ? "border-t border-frame lg:border-t-0" : ""} ${index > 0 ? "lg:border-l lg:border-frame" : ""}`}>
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-700"><Icon className="h-5 w-5" /></div>
+                    <div className="min-w-0">
+                      <div className="text-lg font-extrabold leading-tight tracking-tight text-slate-950 tabular-nums [overflow-wrap:anywhere] sm:text-xl">{item.value}</div>
+                      <div className="mt-1 text-xs leading-5 text-ink-muted">{item.label}</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="px-8 py-6 text-center"><p className="font-medium text-brand-800">Data dampak akan diperbarui setelah laporan kegiatan pertama terverifikasi.</p></div>
+          )}
+        </section>
+
+        <section className="mx-auto w-full max-w-7xl px-4 pt-6 sm:px-6 lg:px-8 lg:pt-8">
           <div className="mx-auto max-w-7xl">
             <div className="mb-4 hidden items-end justify-between gap-4 lg:flex">
               <div>
-                <h2 className="text-2xl font-extrabold tracking-tight text-slate-950">
+                <h2 className="text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl">
                   Berita Terbaru
                 </h2>
                 <p className="mt-1 text-sm leading-6 text-slate-600">
@@ -231,7 +260,7 @@ export default async function HomePage() {
               <Link
                 href={`/berita/${latestArticle.slug}`}
                 aria-label={`Baca berita terbaru: ${latestArticle.title}`}
-                className={`group grid overflow-hidden rounded-2xl border border-frame bg-white shadow-sm transition hover:border-brand-200 hover:shadow-md ${
+                className={`group grid overflow-hidden rounded-2xl border border-frame bg-white shadow-sm transition-[border-color,box-shadow] duration-200 hover:border-brand-200 hover:shadow-md focus-visible:border-brand-200 ${
                   latestArticle.imageUrl
                     ? "sm:grid-cols-[220px_minmax(0,1fr)]"
                     : ""
@@ -262,7 +291,7 @@ export default async function HomePage() {
                     )}
                   </div>
 
-                  <h3 className="mt-3 text-lg font-extrabold leading-snug text-slate-950 transition-colors group-hover:text-brand-800 sm:text-xl">
+                  <h3 className="mt-3 text-lg font-extrabold leading-snug tracking-tight text-slate-950 transition-colors group-hover:text-brand-800 sm:text-xl">
                     {latestArticle.title}
                   </h3>
 
@@ -292,35 +321,6 @@ export default async function HomePage() {
             </Link>
           </div>
         </section>
-
-        <section className="order-2 mx-4 mt-6 max-w-7xl overflow-hidden rounded-2xl border border-frame bg-white shadow-xl sm:mx-6 lg:order-1 lg:mx-auto lg:-mt-14">
-          {hasRealData ? (
-            <div className="grid grid-cols-2 md:grid-cols-4">
-              {impactItems.map((item, index) => {
-                const Icon = item.icon;
-                return (
-                  <div key={item.label} className={`flex items-center gap-3 px-4 py-5 sm:px-6 ${index % 2 ? "border-l border-frame" : ""} ${index > 1 ? "border-t border-frame md:border-t-0" : ""} ${index > 0 ? "md:border-l md:border-frame" : ""}`}>
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-700"><Icon className="h-5 w-5" /></div>
-                    <div className="min-w-0">
-                      <div className="truncate text-base font-extrabold tracking-tight text-slate-950 sm:text-xl">{item.value}</div>
-                      <div className="mt-0.5 text-[11px] leading-tight text-ink-muted sm:text-xs">{item.label}</div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="px-8 py-6 text-center"><p className="font-medium text-brand-800">Data dampak akan diperbarui setelah laporan kegiatan pertama terverifikasi.</p></div>
-          )}
-
-          {donorTicker &&
-            donorTicker.donors.length > 0 && (
-              <HomeDonorTicker
-                monthLabel={donorTicker.monthLabel}
-                donors={donorTicker.donors}
-              />
-            )}
-        </section>
       </div>
 
       <section className="bg-canvas py-14 sm:py-16">
@@ -333,15 +333,15 @@ export default async function HomePage() {
             <Link href="/program" className="inline-flex items-center gap-2 text-sm font-bold text-brand-800 hover:text-brand-950">Lihat Semua Program <ArrowRight className="h-4 w-4" /></Link>
           </div>
           {activePrograms.length > 0 ? (
-            <div className="grid gap-x-6 gap-y-3 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {activePrograms.map((program: any) => {
                 const IconComponent = iconMap[program.icon] || HeartHandshake;
                 return (
-                  <Link href={getProgramNewsHref(program.name)} prefetch={false} key={program.id} className="group flex min-h-[112px] items-start gap-4 rounded-2xl border border-transparent p-4 transition hover:border-brand-100 hover:bg-white hover:shadow-sm">
+                  <Link href={getProgramNewsHref(program.name)} prefetch={false} key={program.id} className="group flex min-h-[112px] items-start gap-4 rounded-2xl border border-frame bg-white p-4 shadow-sm transition-[border-color,box-shadow] duration-200 hover:border-brand-200 hover:shadow-md focus-visible:border-brand-200">
                     <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-700 ring-1 ring-inset ring-brand-100 transition group-hover:bg-brand-700 group-hover:text-white"><IconComponent className="h-6 w-6" /></div>
                     <div className="min-w-0 pt-0.5">
-                      <h3 className="text-base font-bold text-slate-950 transition group-hover:text-brand-800">{program.name}</h3>
-                      <p className="mt-1 line-clamp-2 text-sm leading-5 text-slate-500">{program.description}</p>
+                      <h3 className="text-base font-bold leading-snug tracking-tight text-slate-950 transition-colors group-hover:text-brand-800">{program.name}</h3>
+                      <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{program.description}</p>
                     </div>
                   </Link>
                 );
