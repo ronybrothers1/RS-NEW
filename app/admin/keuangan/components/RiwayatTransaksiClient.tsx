@@ -271,6 +271,8 @@ export default function RiwayatTransaksiClient({
     useState<TransactionItem | null>(null);
   const [deleteError, setDeleteError] =
     useState<string | null>(null);
+  const [deleteReason, setDeleteReason] =
+    useState("");
 
   const [
     isUpdating,
@@ -407,11 +409,31 @@ export default function RiwayatTransaksiClient({
       return;
     }
 
+    const websiteDonation =
+      isWebsiteDonation(
+        deleteItem,
+      );
+    const normalizedReason =
+      deleteReason.trim();
+
+    if (
+      websiteDonation &&
+      normalizedReason.length < 10
+    ) {
+      setDeleteError(
+        "Alasan pembatalan donasi website wajib diisi minimal 10 karakter.",
+      );
+      return;
+    }
+
     setDeleteError(null);
 
     startDelete(async () => {
       const result = await deleteTransaksi(
         deleteItem.id,
+        websiteDonation
+          ? normalizedReason
+          : "",
       );
 
       if (!result.success) {
@@ -423,6 +445,7 @@ export default function RiwayatTransaksiClient({
       }
 
       setDeleteItem(null);
+      setDeleteReason("");
 
       if (
         transactions.length === 1 &&
@@ -782,24 +805,30 @@ export default function RiwayatTransaksiClient({
                                 </button>
                               )}
 
-                              {canDelete &&
-                                !websiteDonation && (
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setDeleteItem(
-                                        transaction,
-                                      );
-                                      setDeleteError(
-                                        null,
-                                      );
-                                    }}
-                                    title="Hapus transaksi"
-                                    className="rounded-lg p-2 text-rose-600 transition hover:bg-rose-50 hover:text-rose-800"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </button>
-                                )}
+                              {canDelete && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setDeleteItem(
+                                      transaction,
+                                    );
+                                    setDeleteError(
+                                      null,
+                                    );
+                                    setDeleteReason(
+                                      "",
+                                    );
+                                  }}
+                                  title={
+                                    websiteDonation
+                                      ? "Hapus donasi website"
+                                      : "Hapus transaksi"
+                                  }
+                                  className="rounded-lg p-2 text-rose-600 transition hover:bg-rose-50 hover:text-rose-800"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              )}
                             </div>
                           </td>
                         </tr>
@@ -1103,9 +1132,13 @@ export default function RiwayatTransaksiClient({
             ) && (
               <div className="mx-6 mb-6 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm leading-6 text-blue-700">
                 Transaksi ini berasal dari
-                verifikasi donasi website dan
-                dikunci dari proses edit atau
-                hapus di menu Keuangan.
+                verifikasi donasi website.
+                Data tetap dikunci dari proses
+                edit. Admin dapat menghapusnya
+                melalui pembatalan
+                terkoordinasi agar status
+                donasi, saldo, dan audit log
+                tetap konsisten.
               </div>
             )}
           </div>
@@ -1408,7 +1441,11 @@ export default function RiwayatTransaksiClient({
               id="delete-title"
               className="mt-4 text-lg font-bold text-slate-900"
             >
-              Hapus transaksi?
+              {isWebsiteDonation(
+                deleteItem,
+              )
+                ? "Hapus donasi website?"
+                : "Hapus transaksi?"}
             </h2>
 
             <p className="mt-2 text-sm leading-6 text-slate-600">
@@ -1425,11 +1462,55 @@ export default function RiwayatTransaksiClient({
               transparansi publik.
             </p>
 
-            <p className="mt-2 text-xs leading-5 text-slate-500">
-              Data tidak dihapus permanen.
-              Sistem menggunakan soft delete
-              dan audit log tetap tersimpan.
-            </p>
+            {isWebsiteDonation(
+              deleteItem,
+            ) ? (
+              <>
+                <p className="mt-2 text-xs leading-5 text-slate-500">
+                  Donasi website akan
+                  dibatalkan secara
+                  terkoordinasi. Status
+                  donasi diubah menjadi
+                  Tidak Terverifikasi,
+                  sedangkan bukti transfer
+                  dan audit log tetap
+                  disimpan.
+                </p>
+
+                <label
+                  htmlFor="website-donation-delete-reason"
+                  className="mt-4 block text-sm font-semibold text-slate-800"
+                >
+                  Alasan pembatalan (wajib)
+                </label>
+
+                <textarea
+                  id="website-donation-delete-reason"
+                  value={deleteReason}
+                  onChange={(event) =>
+                    setDeleteReason(
+                      event.target.value,
+                    )
+                  }
+                  rows={3}
+                  maxLength={500}
+                  placeholder="Contoh: Donasi duplikat karena bukti transfer yang sama tercatat dua kali."
+                  className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-800 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
+                />
+
+                <div className="mt-1 text-right text-xs text-slate-500">
+                  {deleteReason.length}/500
+                </div>
+              </>
+            ) : (
+              <p className="mt-2 text-xs leading-5 text-slate-500">
+                Data tidak dihapus
+                permanen. Sistem
+                menggunakan soft delete
+                dan audit log tetap
+                tersimpan.
+              </p>
+            )}
 
             {deleteError && (
               <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
@@ -1441,9 +1522,11 @@ export default function RiwayatTransaksiClient({
               <button
                 type="button"
                 disabled={isDeleting}
-                onClick={() =>
-                  setDeleteItem(null)
-                }
+                onClick={() => {
+                  setDeleteItem(null);
+                  setDeleteError(null);
+                  setDeleteReason("");
+                }}
                 className="rounded-xl border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
               >
                 Batal
@@ -1451,13 +1534,27 @@ export default function RiwayatTransaksiClient({
 
               <button
                 type="button"
-                disabled={isDeleting}
+                disabled={
+                  isDeleting ||
+                  (
+                    isWebsiteDonation(
+                      deleteItem,
+                    ) &&
+                    deleteReason
+                      .trim()
+                      .length < 10
+                  )
+                }
                 onClick={handleDelete}
-                className="rounded-xl bg-rose-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-60"
+                className="rounded-xl bg-rose-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isDeleting
                   ? "Menghapus..."
-                  : "Ya, Hapus"}
+                  : isWebsiteDonation(
+                        deleteItem,
+                      )
+                    ? "Ya, Hapus Donasi"
+                    : "Ya, Hapus"}
               </button>
             </div>
           </div>

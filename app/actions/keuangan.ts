@@ -10,6 +10,7 @@ import { db } from "@/src/db";
 import {
   auditLogs,
   campaigns,
+  donations,
   financialTransactions,
   programs,
 } from "@/src/db/schema";
@@ -1234,6 +1235,7 @@ export async function updateTransaksi(
 
 export async function deleteTransaksi(
   id: string,
+  reason = "",
 ): Promise<KeuanganActionResult> {
   const financeUser =
     await getFinanceSession();
@@ -1254,6 +1256,20 @@ export async function deleteTransaksi(
       success: false,
       error:
         "ID transaksi tidak valid.",
+    };
+  }
+
+  const normalizedReason =
+    reason.trim();
+
+  if (
+    normalizedReason.length >
+    500
+  ) {
+    return {
+      success: false,
+      error:
+        "Alasan penghapusan maksimal 500 karakter.",
     };
   }
 
@@ -1289,17 +1305,78 @@ export async function deleteTransaksi(
             };
           }
 
-          if (
+          const websiteDonation =
             isWebsiteDonationTransaction(
               oldTransaction,
-            )
-          ) {
-            return {
-              success:
-                false as const,
-              error:
-                "Transaksi dari donasi website tidak dapat dihapus dari menu Keuangan.",
-            };
+            );
+
+          let linkedDonation:
+            | typeof donations.$inferSelect
+            | null = null;
+
+          if (websiteDonation) {
+            if (
+              !oldTransaction.donationId
+            ) {
+              return {
+                success:
+                  false as const,
+                error:
+                  "Donasi website lama ini belum memiliki tautan donationId. Penghapusan otomatis diblokir agar data donasi dan keuangan tidak menjadi tidak konsisten.",
+              };
+            }
+
+            if (
+              normalizedReason.length <
+              10
+            ) {
+              return {
+                success:
+                  false as const,
+                error:
+                  "Alasan pembatalan donasi website wajib diisi minimal 10 karakter.",
+              };
+            }
+
+            await tx.execute(
+              sql`SELECT id FROM donations WHERE id = ${oldTransaction.donationId} FOR UPDATE`,
+            );
+
+            const [donation] =
+              await tx
+                .select()
+                .from(donations)
+                .where(
+                  eq(
+                    donations.id,
+                    oldTransaction.donationId,
+                  ),
+                )
+                .limit(1);
+
+            if (!donation) {
+              return {
+                success:
+                  false as const,
+                error:
+                  "Data donasi website yang terkait tidak ditemukan. Penghapusan diblokir untuk menjaga konsistensi data.",
+              };
+            }
+
+            if (
+              donation.status !==
+              "SUCCESS"
+            ) {
+              return {
+                success:
+                  false as const,
+                error:
+                  "Donasi terkait sudah tidak berstatus berhasil. Periksa data donasi sebelum menghapus transaksi ini.",
+              };
+            }
+
+            linkedDonation =
+              donation;
           }
 
           if (
@@ -1358,24 +1435,81 @@ export async function deleteTransaksi(
             }
           }
 
+          const now =
+            new Date();
+
           const [updated] =
             await tx
               .update(
                 financialTransactions,
               )
               .set({
-                deletedAt:
-                  new Date(),
-                updatedAt:
-                  new Date(),
+                deletedAt: now,
+                updatedAt: now,
               })
               .where(
-                eq(
-                  financialTransactions.id,
-                  id,
+                and(
+                  eq(
+                    financialTransactions.id,
+                    id,
+                  ),
+                  isNull(
+                    financialTransactions.deletedAt,
+                  ),
                 ),
               )
               .returning();
+
+          if (!updated) {
+            throw new Error(
+              "transaction_delete_conflict",
+            );
+          }
+
+          let updatedDonation:
+            | typeof donations.$inferSelect
+            | null = null;
+
+          if (linkedDonation) {
+            const cancellationNote =
+              linkedDonation.reviewNote
+                ? `${linkedDonation.reviewNote}\n\nPembatalan donasi terverifikasi: ${normalizedReason}`
+                : `Pembatalan donasi terverifikasi: ${normalizedReason}`;
+
+            const [donationUpdate] =
+              await tx
+                .update(donations)
+                .set({
+                  status: "FAILED",
+                  reviewNote:
+                    cancellationNote,
+                  reviewedAt: now,
+                  reviewedBy:
+                    financeUser.userId,
+                })
+                .where(
+                  and(
+                    eq(
+                      donations.id,
+                      linkedDonation.id,
+                    ),
+                    eq(
+                      donations.status,
+                      "SUCCESS",
+                    ),
+                  ),
+                )
+                .returning();
+
+            if (!donationUpdate) {
+              throw new Error(
+                "donation_cancel_conflict",
+              );
+            }
+
+            updatedDonation =
+              donationUpdate;
+          }
 
           await tx
             .insert(auditLogs)
@@ -1389,8 +1523,45 @@ export async function deleteTransaksi(
               recordId: id,
               oldData:
                 oldTransaction,
-              newData: updated,
+              newData: websiteDonation
+                ? {
+                    transaction:
+                      updated,
+                    reason:
+                      normalizedReason,
+                    source:
+                      "WEBSITE_DONATION",
+                  }
+                : updated,
             });
+
+          if (
+            linkedDonation &&
+            updatedDonation
+          ) {
+            await tx
+              .insert(auditLogs)
+              .values({
+                userId:
+                  financeUser.userId,
+                action:
+                  "CANCEL_VERIFIED_DONATION",
+                tableName:
+                  "donations",
+                recordId:
+                  linkedDonation.id,
+                oldData:
+                  linkedDonation,
+                newData: {
+                  donation:
+                    updatedDonation,
+                  transactionId:
+                    id,
+                  reason:
+                    normalizedReason,
+                },
+              });
+          }
 
           return {
             success:
@@ -1398,6 +1569,9 @@ export async function deleteTransaksi(
             error: null,
             campaignId:
               oldTransaction.campaignId,
+            donationId:
+              linkedDonation?.id ??
+              null,
           };
         },
       );
@@ -1410,6 +1584,15 @@ export async function deleteTransaksi(
       result.campaignId,
     );
 
+    if (result.donationId) {
+      revalidatePath(
+        "/admin/donasi",
+      );
+      revalidatePath(
+        "/donasi",
+      );
+    }
+
     return {
       success: true,
       error: null,
@@ -1419,6 +1602,22 @@ export async function deleteTransaksi(
       "Delete transaction error:",
       error,
     );
+
+    if (
+      error instanceof Error &&
+      (
+        error.message ===
+          "transaction_delete_conflict" ||
+        error.message ===
+          "donation_cancel_conflict"
+      )
+    ) {
+      return {
+        success: false,
+        error:
+          "Data berubah saat proses penghapusan. Muat ulang halaman lalu coba kembali.",
+      };
+    }
 
     return {
       success: false,
