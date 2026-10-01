@@ -53,13 +53,20 @@ async function main() {
     "Menu Laporan Keuangan tersedia",
   );
 
-  const sampleRows = Array.from({ length: 90 }, (_, index) => ({
-    date: new Date(Date.UTC(2026, 8, (index % 30) + 1, 12)),
-    type: index % 3 === 0 ? ("OUT" as const) : ("IN" as const),
-    description: `Transaksi uji ${index + 1} dengan keterangan yang cukup panjang untuk menguji pembungkus baris tabel PDF.`,
-    programName: index % 2 === 0 ? "Berbagi Rasa" : null,
-    amount: 10000 + index * 1000,
-  }));
+  const sampleRows = Array.from({ length: 90 }, (_, index) => {
+    const isOut = index % 3 === 0;
+
+    return {
+      date: new Date(Date.UTC(2026, 8, (index % 30) + 1, 12)),
+      type: isOut ? ("OUT" as const) : ("IN" as const),
+      category: isOut ? ("EXPENSE" as const) : ("INCOME" as const),
+      description: `Transaksi uji ${index + 1} dengan keterangan yang cukup panjang untuk menguji pembungkus baris tabel PDF.`,
+      programName: index % 2 === 0 ? "Berbagi Rasa" : null,
+      donorName: index % 2 === 0 ? null : `Donatur Uji ${index + 1}`,
+      isAnonymous: index % 7 === 0,
+      amount: 10000 + index * 1000,
+    };
+  });
 
   const bytes = await buildFinanceReportPdf({
     periodLabel: "September 2026",

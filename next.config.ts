@@ -103,6 +103,7 @@ const nextConfig: NextConfig = {
   },
 
   images: {
+    qualities: [60, 75],
     deviceSizes: [
       640,
       700,

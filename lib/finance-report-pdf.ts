@@ -6,11 +6,22 @@ import {
   rgb,
 } from "pdf-lib";
 
+import {
+  buildPublicCashbookUraian,
+} from "@/lib/public-cashbook";
+
 export type FinanceReportRow = {
   date: Date;
   type: "IN" | "OUT";
+  category:
+    | "INCOME"
+    | "EXPENSE"
+    | "LOAN_OUT"
+    | "LOAN_REPAYMENT";
   description: string;
   programName: string | null;
+  donorName: string | null;
+  isAnonymous: boolean;
   amount: number;
 };
 
@@ -30,8 +41,22 @@ const MARGIN = 40;
 const CONTENT_WIDTH = PAGE_WIDTH - MARGIN * 2;
 const FOOTER_Y = 25;
 
+const ROW_LINE_SPACING = 10;
+const TEXT_DESCENDER_FACTOR = 0.35;
+
+const COL_NO = { x: 40, w: 25 };
+const COL_TANGGAL = { x: 65, w: 55 };
+const COL_URAIAN = { x: 120, w: 200 };
+const COL_PENERIMAAN = { x: 320, w: 80 };
+const COL_PENGELUARAN = { x: 400, w: 80 };
+const COL_SALDO = { x: 480, w: 75 };
+
 function formatCurrency(value: number) {
   return `Rp ${Math.round(value).toLocaleString("id-ID")}`;
+}
+
+function formatCurrencyPlain(value: number) {
+  return Math.round(value).toLocaleString("id-ID");
 }
 
 function formatDate(value: Date) {
@@ -73,18 +98,14 @@ function wrapText(
       current = candidate;
       continue;
     }
-
     if (current) lines.push(current);
     current = word;
   }
-
   if (current) lines.push(current);
   return lines;
 }
 
-export async function buildFinanceReportPdf(
-  input: FinanceReportInput,
-) {
+export async function buildFinanceReportPdf(input: FinanceReportInput) {
   const pdf = await PDFDocument.create();
   const regular = await pdf.embedFont(StandardFonts.Helvetica);
   const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
@@ -135,6 +156,76 @@ export async function buildFinanceReportPdf(
     y -= 26;
   };
 
+  const drawTableHeader = () => {
+    page.drawRectangle({
+      x: MARGIN,
+      y: y - 18,
+      width: CONTENT_WIDTH,
+      height: 22,
+      color: rgb(0.06, 0.25, 0.27),
+    });
+
+    const size = 7.8;
+    const textY = y - 10;
+    const white = rgb(1, 1, 1);
+
+    page.drawText("NO", {
+      x: COL_NO.x + 4,
+      y: textY,
+      size,
+      font: bold,
+      color: white,
+    });
+
+    page.drawText("TANGGAL", {
+      x: COL_TANGGAL.x + 4,
+      y: textY,
+      size,
+      font: bold,
+      color: white,
+    });
+
+    page.drawText("URAIAN", {
+      x: COL_URAIAN.x + 4,
+      y: textY,
+      size,
+      font: bold,
+      color: white,
+    });
+
+    const pnrLabel = "PENERIMAAN";
+    const pnrW = bold.widthOfTextAtSize(pnrLabel, size);
+    page.drawText(pnrLabel, {
+      x: COL_PENERIMAAN.x + COL_PENERIMAAN.w - 4 - pnrW,
+      y: textY,
+      size,
+      font: bold,
+      color: white,
+    });
+
+    const pglLabel = "PENGELUARAN";
+    const pglW = bold.widthOfTextAtSize(pglLabel, size);
+    page.drawText(pglLabel, {
+      x: COL_PENGELUARAN.x + COL_PENGELUARAN.w - 4 - pglW,
+      y: textY,
+      size,
+      font: bold,
+      color: white,
+    });
+
+    const sldLabel = "SALDO";
+    const sldW = bold.widthOfTextAtSize(sldLabel, size);
+    page.drawText(sldLabel, {
+      x: COL_SALDO.x + COL_SALDO.w - 4 - sldW,
+      y: textY,
+      size,
+      font: bold,
+      color: white,
+    });
+
+    y -= 26;
+  };
+
   const ensureSpace = (height: number) => {
     if (y - height < FOOTER_Y + 25) {
       drawPageHeader(true);
@@ -167,36 +258,6 @@ export async function buildFinanceReportPdf(
     y -= 19;
   };
 
-  const drawTableHeader = () => {
-    page.drawRectangle({
-      x: MARGIN,
-      y: y - 18,
-      width: CONTENT_WIDTH,
-      height: 22,
-      color: rgb(0.95, 0.96, 0.97),
-    });
-
-    const labels = [
-      ["No", MARGIN + 4],
-      ["Tanggal", MARGIN + 34],
-      ["Jenis", MARGIN + 98],
-      ["Keterangan / Program", MARGIN + 146],
-      ["Nominal", MARGIN + 430],
-    ] as const;
-
-    for (const [label, x] of labels) {
-      page.drawText(label, {
-        x,
-        y: y - 10,
-        size: 7.8,
-        font: bold,
-        color: rgb(0.25, 0.29, 0.34),
-      });
-    }
-
-    y -= 26;
-  };
-
   drawPageHeader(false);
 
   drawSummaryRow("Saldo awal periode", formatCurrency(input.openingBalance));
@@ -225,56 +286,132 @@ export async function buildFinanceReportPdf(
     });
     y -= 22;
   } else {
-    input.rows.forEach((row, index) => {
-      const description = row.programName
-        ? `${row.description} | Program: ${row.programName}`
-        : `${row.description} | Program: Umum`;
+    let runningBalance = input.openingBalance;
 
-      const descriptionLines = wrapText(description, regular, 7.7, 270);
-      const rowHeight = Math.max(24, 11 + descriptionLines.length * 10);
+    input.rows.forEach((row, index) => {
+      const amount = Number(row.amount);
+      if (row.type === "IN") {
+        runningBalance += amount;
+      } else {
+        runningBalance -= amount;
+      }
+
+      const uraian = buildPublicCashbookUraian({
+        description: row.description,
+        type: row.type,
+        isAnonymous: row.isAnonymous,
+        donorName: row.donorName,
+        category: row.category,
+        programName: row.programName,
+      });
+
+      const fontSize = 7.5;
+      const uraianMaxWidth = COL_URAIAN.w - 8;
+      const uraianLines = wrapText(
+        uraian,
+        regular,
+        fontSize,
+        uraianMaxWidth,
+      );
+
+      const rowHeight = Math.max(
+        22,
+        10 + uraianLines.length * ROW_LINE_SPACING,
+      );
       ensureSpace(rowHeight + 4);
 
       const baseY = y;
+      const rowCenter = baseY - rowHeight / 2;
+      const singleLineBaseline =
+        rowCenter - fontSize * TEXT_DESCENDER_FACTOR;
+
+      const uraianBlockHeight =
+        (uraianLines.length - 1) * ROW_LINE_SPACING;
+      const uraianFirstBaseline =
+        rowCenter +
+        uraianBlockHeight / 2 -
+        fontSize * TEXT_DESCENDER_FACTOR;
+
       page.drawText(String(index + 1), {
-        x: MARGIN + 4,
-        y: baseY,
-        size: 7.7,
+        x: COL_NO.x + 4,
+        y: singleLineBaseline,
+        size: fontSize,
         font: regular,
-      });
-      page.drawText(formatDate(row.date), {
-        x: MARGIN + 34,
-        y: baseY,
-        size: 7.7,
-        font: regular,
-      });
-      page.drawText(row.type === "IN" ? "Masuk" : "Keluar", {
-        x: MARGIN + 98,
-        y: baseY,
-        size: 7.7,
-        font: regular,
+        color: rgb(0.30, 0.34, 0.40),
       });
 
-      descriptionLines.forEach((line, lineIndex) => {
+      page.drawText(formatDate(row.date), {
+        x: COL_TANGGAL.x + 4,
+        y: singleLineBaseline,
+        size: fontSize,
+        font: regular,
+        color: rgb(0.30, 0.34, 0.40),
+      });
+
+      uraianLines.forEach((line, lineIndex) => {
         page.drawText(line, {
-          x: MARGIN + 146,
-          y: baseY - lineIndex * 10,
-          size: 7.7,
+          x: COL_URAIAN.x + 4,
+          y:
+            uraianFirstBaseline -
+            lineIndex * ROW_LINE_SPACING,
+          size: fontSize,
           font: regular,
           color: rgb(0.18, 0.21, 0.25),
         });
       });
 
-      const amountText = `${row.type === "IN" ? "+" : "-"} ${formatCurrency(row.amount)}`;
-      const amountWidth = bold.widthOfTextAtSize(amountText, 7.7);
-      page.drawText(amountText, {
-        x: PAGE_WIDTH - MARGIN - 4 - amountWidth,
-        y: baseY,
-        size: 7.7,
+      if (row.type === "IN") {
+        const val = formatCurrencyPlain(amount);
+        const w = regular.widthOfTextAtSize(val, fontSize);
+        page.drawText(val, {
+          x: COL_PENERIMAAN.x + COL_PENERIMAAN.w - 4 - w,
+          y: singleLineBaseline,
+          size: fontSize,
+          font: regular,
+          color: rgb(0.02, 0.43, 0.27),
+        });
+      } else {
+        const val = "—";
+        const w = regular.widthOfTextAtSize(val, fontSize);
+        page.drawText(val, {
+          x: COL_PENERIMAAN.x + COL_PENERIMAAN.w - 4 - w,
+          y: singleLineBaseline,
+          size: fontSize,
+          font: regular,
+          color: rgb(0.60, 0.63, 0.68),
+        });
+      }
+
+      if (row.type === "OUT") {
+        const val = formatCurrencyPlain(amount);
+        const w = regular.widthOfTextAtSize(val, fontSize);
+        page.drawText(val, {
+          x: COL_PENGELUARAN.x + COL_PENGELUARAN.w - 4 - w,
+          y: singleLineBaseline,
+          size: fontSize,
+          font: regular,
+          color: rgb(0.70, 0.16, 0.12),
+        });
+      } else {
+        const val = "—";
+        const w = regular.widthOfTextAtSize(val, fontSize);
+        page.drawText(val, {
+          x: COL_PENGELUARAN.x + COL_PENGELUARAN.w - 4 - w,
+          y: singleLineBaseline,
+          size: fontSize,
+          font: regular,
+          color: rgb(0.60, 0.63, 0.68),
+        });
+      }
+
+      const saldoVal = formatCurrencyPlain(runningBalance);
+      const saldoW = bold.widthOfTextAtSize(saldoVal, fontSize);
+      page.drawText(saldoVal, {
+        x: COL_SALDO.x + COL_SALDO.w - 4 - saldoW,
+        y: singleLineBaseline,
+        size: fontSize,
         font: bold,
-        color:
-          row.type === "IN"
-            ? rgb(0.02, 0.43, 0.27)
-            : rgb(0.70, 0.16, 0.12),
+        color: rgb(0.08, 0.10, 0.13),
       });
 
       y -= rowHeight;

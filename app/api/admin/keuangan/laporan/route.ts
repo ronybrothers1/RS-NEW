@@ -35,8 +35,6 @@ function isDateString(value: string) {
   return /^\d{4}-\d{2}-\d{2}$/.test(value);
 }
 
-
-
 function monthLabel(year: number, month: number) {
   return new Intl.DateTimeFormat("id-ID", {
     month: "long",
@@ -66,21 +64,12 @@ function parsePeriod(url: URL) {
     const month = Number(match[2]);
     if (year < 2021 || year > 2100 || month < 1 || month > 12) return null;
 
-    const bounds =
-      getJakartaMonthBounds(
-        year,
-        month,
-      );
-
-    if (!bounds) {
-      return null;
-    }
+    const bounds = getJakartaMonthBounds(year, month);
+    if (!bounds) return null;
 
     return {
-      start:
-        bounds.start,
-      endExclusive:
-        bounds.endExclusive,
+      start: bounds.start,
+      endExclusive: bounds.endExclusive,
       label: monthLabel(year, month),
       filename: `laporan-keuangan-${year}-${String(month).padStart(2, "0")}.pdf`,
     };
@@ -90,20 +79,12 @@ function parsePeriod(url: URL) {
     const year = Number(url.searchParams.get("year"));
     if (!Number.isInteger(year) || year < 2021 || year > 2100) return null;
 
-    const bounds =
-      getJakartaYearBounds(
-        year,
-      );
-
-    if (!bounds) {
-      return null;
-    }
+    const bounds = getJakartaYearBounds(year);
+    if (!bounds) return null;
 
     return {
-      start:
-        bounds.start,
-      endExclusive:
-        bounds.endExclusive,
+      start: bounds.start,
+      endExclusive: bounds.endExclusive,
       label: `1 Januari ${year} - 31 Desember ${year}`,
       filename: `laporan-keuangan-${year}.pdf`,
     };
@@ -114,21 +95,13 @@ function parsePeriod(url: URL) {
     const endRaw = url.searchParams.get("end") || "";
     if (!isDateString(startRaw) || !isDateString(endRaw)) return null;
 
-    const start =
-      getJakartaDateStart(
-        startRaw,
-      );
-
-    const endExclusive =
-      getJakartaNextDayStart(
-        endRaw,
-      );
+    const start = getJakartaDateStart(startRaw);
+    const endExclusive = getJakartaNextDayStart(endRaw);
 
     if (
       !start ||
       !endExclusive ||
-      start.getTime() >=
-        endExclusive.getTime()
+      start.getTime() >= endExclusive.getTime()
     ) {
       return null;
     }
@@ -143,8 +116,6 @@ function parsePeriod(url: URL) {
 
   return null;
 }
-
-
 
 export async function GET(request: Request) {
   const staff = await getCurrentStaffUser();
@@ -163,19 +134,19 @@ export async function GET(request: Request) {
     });
   }
 
-  const openingBalance =
-    await getFinanceOpeningBalanceAt(
-      period.start,
-    );
+  const openingBalance = await getFinanceOpeningBalanceAt(period.start);
 
   const rows = await db
     .select({
       id: financialTransactions.id,
       date: financialTransactions.date,
       type: financialTransactions.type,
+      category: financialTransactions.category,
       amount: financialTransactions.amount,
       description: financialTransactions.description,
       programName: programs.name,
+      donorName: financialTransactions.donorName,
+      isAnonymous: financialTransactions.isAnonymous,
       createdAt: financialTransactions.createdAt,
     })
     .from(financialTransactions)
@@ -203,8 +174,11 @@ export async function GET(request: Request) {
     return {
       date: row.date,
       type: row.type,
+      category: row.category,
       description: row.description,
       programName: row.programName,
+      donorName: row.donorName,
+      isAnonymous: row.isAnonymous,
       amount,
     };
   });
