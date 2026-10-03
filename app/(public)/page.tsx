@@ -291,9 +291,9 @@ export default async function HomePage() {
                     )}
                   </div>
 
-                  <h3 className="mt-3 text-lg font-extrabold leading-snug tracking-tight text-slate-950 transition-colors group-hover:text-brand-800 sm:text-xl">
+                  <h2 className="mt-3 text-lg font-extrabold leading-snug tracking-tight text-slate-950 transition-colors group-hover:text-brand-800 sm:text-xl">
                     {latestArticle.title}
-                  </h3>
+                  </h2>
 
                   {latestArticle.excerpt && (
                     <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">
