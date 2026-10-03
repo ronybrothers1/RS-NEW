@@ -29,6 +29,8 @@ import {
   users,
 } from "@/src/db/schema";
 
+import DownloadPengajuanPdfButton from "./components/DownloadPengajuanPdfButton";
+
 export const dynamic =
   "force-dynamic";
 
@@ -494,6 +496,10 @@ export default async function AdminAssistancePage({
     return `/admin/pengajuan?${query.toString()}`;
   };
 
+  const selectedProgramName =
+    programOptions.find(
+      (p) => p.id === programId,
+    )?.name ?? "";
 
   return (
     <div className="space-y-6">
@@ -507,6 +513,16 @@ export default async function AdminAssistancePage({
         <p className="mt-1 text-sm leading-6 text-slate-500">
           Verifikasi pengajuan yang telah dikirim pengguna. Draf pribadi pengguna tidak ditampilkan kepada pengurus.
         </p>
+      </div>
+
+      <div className="flex justify-end">
+        <DownloadPengajuanPdfButton
+          q={q}
+          status={status}
+          programId={programId}
+          programName={selectedProgramName}
+          disabled={totalApplications === 0}
+        />
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
