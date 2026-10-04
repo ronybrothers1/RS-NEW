@@ -72,6 +72,8 @@ export async function generateMetadata({
       ? `/api/bantuan/${campaign.slug}/cover`
       : undefined,
     imageAlt: `Foto kampanye ${campaign.title}`,
+    imageWidth: 4032,
+    imageHeight: 2268,
   });
 }
 

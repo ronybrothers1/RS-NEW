@@ -12,6 +12,8 @@ type PageMetadataOptions = {
   path: string;
   image?: string | null;
   imageAlt?: string | null;
+  imageWidth?: number;
+  imageHeight?: number;
   absoluteTitle?: boolean;
   article?: {
     publishedTime?: Date | null;
@@ -48,7 +50,7 @@ export function createSeoDescription(
   const shortened = normalized.slice(0, 157);
   const lastSpace = shortened.lastIndexOf(" ");
 
-  return `${shortened.slice(0, lastSpace > 120 ? lastSpace : 157).trim()}…`;
+  return `${shortened.slice(0, lastSpace > 120 ? lastSpace : 157).trim()}â€¦`;
 }
 
 export function createPageMetadata({
@@ -57,6 +59,8 @@ export function createPageMetadata({
   path,
   image,
   imageAlt,
+  imageWidth,
+  imageHeight,
   absoluteTitle = false,
   article,
 }: PageMetadataOptions): Metadata {
@@ -68,12 +72,26 @@ export function createPageMetadata({
     ? resolvedTitle
     : `${cleanTitle} | ${SITE_NAME_SHORT}`;
   const resolvedDescription = createSeoDescription([description]);
+
+  const hasDimensions =
+    typeof imageWidth === "number" &&
+    typeof imageHeight === "number" &&
+    imageWidth > 0 &&
+    imageHeight > 0;
+
   const images = image
     ? [
-        {
-          url: image,
-          alt: imageAlt?.trim() || cleanTitle,
-        },
+        hasDimensions
+          ? {
+              url: image,
+              width: imageWidth,
+              height: imageHeight,
+              alt: imageAlt?.trim() || cleanTitle,
+            }
+          : {
+              url: image,
+              alt: imageAlt?.trim() || cleanTitle,
+            },
       ]
     : undefined;
 
