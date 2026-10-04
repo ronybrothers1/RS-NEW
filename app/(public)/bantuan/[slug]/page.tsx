@@ -69,11 +69,13 @@ export async function generateMetadata({
     description,
     path: `/bantuan/${slug}`,
     image: campaign.coverPhotoId
-      ? `/api/bantuan/${campaign.slug}/cover`
+      ? `/_next/image?url=${encodeURIComponent(
+          `/api/bantuan/${campaign.slug}/cover`,
+        )}&w=1200&q=60`
       : undefined,
     imageAlt: `Foto kampanye ${campaign.title}`,
-    imageWidth: 4032,
-    imageHeight: 2268,
+    imageWidth: 1200,
+    imageHeight: 675,
   });
 }
 
