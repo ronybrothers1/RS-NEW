@@ -22,6 +22,7 @@ import { getProgramNewsHref } from "@/lib/program-news";
 import { getCachedCurrentMonthDonors } from "@/lib/public-current-month-donors";
 import { createPageMetadata, SITE_DESCRIPTION, SITE_NAME } from "@/lib/seo-metadata";
 import HomeDonorTicker from "./HomeDonorTicker";
+import HomeCampaignHighlight from "./HomeCampaignHighlight";
 
 export const metadata = createPageMetadata({
   title: SITE_NAME,
@@ -322,6 +323,8 @@ export default async function HomePage() {
           </div>
         </section>
       </div>
+
+      <HomeCampaignHighlight />
 
       <section className="bg-canvas py-14 sm:py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
