@@ -28,7 +28,7 @@ export default async function HomeCampaignHighlight() {
   }
 
   return (
-    <section className="bg-canvas py-14 sm:py-16">
+    <section className="bg-canvas pt-14 pb-0 sm:pt-16 sm:pb-0">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
