@@ -1,10 +1,11 @@
-import {
+﻿import {
   and,
   asc,
   eq,
   ilike,
   ne,
   or,
+  sql,
   type SQL,
 } from "drizzle-orm";
 import {
@@ -42,40 +43,34 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
 
-  const rawStatus = String(
-    searchParams.get("status") || "",
-  ).trim();
-
-  const status = reviewStatuses.includes(
-    rawStatus as AssistanceApplicationStatus,
-  )
+  const rawStatus = String(searchParams.get("status") || "").trim();
+  const status = reviewStatuses.includes(rawStatus as AssistanceApplicationStatus)
     ? (rawStatus as AssistanceApplicationStatus)
     : "";
-
-  const programId = String(
-    searchParams.get("program") || "",
-  ).trim();
-
-  const q = String(
-    searchParams.get("q") || "",
-  ).trim();
+  const programId = String(searchParams.get("program") || "").trim();
+  const q = String(searchParams.get("q") || "").trim();
+  const month = String(searchParams.get("month") || "").trim();
+  const year = String(searchParams.get("year") || "").trim();
 
   const filters: SQL[] = [
     ne(assistanceApplications.status, "DRAFT"),
   ];
 
   if (status) {
-    filters.push(
-      eq(assistanceApplications.status, status),
-    );
+    filters.push(eq(assistanceApplications.status, status));
   }
 
   if (programId) {
+    filters.push(eq(assistanceApplications.programId, programId));
+  }
+
+  // Filter Bulan dan Tahun dengan konversi zona waktu ke WIB
+  if (month && year) {
     filters.push(
-      eq(
-        assistanceApplications.programId,
-        programId,
-      ),
+      sql`EXTRACT(MONTH FROM (${assistanceApplications.submittedAt} AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Jakarta')) = ${Number(month)}`
+    );
+    filters.push(
+      sql`EXTRACT(YEAR FROM (${assistanceApplications.submittedAt} AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Jakarta')) = ${Number(year)}`
     );
   }
 
@@ -83,71 +78,42 @@ export async function GET(request: NextRequest) {
     const search = `%${q}%`;
     const condition = or(
       ilike(assistanceApplications.title, search),
-      ilike(
-        assistanceApplications.beneficiaryName,
-        search,
-      ),
+      ilike(assistanceApplications.beneficiaryName, search),
       ilike(assistanceApplications.village, search),
-      ilike(
-        assistanceApplications.subdistrict,
-        search,
-      ),
+      ilike(assistanceApplications.subdistrict, search),
       ilike(users.name, search),
-      ilike(programs.name, search),
+      ilike(programs.name, search)
     );
-    if (condition) {
-      filters.push(condition);
-    }
+    if (condition) filters.push(condition);
   }
 
   const rows = await db
     .select({
       id: assistanceApplications.id,
       title: assistanceApplications.title,
-      beneficiaryName:
-        assistanceApplications.beneficiaryName,
+      beneficiaryName: assistanceApplications.beneficiaryName,
       applicantName: users.name,
       programName: programs.name,
       village: assistanceApplications.village,
-      subdistrict:
-        assistanceApplications.subdistrict,
+      subdistrict: assistanceApplications.subdistrict,
       regency: assistanceApplications.regency,
-      targetAmount:
-        assistanceApplications.targetAmount,
+      targetAmount: assistanceApplications.targetAmount,
       status: assistanceApplications.status,
-      submittedAt:
-        assistanceApplications.submittedAt,
+      submittedAt: assistanceApplications.submittedAt,
     })
     .from(assistanceApplications)
-    .innerJoin(
-      users,
-      eq(
-        assistanceApplications.applicantId,
-        users.id,
-      ),
-    )
-    .innerJoin(
-      programs,
-      eq(
-        assistanceApplications.programId,
-        programs.id,
-      ),
-    )
+    .innerJoin(users, eq(assistanceApplications.applicantId, users.id))
+    .innerJoin(programs, eq(assistanceApplications.programId, programs.id))
     .where(and(...filters))
-    .orderBy(
-      asc(assistanceApplications.submittedAt),
-      asc(assistanceApplications.id),
-    );
+    .orderBy(asc(assistanceApplications.submittedAt), asc(assistanceApplications.id));
 
   return NextResponse.json(
     {
       generatedAt: new Date().toISOString(),
-      filters: { status, programId, q },
+      filters: { status, programId, q, month, year },
       rows: rows.map((row) => ({
         ...row,
-        submittedAt: row.submittedAt
-          ? row.submittedAt.toISOString()
-          : null,
+        submittedAt: row.submittedAt ? row.submittedAt.toISOString() : null,
       })),
     },
     {

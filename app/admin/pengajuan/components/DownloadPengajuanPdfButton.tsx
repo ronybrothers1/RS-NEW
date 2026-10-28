@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { Download, Loader2 } from "lucide-react";
@@ -14,6 +14,8 @@ type Props = {
   status: string;
   programId: string;
   programName: string;
+  month: string;
+  year: string;
   disabled?: boolean;
 };
 
@@ -23,6 +25,8 @@ type ApiResponse = {
     status: string;
     programId: string;
     q: string;
+    month?: string;
+    year?: string;
   };
   rows: Array<{
     id: string;
@@ -49,11 +53,18 @@ function formatDateShort(iso: string | null): string {
   }).format(d);
 }
 
+const MONTH_NAMES = [
+  "", "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+  "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+];
+
 export default function DownloadPengajuanPdfButton({
   q,
   status,
   programId,
   programName,
+  month,
+  year,
   disabled,
 }: Props) {
   const [loading, setLoading] = useState(false);
@@ -69,6 +80,10 @@ export default function DownloadPengajuanPdfButton({
       if (q) params.set("q", q);
       if (status) params.set("status", status);
       if (programId) params.set("program", programId);
+      
+      // KIRIM BULAN DAN TAHUN KE API
+      if (month) params.set("month", month);
+      if (year) params.set("year", year);
 
       const url =
         "/admin/pengajuan/export-data" +
@@ -130,6 +145,9 @@ export default function DownloadPengajuanPdfButton({
           ]?.label ?? status
         : "Semua status";
 
+      const monthLabel = month ? MONTH_NAMES[parseInt(month, 10)] : "Semua Bulan";
+      const yearLabel = year ? year : "Semua Tahun";
+
       doc.setFont("helvetica", "normal");
       doc.setFontSize(9);
       doc.setTextColor(51, 65, 85);
@@ -148,13 +166,16 @@ export default function DownloadPengajuanPdfButton({
       );
 
       infoY += 5;
+      // TAMPILKAN PERIODE DI PDF
+      doc.text(`Periode: ${monthLabel} ${yearLabel}`, margin, infoY);
+      
       doc.text(
         `Dicetak: ${new Intl.DateTimeFormat("id-ID", {
           dateStyle: "long",
           timeStyle: "short",
           timeZone: "Asia/Jakarta",
         }).format(generatedAt)}`,
-        margin,
+        margin + 80,
         infoY,
       );
 
@@ -256,10 +277,11 @@ export default function DownloadPengajuanPdfButton({
       const safeStatus = status
         ? status.toLowerCase()
         : "semua-status";
+      const periodStr = (month && year) ? `-${monthLabel}-${yearLabel}` : "";
       const dateStr = generatedAt
         .toISOString()
         .slice(0, 10);
-      const filename = `Pengajuan-${safeStatus}-${dateStr}.pdf`;
+      const filename = `Pengajuan-${safeStatus}${periodStr}-${dateStr}.pdf`;
 
       doc.save(filename);
     } catch (err) {
