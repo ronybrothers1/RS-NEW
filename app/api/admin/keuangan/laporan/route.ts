@@ -117,7 +117,7 @@ function parsePeriod(url: URL) {
   return null;
 }
 
-export async function GET(request: Request) {
+async function buildReportResponse(request: Request) {
   const staff = await getCurrentStaffUser();
   if (!staff) {
     return new Response("Unauthorized", {
@@ -205,4 +205,20 @@ export async function GET(request: Request) {
       "X-Robots-Tag": "noindex, nofollow",
     },
   });
+}
+
+export async function GET(request: Request) {
+  try {
+    return await buildReportResponse(request);
+  } catch (error) {
+    console.error("[admin/keuangan/laporan] gagal membuat PDF:", error);
+
+    return new Response(
+      "Laporan gagal dibuat. Periksa log server untuk detail error.",
+      {
+        status: 500,
+        headers: { "Cache-Control": "no-store" },
+      },
+    );
+  }
 }

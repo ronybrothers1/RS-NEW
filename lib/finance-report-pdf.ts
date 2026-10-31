@@ -6,9 +6,8 @@ import {
   rgb,
 } from "pdf-lib";
 
-import {
-  buildPublicCashbookUraian,
-} from "@/lib/public-cashbook";
+import { sanitizeForFont } from "@/lib/pdf-text";
+import { buildPublicCashbookUraian } from "@/lib/public-cashbook";
 
 export type FinanceReportRow = {
   date: Date;
@@ -85,7 +84,7 @@ function wrapText(
   size: number,
   maxWidth: number,
 ) {
-  const clean = text.replace(/\s+/g, " ").trim();
+  const clean = sanitizeForFont(text, font).replace(/\s+/g, " ").trim();
   if (!clean) return [""];
 
   const words = clean.split(" ");
