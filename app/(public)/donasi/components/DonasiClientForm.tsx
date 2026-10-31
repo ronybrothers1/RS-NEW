@@ -1,12 +1,15 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
   CheckCircle2,
   Clock3,
   Copy,
+  Download,
   Landmark,
+  QrCode,
   ShieldCheck,
 } from "lucide-react";
 import {
@@ -53,6 +56,9 @@ const BANK_ORDER = [
   "BSI",
   "BRI",
 ];
+
+const QRIS_METHOD = "QRIS";
+const QRIS_IMAGE = "/qris-ruang-sejahtera.png";
 
 function formatAmount(value: string) {
   if (!value) {
@@ -146,7 +152,7 @@ export default function DonasiClientForm({
     paymentMethod,
     setPaymentMethod,
   ] = useState(
-    availableBanks[0] || "",
+    availableBanks[0] || QRIS_METHOD,
   );
 
   const [copied, setCopied] =
@@ -563,22 +569,20 @@ export default function DonasiClientForm({
 
           <div>
             <h2 className="text-lg font-bold text-slate-900">
-              Transfer ke Rekening Resmi
+              Transfer atau QRIS Resmi
             </h2>
 
             <p className="mt-1 text-sm text-slate-500">
-              Pilih bank lalu lakukan
-              transfer sebelum mengunggah
-              bukti.
+              Pilih bank atau QRIS lalu
+              lakukan pembayaran sebelum
+              mengunggah bukti.
             </p>
           </div>
         </div>
 
-        {availableBanks.length >
-        0 ? (
-          <>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {availableBanks.map(
+        <>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+              {[...availableBanks, QRIS_METHOD].map(
                 (bank) => (
                   <label
                     key={bank}
@@ -605,7 +609,11 @@ export default function DonasiClientForm({
                       className="sr-only"
                     />
 
-                    <Landmark className="mx-auto h-5 w-5 text-teal-700" />
+                    {bank === QRIS_METHOD ? (
+                      <QrCode className="mx-auto h-5 w-5 text-teal-700" />
+                    ) : (
+                      <Landmark className="mx-auto h-5 w-5 text-teal-700" />
+                    )}
 
                     <span className="mt-2 block text-sm font-bold text-slate-800">
                       {bank}
@@ -615,7 +623,7 @@ export default function DonasiClientForm({
               )}
             </div>
 
-            {paymentMethod && (
+            {paymentMethod !== QRIS_METHOD && paymentMethod && (
               <div className="mt-5 rounded-2xl border border-teal-200 bg-teal-50 p-5">
                 <p className="text-xs font-semibold uppercase tracking-wide text-teal-700">
                   Rekening Resmi{" "}
@@ -651,14 +659,56 @@ export default function DonasiClientForm({
                 </p>
               </div>
             )}
-          </>
-        ) : (
-          <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm leading-6 text-rose-700">
-            Saat ini belum ada rekening
-            donasi yang tersedia. Form
-            pengiriman dinonaktifkan.
-          </div>
-        )}
+
+            {paymentMethod === QRIS_METHOD && (
+              <div className="mt-5 rounded-2xl border border-teal-200 bg-teal-50 p-5">
+                <p className="text-xs font-semibold uppercase tracking-wide text-teal-700">
+                  Bayar dengan QRIS
+                </p>
+
+                <div className="mt-4 flex flex-col items-center gap-4">
+                  <Image
+                    src={QRIS_IMAGE}
+                    alt="QRIS Yayasan Ruang Sejahtera, NMID ID1026619408564"
+                    width={681}
+                    height={681}
+                    sizes="(max-width: 640px) 90vw, 360px"
+                    unoptimized
+                    className="h-auto w-full max-w-[360px] rounded-xl border border-slate-200 bg-white"
+                  />
+
+                  <a
+                    href={QRIS_IMAGE}
+                    download="QRIS-Yayasan-Ruang-Sejahtera.png"
+                    className="inline-flex items-center justify-center rounded-xl border border-teal-200 bg-white px-4 py-2.5 text-sm font-semibold text-teal-800 transition hover:bg-teal-100"
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+                    Unduh Gambar QRIS
+                  </a>
+                </div>
+
+                <ol className="mt-4 list-decimal space-y-1 pl-5 text-xs leading-5 text-teal-800">
+                  <li>
+                    Buka aplikasi mobile banking atau e-wallet yang
+                    mendukung QRIS, lalu pindai kode di atas.
+                  </li>
+                  <li>
+                    Pastikan nama penerima yang muncul adalah YAYASAN
+                    RUANG SEJAHTERA.
+                  </li>
+                  <li>
+                    Masukkan nominal yang sama persis dengan nominal
+                    donasi pada langkah 2.
+                  </li>
+                  <li>
+                    Simpan tangkapan layar bukti pembayaran (nominal,
+                    waktu, dan nama penerima harus terlihat), lalu
+                    unggah pada langkah 5.
+                  </li>
+                </ol>
+              </div>
+            )}
+        </>
       </section>
 
       <section className="border-t border-slate-100 pt-8">
@@ -669,7 +719,7 @@ export default function DonasiClientForm({
 
           <div>
             <h2 className="text-lg font-bold text-slate-900">
-              Unggah Bukti Transfer
+              Unggah Bukti Pembayaran
             </h2>
 
             <p className="mt-1 text-sm text-slate-500">
@@ -696,9 +746,7 @@ export default function DonasiClientForm({
           disabled={
             isPending ||
             proofState.uploading ||
-            !proofState.ready ||
-            availableBanks.length ===
-              0
+            !proofState.ready
           }
           className="public-cta-3d w-full px-5 py-4 text-base font-bold disabled:cursor-not-allowed disabled:opacity-50"
         >

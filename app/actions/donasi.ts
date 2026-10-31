@@ -43,6 +43,7 @@ const SUPPORTED_BANKS =
     "MANDIRI",
     "BSI",
     "BRI",
+    "QRIS",
   ]);
 
 type ProofValidationResult =
@@ -406,6 +407,7 @@ export async function submitDonation(
     }
 
     if (
+      paymentMethod !== "QRIS" &&
       !bankSettings[0]
         ?.value
         ?.trim()
